@@ -1,0 +1,10 @@
+web/node_modules/
+web/dist/
+web/adminui-sdk.tgz
+web/package-lock.json
+go/web/
+go/tool
+go/tool.exe
+rust/target/
+data/
+*.sqlite*

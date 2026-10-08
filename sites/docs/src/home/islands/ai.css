@@ -1,0 +1,44 @@
+/* AI island: terminal-style chat on the left, the generated page on the right; catalog search card. */
+.h-ai { display: grid; grid-template-columns: 440px 1fr; border-radius: 16px; overflow: hidden; border: 1px solid var(--aui-line); box-shadow: var(--aui-shadow-lg); background: var(--aui-surface); min-height: 560px; }
+.h-ai-chat { display: grid; align-content: start; gap: 16px; padding: 18px; background: var(--aui-canvas); color: var(--aui-text); font-size: 13.5px; box-sizing: border-box; }
+.h-ai-term { display: flex; flex-direction: column; }
+.h-ai-term > .h-ai-chat { flex: 1; }
+.h-ai-head { display: flex; align-items: center; gap: 8px; font: 500 12.5px ui-monospace, Consolas, monospace; color: var(--aui-note); }
+.h-ai-head > button { margin-left: auto; }
+.h-ai-head svg { width: 16px; height: 16px; }
+.h-ai-msg { display: flex; gap: 10px; padding: 12px; border-radius: 10px; background: var(--aui-surface); line-height: 1.7; }
+.h-ai-msg p { margin: 0; }
+.h-ai-msg svg { flex: none; width: 18px; height: 18px; margin-top: 3px; color: var(--aui-note); }
+.h-ai-caret { display: inline-block; width: 7px; height: 15px; margin-left: 2px; vertical-align: -2px; background: var(--aui-text); }
+@media (prefers-reduced-motion: no-preference) { .h-ai-caret { animation: h-blink 1s steps(1) infinite; } }
+@keyframes h-blink { 50% { opacity: 0; } }
+.h-ai-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font: 12.5px/1.5 ui-monospace, Consolas, monospace; }
+.h-ai-steps li { display: flex; gap: 8px; align-items: flex-start; color: var(--aui-note); opacity: 0.7; transition: color 0.3s; }
+.h-ai-steps li svg { flex: none; width: 15px; height: 15px; margin-top: 1px; }
+.h-ai-steps li[data-state="run"] { color: var(--aui-warning); opacity: 1; }
+.h-ai-steps li[data-state="done"] { color: var(--aui-success); opacity: 1; }
+.h-ai-code { margin: 0; padding: 12px; border-radius: 10px; background: var(--aui-surface-subtle); border: 1px solid var(--aui-line); font: 12px/1.6 ui-monospace, Consolas, monospace; color: var(--aui-secondary); white-space: pre; overflow-x: auto; opacity: 0.25; transition: opacity 0.4s; }
+.h-ai-code[data-show="1"] { opacity: 1; }
+.h-ai-preview { display: grid; grid-template-rows: auto 1fr; min-width: 0; background: var(--aui-canvas); }
+.h-ai-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--aui-line); background: var(--aui-surface); font: 12.5px ui-monospace, Consolas, monospace; color: var(--aui-note); }
+.h-ai-body { padding: 8px; min-width: 0; overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) { .h-ai-preview[data-show="1"] .h-ai-body > * { animation: h-pop 0.5s var(--aui-ease, ease); } }
+@keyframes h-pop { from { opacity: 0; transform: translateY(10px); } }
+.h-ai-skel { display: grid; gap: 12px; padding: 24px; }
+.h-ai-skel i { height: 18px; border-radius: 6px; background: var(--aui-line); }
+.h-ai-skel i:first-child { width: 30%; height: 28px; }
+.h-ai-skel i:nth-child(2) { width: 60%; }
+
+.h-card { display: grid; align-content: start; gap: 12px; padding: 16px; border-radius: 14px; border: 1px solid var(--aui-line); background: var(--aui-surface); min-width: 0; }
+.h-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.h-file { font: 600 12.5px ui-monospace, Consolas, monospace; color: var(--aui-text); }
+.h-dim { margin: 0; font-size: 12.5px; color: var(--aui-note); }
+.h-hits { display: grid; gap: 8px; }
+.h-hit { padding: 10px 12px; border-radius: 10px; background: var(--aui-surface-subtle); }
+.h-hit div { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.h-hit strong { font: 600 13px ui-monospace, Consolas, monospace; color: var(--aui-ink); }
+.h-hit code { font: 11.5px ui-monospace, Consolas, monospace; color: var(--aui-note); }
+.h-hit p { margin: 4px 0 0; font: 12px/1.6 ui-monospace, Consolas, monospace; color: var(--aui-secondary); word-break: break-word; }
+
+@media (max-width: 1100px) { .h-ai { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .h-ai-code { display: none; } .h-ai { min-height: 0; } }

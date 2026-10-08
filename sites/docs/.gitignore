@@ -1,0 +1,4 @@
+build/
+build-sandbox/
+shots/
+node_modules/

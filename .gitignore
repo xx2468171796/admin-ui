@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+tsconfig.dist.json
+.DS_Store
+*.tgz
+test/artifacts/
+packages/react/test/artifacts/
+sites/docs/build/
+sites/docs/build-sandbox/
+examples/*/dist/
+examples/single-service/web/dist/
+examples/single-service/go/web/dist/
+examples/single-service/rust/target/
+EXPORT-BLOCKED.txt

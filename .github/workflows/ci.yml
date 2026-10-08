@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: Run the Playwright browser suites
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "26"
+
+jobs:
+  guard:
+    name: Leak guard (internal names)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: node scripts/check-internal.mjs .
+
+  library:
+    name: Library (check, test, build, size)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install
+        run: if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+      - name: Build dist (examples and size probes resolve the package through its exports → dist)
+        run: npm run build
+      - name: Typecheck
+        run: npm run typecheck -w @adminui/react
+      - name: Unit tests
+        run: npm test -w @adminui/react
+      - name: Audit rules on the package's own pages
+        run: npm run audit:access -w @adminui/react && npm run audit:examples -w @adminui/react
+      - name: CSS chunks
+        run: npm run css:check -w @adminui/react
+      - name: Dist matches source
+        run: node scripts/check-dist.mjs packages/react
+      - name: Size budgets
+        run: npm run size -w @adminui/react
+      - name: Pack dry run
+        working-directory: packages/react
+        run: npm pack --dry-run
+
+  docs:
+    name: Docs site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install
+        run: if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+      - run: npm run build
+      # The build check opens the built home page in Chromium (live CRM frame, Ctrl+K search, links).
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Typecheck, audit, build and check the static site
+        run: npm run docs:check
+
+  browser:
+    name: Browser suites (optional)
+    # Slow; runs on main, on manual dispatch, or on PRs labelled "browser-tests". Failures do not block merging.
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.browser) ||
+      contains(github.event.pull_request.labels.*.name, 'browser-tests')
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install
+        run: if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+      - run: npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Packed consumer (npm pack → isolated install → browser)
+        run: npm run test:packed
+      - name: Core browser suite
+        run: npm run test:browser
+      - name: Docs demos
+        run: npm run test:demos -w admin-ui-docs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-artifacts
+          path: packages/react/test/artifacts/
+          if-no-files-found: ignore

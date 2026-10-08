@@ -1,0 +1,3 @@
+/* admin-ui-audit fixture: host CSS that patches removed classes */
+.page .aui-batchbar { gap: 4px; }
+@import "@adminui/react/src/styles/grid.css";

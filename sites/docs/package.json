@@ -1,0 +1,22 @@
+{
+  "name": "admin-ui-docs",
+  "private": true,
+  "type": "module",
+  "description": "Documentation and live demo site for @adminui/react (static, not published to npm).",
+  "scripts": {
+    "dev": "node ../../node_modules/vite/bin/vite.js --port 5410 --strictPort",
+    "build": "node scripts/build.mjs",
+    "build:sandbox": "node scripts/build.mjs --sandbox",
+    "serve": "node ../../node_modules/vite/bin/vite.js preview --port 5410 --strictPort",
+    "typecheck": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
+    "audit": "node ../../node_modules/@adminui/react/scripts/ui-audit.mjs src",
+    "check": "npm run typecheck && npm run audit && npm run build && node scripts/check-build.mjs && npm run check:sandbox",
+    "check:sandbox": "npm run build:sandbox && node scripts/check-build.mjs --sandbox",
+    "test:demos": "node scripts/check-demos.mjs",
+    "shots": "node scripts/shots.mjs",
+    "serve:sandbox": "node scripts/serve-sandbox.mjs"
+  },
+  "dependencies": {
+    "@adminui/react": "8.3.0"
+  }
+}

@@ -1,0 +1,56 @@
+name: Release
+
+# On a version tag (vX.Y.Z, pre-releases vX.Y.Z-rc.N): guard, build, check, then
+#  - attach the npm tarball to a GitHub release (always; installable by URL), and
+#  - publish to npm with provenance when the NPM_TOKEN secret (npm automation token) is set.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # GitHub release
+  id-token: write # npm provenance
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "26"
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - name: Tag matches package version
+        run: |
+          version=$(node -p "require('./packages/react/package.json').version")
+          test "v$version" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME != v$version"; exit 1; }
+      - name: Leak guard
+        run: node scripts/check-internal.mjs .
+      - name: Install
+        run: if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+      - name: Build and check
+        run: npm run check
+      - name: Pack
+        working-directory: packages/react
+        run: npm pack --pack-destination "$RUNNER_TEMP"
+      - name: GitHub release with tarball
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prerelease=""
+          case "$GITHUB_REF_NAME" in *-*) prerelease="--prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP"/adminui-react-*.tgz \
+            --title "$GITHUB_REF_NAME" --generate-notes --verify-tag $prerelease
+      - name: Publish to npm
+        working-directory: packages/react
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::warning::NPM_TOKEN is not set; skipped npm publish (the tarball is on the GitHub release)."
+            exit 0
+          fi
+          tag=latest
+          case "$GITHUB_REF_NAME" in *-*) tag=next ;; esac
+          npm publish --access public --provenance --tag "$tag"

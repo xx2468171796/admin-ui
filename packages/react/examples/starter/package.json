@@ -1,0 +1,29 @@
+{
+  "name": "admin-ui-starter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build"
+  },
+  "dependencies": {
+    "@adminui/react": "file:../adminui-sdk.tgz",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "lucide-react": "^0.468.0",
+    "echarts": "6.1.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "read-excel-file": "9.3.10",
+    "@tanstack/react-table": "9.2.4",
+    "@tanstack/react-virtual": "3.14.13"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "vite": "^6.4.3",
+    "@vitejs/plugin-react": "^4.3.4"
+  }
+}

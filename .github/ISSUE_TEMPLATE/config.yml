@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation and live demos / 文档与在线演示
+    url: https://adminui.zygskins.cn
+    about: Check the component pages first. / 先看组件文档页。
+  - name: Security vulnerability / 安全漏洞
+    url: https://github.com/xx2468171796/admin-ui/security/advisories/new
+    about: Report privately, not as an issue. / 私下报告，不要公开提 issue。

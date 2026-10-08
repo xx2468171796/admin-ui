@@ -1,0 +1,4 @@
+/* Hero island: the live CRM inside the fake browser window (window chrome is the shell's, see home.css). */
+.h-crm { height: 720px; }
+.h-crm-page { padding: 4px 0; }
+@media (max-width: 720px) { .h-crm { height: 640px; } }

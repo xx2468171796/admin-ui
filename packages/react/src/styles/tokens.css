@@ -1,0 +1,268 @@
+/* @adminui/react · tokens: palette variables, sizes, type scale, base resets (the only place colours are written). */
+@keyframes aui-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes aui-pop-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(.98); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+@keyframes aui-short-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes aui-shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes aui-dot-pulse { 0%, 80%, 100% { opacity: .35; } 40% { opacity: 1; } }
+.adminui[data-aui-motion="none"] *,
+.adminui[data-aui-motion="none"] *::before,
+.adminui[data-aui-motion="none"] *::after {
+  animation: none !important; transition: none !important; scroll-behavior: auto !important;
+}
+.adminui {
+  color-scheme: light;
+  --aui-font-scale: 1;
+  /* 色卡变量：AdminProvider 按所选色卡和明暗模式算好写在根元素上（palette.ts）；这里是森林绿浅色的兜底值。
+     主色系：primary / ink（深）/ primary-mid（中）/ soft / soft-strong / wash；点缀：warning（注意）、danger（异常）、info（信息），
+     各带 -soft 底色和 -line 边框；success = 主色系。不要在业务样式里写死颜色。 */
+  --aui-primary: #357450;
+  --aui-primary-fill: #357450;
+  --aui-ink: #2e5d4a;
+  --aui-primary-mid: #598d70;
+  --aui-soft: #edf2ef;
+  --aui-soft-strong: #d7e3dc;
+  --aui-wash: #f7f9f8;
+  --aui-border: #d7e3dc;
+  --aui-sidebar: #1e3a36;
+  --aui-sidebarDeep: #1a3032;
+  --aui-canvas: #dee5e5;
+  --aui-surface: #ffffff;
+  --aui-surface-subtle: #eff3f1;
+  --aui-tile: #f7f9f9;
+  --aui-text: #1e2e2e;
+  --aui-secondary: #415154;
+  --aui-note: #677579;
+  --aui-line: #d0d9d9;
+  --aui-control-border: #7f909a;
+  /* 纯中性文字阶（不带主色调，对标飞书）：1 正文 / 2 次要、备注 / 3 占位、大字、图标 / 4 禁用。
+     palette.ts 按明暗算好（深色 1–2 对面板 ≥ 4.5:1、3 ≥ 3:1）；只在文档阅读 / 编辑器正文里经 .aui-neutral-text 用 */
+  --aui-neutral-1: #1f2329;
+  --aui-neutral-2: #646a73;
+  --aui-neutral-3: #8f959e;
+  --aui-neutral-4: #bbbfc4;
+  --aui-success: #2e5d4a;
+  --aui-success-soft: #edf2ef;
+  --aui-success-line: #d7e3dc;
+  --aui-warning: #985f19;
+  --aui-warning-soft: #f6f0e8;
+  --aui-warning-line: #e1cbaf;
+  --aui-danger: #b4492f;
+  --aui-danger-soft: #f8edea;
+  --aui-danger-line: #e5bfb6;
+  --aui-info: #3f6283;
+  --aui-info-soft: #eceff3;
+  --aui-info-line: #bcc8d4;
+  /* 选项 10 色：palette.ts / option-palette.ts 按色卡和明暗算好；绿 = 主色、灰 = 备注色，其余取异常色的明度彩度转色相。
+     每色四个：本色（圆点 / 色块）、-soft（标签底）、-text（标签字，对底 ≥ 4.5:1）、-solid（实心标签底，对白字 ≥ 4.5:1）。这里是森林绿浅色的兜底值。 */
+  --aui-option-green: #357450; --aui-option-green-soft: #e3ece7; --aui-option-green-text: #326c4c; --aui-option-green-solid: #2f6646;
+  --aui-option-teal: #0e8080; --aui-option-teal-soft: #ddeded; --aui-option-teal-text: #0f6f6f; --aui-option-teal-solid: #0c7171;
+  --aui-option-blue: #3570b9; --aui-option-blue-soft: #e3ebf5; --aui-option-blue-text: #3268a8; --aui-option-blue-solid: #2f63a3;
+  --aui-option-violet: #7c5baf; --aui-option-violet-soft: #ede8f4; --aui-option-violet-text: #7156a0; --aui-option-violet-solid: #6d509a;
+  --aui-option-pink: #a64c7a; --aui-option-pink-soft: #f3e6ec; --aui-option-pink-text: #964871; --aui-option-pink-solid: #92436b;
+  --aui-option-red: #b3493f; --aui-option-red-soft: #f4e6e4; --aui-option-red-text: #a1463d; --aui-option-red-solid: #9e4037;
+  --aui-option-orange: #b06214; --aui-option-orange-soft: #f4e9de; --aui-option-orange-text: #955616; --aui-option-orange-solid: #9b5612;
+  --aui-option-yellow: #946f00; --aui-option-yellow-soft: #f0ebdb; --aui-option-yellow-text: #7e6106; --aui-option-yellow-solid: #826200;
+  --aui-option-olive: #617a2b; --aui-option-olive-soft: #e9ece1; --aui-option-olive-text: #59712b; --aui-option-olive-solid: #556b26;
+  --aui-option-gray: #677579; --aui-option-gray-soft: #eaecec; --aui-option-gray-text: #5e6c70; --aui-option-gray-solid: #5b676a;
+  --aui-space-1: 4px;
+  --aui-space-2: 8px;
+  --aui-space-3: 12px;
+  --aui-space-4: 16px;
+  --aui-space-5: 16px;
+  --aui-space-6: 20px;
+  /* 圆角：卡片 / 面板 12、控件 / 弹层 8 */
+  --aui-radius: 8px;
+  --aui-radius-lg: 12px;
+  --aui-radius-sm: 6px;
+  /* 控件统一高度：按钮、输入框、下拉、分段、日期快捷并排时一条线（标准 36、小号 28；手机 40） */
+  --aui-control-height: 36px;
+  --aui-control-height-sm: 28px;
+  /* 触屏尺寸：手机和公开页上能点的东西至少 44px（按住说话、公开页按钮 / 输入框、密码格） */
+  --aui-control-height-touch: 44px;
+  /* 共用的派生变量（都由色卡变量混出来，深浅模式自动跟随）：阴影、遮罩、行悬停 / 选中、侧栏上的文字和分隔线 */
+  --aui-shadow-sm: 0 1px 2px color-mix(in srgb, var(--aui-text) 6%, transparent);
+  --aui-shadow-md: 0 10px 30px color-mix(in srgb, var(--aui-text) 14%, transparent);
+  --aui-shadow-lg: 0 24px 60px color-mix(in srgb, var(--aui-text) 22%, transparent);
+  --aui-overlay: color-mix(in srgb, var(--aui-sidebarDeep) 55%, transparent);
+  --aui-hover: color-mix(in srgb, var(--aui-primary) 5%, var(--aui-surface));
+  --aui-selected: color-mix(in srgb, var(--aui-primary) 10%, var(--aui-surface));
+  /* 主色实底上的字：palette.ts 保证 primary-fill 对白字 ≥ 4.5:1（浅深色都是），所以固定白。 */
+  --aui-on-primary: #ffffff;
+  /* 表单控件：静止边框在线色和控件边框色之间，悬停 = 控件边框色，聚焦 / 展开 = 主色边 + 3px 浅光圈；
+     弹层阴影、选项行高 32、选项悬停底；深色在下面另给 */
+  --aui-field-border: color-mix(in srgb, var(--aui-control-border) 45%, var(--aui-line));
+  --aui-focus-ring: 0 0 0 3px color-mix(in srgb, var(--aui-primary) 16%, transparent);
+  --aui-focus-ring-danger: 0 0 0 3px color-mix(in srgb, var(--aui-danger) 16%, transparent);
+  --aui-pop-shadow: 0 12px 32px color-mix(in srgb, var(--aui-text) 14%, transparent), 0 2px 6px color-mix(in srgb, var(--aui-text) 6%, transparent);
+  --aui-option-row: 32px;
+  --aui-option-hover: var(--aui-surface-subtle);
+  /* 反馈与弹层：两级阴影——浮层（菜单 / 下拉 / 弹出面板 / 提示条 = --aui-pop-shadow）和弹框（对话框 / 侧边弹层 /
+     命令面板 = --aui-dialog-shadow）；弹层底色 --aui-elev（深色比页面亮一档）；遮罩不模糊、42% */
+  --aui-dialog-shadow: 0 24px 64px color-mix(in srgb, var(--aui-text) 20%, transparent), 0 4px 12px color-mix(in srgb, var(--aui-text) 8%, transparent);
+  --aui-elev: var(--aui-surface);
+  --aui-scrim: color-mix(in srgb, var(--aui-sidebarDeep) 42%, transparent);
+  /* 滚动条（全站一套）：细、圆头、控件边框色，深色自动跟随；弹层和列表把 --aui-scrollbar-size 调成 8px */
+  --aui-scrollbar-size: 10px;
+  --aui-scrollbar-thumb: color-mix(in srgb, var(--aui-control-border) 42%, transparent);
+  --aui-scrollbar-thumb-hover: color-mix(in srgb, var(--aui-control-border) 85%, transparent);
+  /* 基础元素：悬停 = 中性 6% 叠层、按下 = 10%；主色 / 危险实底的悬停按下；禁用 = 浅灰底 + 淡字（不降透明度）；
+     深色提示气泡（深色模式下是浅一档的面板色）；8 档字号（乘 --aui-font-scale 用）和 3 种字重 */
+  --aui-hover-overlay: color-mix(in srgb, var(--aui-text) 6%, transparent);
+  --aui-press-overlay: color-mix(in srgb, var(--aui-text) 10%, transparent);
+  --aui-fill-hover: color-mix(in srgb, #000 8%, var(--aui-primary-fill));
+  --aui-fill-press: color-mix(in srgb, #000 16%, var(--aui-primary-fill));
+  --aui-danger-fill: color-mix(in srgb, var(--aui-danger) 92%, #000);
+  --aui-disabled-bg: var(--aui-surface-subtle);
+  --aui-disabled-fg: color-mix(in srgb, var(--aui-note) 75%, var(--aui-surface));
+  --aui-tip-bg: color-mix(in srgb, var(--aui-sidebarDeep) 92%, #000);
+  --aui-tip-fg: #f3f6f5;
+  --aui-fs-display: 28px;
+  --aui-fs-title: 22px;
+  --aui-fs-dialog: 18px;
+  --aui-fs-card: 14.5px;
+  --aui-fs-body: 14px;
+  --aui-fs-control: 13px;
+  --aui-fs-tag: 12.5px;
+  --aui-fs-note: 12px;
+  --aui-fw-regular: 400;
+  --aui-fw-medium: 500;
+  --aui-fw-strong: 600;
+  --aui-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --aui-on-rail: #f5f8f6;
+  --aui-on-rail-muted: color-mix(in srgb, #ffffff 72%, var(--aui-sidebar));
+  --aui-rail-line: color-mix(in srgb, #ffffff 20%, transparent);
+  --aui-rail-soft: color-mix(in srgb, #ffffff 12%, transparent);
+  --aui-duration-fast: 120ms;
+  --aui-duration-normal: 180ms;
+  --aui-duration-panel: 240ms;
+  --aui-ease: cubic-bezier(0, 0, 0.2, 1);
+  font:
+    calc(14px * var(--aui-font-scale))/1.5 Inter,
+    "PingFang SC",
+    "Microsoft YaHei",
+    system-ui,
+    sans-serif;
+  color: var(--aui-text);
+  background: var(--aui-canvas);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+.adminui *,
+.adminui *::before,
+.adminui *::after {
+  box-sizing: border-box;
+}
+.adminui :where(h1, h2, h3, p) {
+  margin: 0;
+}
+.adminui :where(button, input, textarea) {
+  font: inherit;
+}
+.adminui :where(b, strong, h1, h2, h3, h4, h5, h6, th, dt) { font-weight: 600; }
+.adminui :where(button) {
+  cursor: pointer;
+}
+.adminui :where(button):disabled {
+  cursor: not-allowed;
+}
+.adminui :where(svg) {
+  flex-shrink: 0;
+}
+.adminui [hidden] {
+  display: none !important;
+}
+.adminui :where(button, input, textarea, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--aui-primary);
+  outline-offset: 3px;
+}
+.adminui a {
+  color: var(--aui-ink);
+}
+.adminui .aui-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@keyframes aui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .adminui *,
+  .adminui *::before,
+  .adminui *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+}
+.adminui[data-aui-mode=dark] {
+  color-scheme:dark;
+  --aui-field-border: color-mix(in srgb, var(--aui-control-border) 60%, var(--aui-line));
+  --aui-pop-shadow: 0 12px 32px rgb(0 0 0 / 0.5), 0 0 0 1px color-mix(in srgb, #ffffff 5%, transparent);
+  --aui-option-hover: color-mix(in srgb, #ffffff 6%, var(--aui-surface));
+  --aui-dialog-shadow: 0 24px 64px rgb(0 0 0 / 0.6), 0 0 0 1px color-mix(in srgb, #ffffff 6%, transparent);
+  --aui-elev: color-mix(in srgb, #ffffff 3%, var(--aui-surface));
+  --aui-scrim: rgb(0 0 0 / 0.55);
+  --aui-hover-overlay: color-mix(in srgb, var(--aui-text) 8%, transparent);
+  --aui-press-overlay: color-mix(in srgb, var(--aui-text) 13%, transparent);
+  --aui-fill-hover: color-mix(in srgb, #fff 8%, var(--aui-primary-fill));
+  --aui-fill-press: color-mix(in srgb, #000 12%, var(--aui-primary-fill));
+  --aui-danger-fill: color-mix(in srgb, var(--aui-danger) 70%, #000);
+  --aui-disabled-fg: color-mix(in srgb, var(--aui-note) 70%, var(--aui-surface));
+  --aui-tip-bg: color-mix(in srgb, var(--aui-surface) 78%, #fff);
+  --aui-tip-fg: var(--aui-text);
+}
+@media (max-width: 760px) {
+  .adminui { --aui-fs-title: 20px; }
+}
+.adminui :where(svg.lucide) { stroke-width: 1.75; }
+.adminui :where(.aui-button-sm, .aui-button-xs, .aui-icon-btn[data-size=sm], .aui-icon-btn[data-size=xs], .aui-tag, .aui-badge, .aui-chip, .aui-chips, .aui-note) :where(svg.lucide),
+.adminui :where(svg.lucide.aui-icon-12, svg.lucide.aui-icon-14) { stroke-width: 2; }
+.adminui :where(svg.lucide.aui-icon-24, .aui-empty-icon svg.lucide) { stroke-width: 1.5; }
+.adminui { --aui-dark-accent: var(--aui-primary); --aui-dark-soft: var(--aui-soft); }
+/* :where(a) keeps this at (0,2,0): a Button rendered as a link (asChild) keeps its own colour — at (0,2,1) it turned the primary button's white text green in dark mode (8.0.2). */
+.adminui[data-aui-mode=dark] :where(a) { color:var(--aui-dark-accent); }
+.adminui { --aui-default-row-height:48px; }
+.adminui {
+  --aui-table-head-height: 40px;
+  --aui-table-head-size: 12px;
+  --aui-table-head-weight: 600;
+  --aui-table-head-color: var(--aui-secondary);
+  --aui-table-head-bg: var(--aui-surface-subtle);
+}
+.adminui[data-density=compact] { --aui-default-row-height:40px; }
+@keyframes aui-live-pulse { 50% { box-shadow:0 0 0 5px color-mix(in srgb,#0ca30c 8%,transparent); } }
+@media (max-width:760px) {
+  .adminui { --aui-control-height:40px; }
+}
+@keyframes aui-drawer-in { from { opacity:0; transform:translateX(24px); } to { opacity:1; transform:none; } }
+@keyframes aui-sheet-in { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+@keyframes aui-grid-pulse { 50% { opacity:.3; } }
+@keyframes aui-grid-spin { to { transform:rotate(360deg); } }
+@keyframes aui-grid-shimmer { from { background-position:100% 0; } to { background-position:-100% 0; } }
+.adminui {
+  --aui-on-media: var(--aui-on-rail);
+  --aui-media-scrim: color-mix(in srgb, var(--aui-sidebarDeep) 64%, transparent);
+  --aui-media-scrim-strong: color-mix(in srgb, var(--aui-sidebarDeep) 82%, transparent);
+  --aui-media-stage: color-mix(in srgb, var(--aui-sidebarDeep) 90%, var(--aui-text));
+  --aui-record: var(--aui-danger);
+  --aui-record-soft: var(--aui-danger-soft);
+  --aui-record-line: var(--aui-danger-line);
+}
+.adminui .aui-neutral-text {
+  --aui-text: var(--aui-neutral-1);
+  --aui-secondary: var(--aui-neutral-2);
+  --aui-note: var(--aui-neutral-2);
+  color: var(--aui-text);
+}

@@ -1,0 +1,13 @@
+/* Builder island: the DashboardBuilder in a soft palette-coloured frame with three hint stickers. */
+.h-play { position: relative; padding: 28px 0 0; }
+.h-play-frame { border-radius: 24px; padding: 10px; background: color-mix(in srgb, var(--aui-primary) 14%, var(--aui-surface)); box-shadow: 0 40px 80px -40px color-mix(in srgb, var(--aui-primary) 60%, transparent); }
+.h-play-frame > div { border-radius: 16px; overflow: hidden; background: var(--aui-surface); }
+.h-sticker { position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 12px; font-size: 13px; font-weight: 600; color: var(--aui-on-primary); background: var(--aui-primary-fill, var(--aui-primary)); box-shadow: var(--aui-shadow-md); white-space: nowrap; }
+.h-sticker svg { width: 15px; height: 15px; }
+.h-s1 { left: 24px; top: 4px; transform: rotate(-3deg); }
+.h-s2 { left: 50%; top: 2px; transform: translateX(-50%) rotate(2deg); }
+.h-s3 { right: 24px; top: 6px; transform: rotate(-2deg); background: var(--aui-surface); color: var(--aui-text); border: 1.5px solid var(--aui-line); }
+.h-play-mobile { padding: 0; display: grid; gap: 12px; }
+.h-play-note { display: flex; gap: 8px; align-items: center; margin: 0; font-size: 13.5px; color: var(--aui-secondary); padding: 10px 14px; border-radius: 12px; background: var(--aui-surface); border: 1px dashed var(--aui-line); }
+.h-play-note svg { width: 16px; height: 16px; flex: none; color: var(--aui-primary); }
+@media (max-width: 1100px) { .h-s2 { display: none; } }

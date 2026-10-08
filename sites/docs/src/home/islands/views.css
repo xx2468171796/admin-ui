@@ -1,0 +1,23 @@
+/* Views island (dark band): one data set, five views, switching by itself. */
+.h-morph { border-radius: 18px; border: 1px solid var(--aui-line); background: var(--aui-surface); box-shadow: var(--aui-shadow-lg); overflow: hidden; }
+.h-morph-tabs { display: flex; align-items: center; gap: 4px; padding: 10px 12px; border-bottom: 1px solid var(--aui-line); }
+.h-mtab { position: relative; display: grid; gap: 6px; padding: 8px 16px 6px; border: 0; border-radius: 8px; background: transparent; color: var(--aui-note); font: 600 14px var(--aui-font, system-ui); cursor: pointer; }
+.h-mtab:hover { color: var(--aui-text); }
+.h-mtab[aria-selected="true"] { color: var(--aui-text); background: var(--aui-hover); }
+.h-mtab:focus-visible { outline: 2px solid var(--aui-primary); }
+.h-mtab i { display: block; height: 2px; border-radius: 2px; background: var(--aui-line); overflow: hidden; }
+.h-mtab[aria-selected="true"] i { background: var(--aui-soft-strong); }
+.h-mtab b { display: block; height: 100%; width: 100%; background: var(--aui-primary-mid); transform-origin: left; animation: h-fill linear forwards; }
+.h-mtab b[data-paused] { animation-play-state: paused; }
+@keyframes h-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.h-morph-note { margin-left: auto; display: flex; align-items: center; gap: 10px; font: 12.5px ui-monospace, Consolas, monospace; color: var(--aui-note); padding-right: 6px; }
+.h-morph-stage { position: relative; padding: 16px; height: 592px; box-sizing: border-box; overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) { .h-morph-stage { animation: h-in 0.5s var(--aui-ease, ease); } }
+@keyframes h-in { from { opacity: 0; transform: translateY(8px) scale(0.995); } }
+.h-morph-cal > div { height: 556px !important; }
+@media (max-width: 720px) {
+  .h-morph-tabs { overflow-x: auto; }
+  .h-mtab { padding: 8px 12px 6px; flex: none; }
+  .h-morph-note { display: none; }
+  .h-morph-stage { padding: 8px; height: 600px; overflow-y: auto; }
+}

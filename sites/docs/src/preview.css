@@ -1,0 +1,5 @@
+html, body { margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+.site-demo { padding: 24px; box-sizing: border-box; background: var(--aui-surface); color: var(--aui-text); min-height: 120px; }
+.site-demo[data-bleed="true"] { padding: 0; }
+@media (max-width: 520px) { .site-demo { padding: 16px; } }

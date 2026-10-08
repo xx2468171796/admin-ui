@@ -1,0 +1,20 @@
+/* Chinese-conventions island: four detail cards, each with a live component, and the holiday calendar. */
+.h-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.h-detail { display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: 12px; row-gap: 6px; padding: 20px; border-radius: 14px; border: 1px solid var(--aui-line); background: var(--aui-surface); min-width: 0; }
+.h-detail-n { grid-row: 1 / 4; font: 700 20px/1.2 ui-monospace, Consolas, monospace; color: var(--aui-primary); }
+.h-detail strong { font-size: 17px; }
+.h-detail p { margin: 0; font-size: 14px; line-height: 1.8; color: var(--aui-secondary); }
+.h-detail-live { align-self: start; margin-top: 10px; padding: 14px; border-radius: 10px; background: var(--aui-surface-subtle); min-width: 0; }
+.h-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.h-col { display: grid; gap: 10px; min-width: 0; }
+.h-mini-cal { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
+.h-mini-cal i { display: grid; place-items: center; height: 42px; border-radius: 6px; font-style: normal; font-size: 13px; font-weight: 600; color: var(--aui-text); background: var(--aui-surface); border: 1px solid var(--aui-line); }
+.h-mini-cal i small { font-size: 10px; line-height: 1; font-weight: 500; color: var(--aui-note); }
+.h-mini-cal i[data-k="off"] { color: var(--aui-danger); background: var(--aui-danger-soft, var(--aui-surface)); border-color: var(--aui-danger-line, var(--aui-line)); }
+.h-mini-cal i[data-k="off"] small { color: var(--aui-danger); }
+.h-mini-cal i[data-k="work"] { color: var(--aui-ink); background: var(--aui-soft); border-color: var(--aui-soft-strong); }
+.h-mini-cal i[data-k="work"] small { color: var(--aui-ink); }
+.h-east-cal > div { height: 780px !important; }
+@media (max-width: 720px) { .h-east-cal > div { height: 640px !important; } }
+@media (max-width: 960px) { .h-details { grid-template-columns: 1fr; } }
+@media (max-width: 420px) { .h-detail { grid-template-columns: 1fr; padding: 16px; } .h-detail-n { grid-row: auto; } .h-mini-cal { gap: 2px; } .h-mini-cal i { height: 38px; font-size: 12px; } }

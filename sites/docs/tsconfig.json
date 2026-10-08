@@ -1,0 +1,10 @@
+{
+  "extends": "../../packages/react/tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "react", "react-dom", "vite/client"],
+    "customConditions": ["source"],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": ["src", "vite.config.ts", "site-pages.ts"]
+}

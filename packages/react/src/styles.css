@@ -1,0 +1,5 @@
+/* @adminui/react core styles: tokens, base and the core components. Import this file first
+   (before any component). Area styles come with the components that use them: each module imports its chunk
+   ("#aui-css/<chunk>.css", see package.json "imports"), so a page only ships the CSS of what it renders. */
+@import "./styles/tokens.css";
+@import "./styles/core.css";

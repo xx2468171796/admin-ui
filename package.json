@@ -1,0 +1,30 @@
+{
+  "name": "admin-ui-monorepo",
+  "private": true,
+  "description": "admin-ui: React component library for data-dense admin backends (@adminui/react), its docs site and examples.",
+  "license": "MIT",
+  "homepage": "https://adminui.zygskins.cn",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xx2468171796/admin-ui.git"
+  },
+  "workspaces": [
+    "packages/*",
+    "sites/*"
+  ],
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "build": "npm run build -w @adminui/react",
+    "check": "npm run build && npm run check -w @adminui/react",
+    "test": "npm test -w @adminui/react",
+    "size": "npm run size -w @adminui/react",
+    "audit:examples": "npm run audit:examples -w @adminui/react",
+    "test:browser": "npm run test:browser -w @adminui/react",
+    "test:packed": "npm run test:packed -w @adminui/react",
+    "docs:dev": "npm run dev -w admin-ui-docs",
+    "docs:check": "npm run check -w admin-ui-docs",
+    "guard": "node scripts/check-internal.mjs ."
+  }
+}

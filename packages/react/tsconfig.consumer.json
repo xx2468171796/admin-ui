@@ -1,0 +1,9 @@
+{
+  "//": "消费方视角的类型检查：本包以 TS 源码发布，消费项目常开 noUnusedLocals / noUnusedParameters（如 aigw），源码里一个未用变量就会让对方编译失败。只查 src。",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": ["src"]
+}
