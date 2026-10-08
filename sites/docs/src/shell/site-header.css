@@ -1,0 +1,58 @@
+/* The shared site header (site-header.tsx), homepage and docs. Colours only from admin-ui tokens (var(--aui-*)).
+   --sh-h = height of the bar that stays on screen; pages offset sticky / fixed elements and anchors by it. */
+:root { --sh-h: 64px; }
+@media (max-width: 1140px) { :root { --sh-h: 56px; } }
+
+.sh {
+  position: sticky; top: 0; z-index: 40;
+  background: color-mix(in srgb, var(--aui-surface) 88%, transparent); backdrop-filter: saturate(1.4) blur(12px);
+  border-bottom: 1px solid var(--aui-line);
+}
+.sh-in {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "brand nav tools";
+  align-items: center; column-gap: 16px; height: var(--sh-h); padding: 0 24px; box-sizing: border-box;
+}
+.sh-brand { grid-area: brand; display: flex; align-items: center; gap: 4px; min-width: 0; }
+.sh-lead { display: none; }
+.sh-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; white-space: nowrap; }
+.adminui a.sh-logo { color: var(--aui-text); }
+.sh-logo svg { flex: none; }
+.sh-version { font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--aui-note); border: 1px solid var(--aui-line); border-radius: 6px; padding: 0 6px; line-height: 20px; }
+
+.sh-nav { grid-area: nav; display: flex; gap: 2px; min-width: 0; margin-left: 8px; }
+.sh-row { display: none; }
+.sh-nav a, .sh-row a { flex: none; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 6px; white-space: nowrap; }
+.adminui :is(.sh-nav, .sh-row) a { color: var(--aui-secondary); }
+.adminui :is(.sh-nav, .sh-row) a:hover { color: var(--aui-text); background: var(--aui-hover); }
+.adminui :is(.sh-nav, .sh-row) a[aria-current="page"] { color: var(--aui-ink); background: var(--aui-soft); font-weight: 600; }
+
+.sh-tools { grid-area: tools; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.sh-extra { display: flex; align-items: center; gap: 2px; }
+.sh-star { display: inline-flex; align-items: center; gap: 6px; flex: none; height: 36px; padding: 0 4px 0 10px; box-sizing: border-box; border-radius: 8px; border: 1px solid var(--aui-line); background: var(--aui-surface); text-decoration: none; font-size: 13px; font-weight: 600; }
+.adminui a.sh-star { color: var(--aui-text); }
+.sh-star:hover { border-color: var(--aui-control-border); }
+.sh-star > svg { width: 16px; height: 16px; }
+.sh-star b { display: inline-flex; align-items: center; gap: 3px; padding: 4px 8px; border-radius: 6px; background: var(--aui-surface-subtle); font-weight: 600; color: var(--aui-secondary); }
+.sh-star b svg { width: 12px; height: 12px; color: var(--aui-warning); fill: currentColor; }
+.sh-star:focus-visible, .sh-nav a:focus-visible, .sh-row a:focus-visible, .sh-logo:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 2px; }
+
+/* Narrow: the bar keeps brand + tools; the links move to .sh-row under it (not sticky, it scrolls away). */
+@media (max-width: 1140px) {
+  .sh-in { grid-template-areas: "brand . tools"; padding: 0 12px; column-gap: 8px; }
+  .sh-nav { display: none; }
+  .sh-row {
+    display: flex; align-items: center; gap: 2px; height: 44px; padding: 0 8px; box-sizing: border-box; overflow-x: auto; scrollbar-width: none;
+    background: var(--aui-surface); border-bottom: 1px solid var(--aui-line);
+  }
+  .sh-row::-webkit-scrollbar { display: none; }
+}
+/* The docs sidebar becomes a drawer here (site.css): show its toggle. */
+@media (max-width: 860px) { .sh-lead { display: flex; } }
+@media (max-width: 640px) {
+  .sh-star span, .sh-star b { display: none; }
+  .sh-star { width: 36px; padding: 0; justify-content: center; }
+  .sh-tools { gap: 4px; }
+}
+@media (max-width: 420px) {
+  .sh-version { display: none; }
+}

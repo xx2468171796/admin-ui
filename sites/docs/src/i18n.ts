@@ -5,15 +5,7 @@
 export type Lang = "zh" | "en";
 
 const zh = {
-  brandNote: "管理后台组件库",
-  navGuide: "指南",
-  navComponents: "组件",
-  navWhy: "对比",
-  navStacks: "技术栈",
-  search: "搜索组件、文档…",
   langLabel: "语言",
-  darkOn: "切换到深色",
-  darkOff: "切换到浅色",
   palette: "色卡",
   menu: "目录",
   guides: "指南",
@@ -51,15 +43,7 @@ const zh = {
 export type Messages = { readonly [K in keyof typeof zh]: string };
 
 const en: Messages = {
-  brandNote: "UI kit for admin apps",
-  navGuide: "Guide",
-  navComponents: "Components",
-  navWhy: "Compare",
-  navStacks: "Stacks",
-  search: "Search components and docs…",
   langLabel: "Language",
-  darkOn: "Switch to dark",
-  darkOff: "Switch to light",
   palette: "Palette",
   menu: "Menu",
   guides: "Guide",

@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { ArrowRight, MousePointerClick } from "lucide-react";
-import { AdminProvider, Button, CommandPalette, Kbd, PALETTES, SegmentedControl, isPaletteId, type AdminCommand, type CommandItem, type CommandProvider } from "@adminui/react";
-import { AUDIT_BAD, AUDIT_OK, CRM_PAGES, EXPORTS_COUNT, NAV_LINKS, PALETTE_PAGES, PKG, RULES, VERSION, doc } from "./content";
+import { AdminProvider, Button, Kbd, PALETTES, SegmentedControl, isPaletteId, type AdminCommand, type CommandItem, type CommandProvider } from "@adminui/react";
+import { AUDIT_BAD, AUDIT_OK, CRM_PAGES, EXPORTS_COUNT, PALETTE_PAGES, PKG, RULES, VERSION, doc } from "./content";
 import { searchDocsLazy } from "../shell/search-loader";
+import { SiteHeader } from "../shell/site-header";
 import { IslandSlot } from "./island-slot";
-import { Badges, Compare, CountUp, Footer, GithubStar, InstallBlock, InstallLine, Logo, ModeToggle, PaletteDock, Reveal, SectionHead, StackStrip, Starters } from "./parts";
+import { Badges, Compare, CountUp, Footer, InstallBlock, InstallLine, PaletteDock, Reveal, SectionHead, StackStrip, Starters } from "./parts";
 import { useHome } from "./store";
 
 const scrollToLive = () => document.getElementById("live")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -27,19 +28,13 @@ function TopBar() {
     [mode, set],
   );
   return (
-    <header className="h-nav">
-      <div className="h-wrap h-nav-in">
-        <Logo />
-        <nav className="h-nav-links" aria-label="主导航">
-          {NAV_LINKS.map(([label, slug]) => <a key={slug} href={doc(slug)}>{label}</a>)}
-        </nav>
-        <div className="h-nav-right">
-          <CommandPalette globalShortcut placeholder="搜索文档，或输入命令…" commands={commands} providers={DOC_PROVIDERS} onSelect={openDoc} />
-          <GithubStar />
-          <ModeToggle />
-        </div>
-      </div>
-    </header>
+    <SiteHeader
+      mode={mode}
+      onToggleMode={() => set({ mode: mode === "dark" ? "light" : "dark" })}
+      commands={commands}
+      providers={DOC_PROVIDERS}
+      onSelect={openDoc}
+    />
   );
 }
 

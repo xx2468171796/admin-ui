@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowRight, Check, Copy, Github, Moon, Star, Sun } from "lucide-react";
+import { ArrowRight, Check, Copy } from "lucide-react";
 import { IconButton, PALETTES, SegmentedControl, StatusBadge, Tag } from "@adminui/react";
-import { FOOTER, GITHUB, INSTALL, PKG, RELEASES, RIVALS, STACKS, STARTERS, USAGE, VERSION, WEAK_SPOTS, doc, starterCmd, type PackageManager } from "./content";
+import { FOOTER, INSTALL, PKG, RELEASES, RIVALS, STACKS, STARTERS, USAGE, VERSION, WEAK_SPOTS, doc, starterCmd, type PackageManager } from "./content";
+import { SiteLogo } from "../shell/site-header";
 import { useHome } from "./store";
 
 /** Sets data-in="1" once the element scrolls into view (CSS only animates without reduced motion). */
@@ -48,39 +49,6 @@ export function CountUp({ to, format = (n: number) => n.toLocaleString("zh-CN") 
     return () => cancelAnimationFrame(raf);
   }, [seen, reduced, started, to]);
   return <span ref={ref}>{format(n)}</span>;
-}
-
-export function Logo() {
-  return (
-    <a className="h-logo" href="index.html" aria-label="admin-ui 首页">
-      <svg width={28} height={28} viewBox="0 0 32 32" aria-hidden="true">
-        <rect x="1" y="1" width="30" height="30" rx="8" fill="var(--aui-primary-fill)" />
-        <rect x="7" y="8" width="18" height="3.2" rx="1.6" fill="var(--aui-on-primary)" />
-        <rect x="7" y="14.4" width="11" height="3.2" rx="1.6" fill="var(--aui-on-primary)" opacity=".85" />
-        <rect x="7" y="20.8" width="15" height="3.2" rx="1.6" fill="var(--aui-on-primary)" opacity=".7" />
-        <rect x="20" y="14.4" width="5" height="9.6" rx="1.6" fill="var(--aui-on-primary)" opacity=".55" />
-      </svg>
-      <span>admin-ui</span>
-    </a>
-  );
-}
-
-export function ModeToggle() {
-  const { mode, set } = useHome();
-  const dark = mode === "dark";
-  return (
-    <IconButton variant="outline" label={dark ? "换成浅色" : "换成深色"} pressed={dark} icon={dark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />} onClick={() => set({ mode: dark ? "light" : "dark" })} />
-  );
-}
-
-export function GithubStar() {
-  return (
-    <a className="h-star" href={GITHUB} aria-label="GitHub 仓库">
-      <Github aria-hidden="true" />
-      <span>GitHub</span>
-      <b><Star aria-hidden="true" />Star</b>
-    </a>
-  );
 }
 
 export function Badges() {
@@ -235,7 +203,7 @@ export function Footer() {
     <footer className="h-footer">
       <div className="h-footer-grid">
         <div className="h-footer-brand">
-          <Logo />
+          <SiteLogo badge={false} />
           <p>为数据密集型管理后台而生的 React 组件库。</p>
           <code>{INSTALL.npm}</code>
         </div>

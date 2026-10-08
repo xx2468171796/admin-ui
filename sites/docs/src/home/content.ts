@@ -1,3 +1,5 @@
+import { GITHUB } from "../shell/site-header-data";
+
 // Homepage copy. Facts only from the package and the docs pages (why.md, stacks.md, install.md). Links are relative
 // (`install.html`) so the page works on the real host, locally and inside sandboxed review frames.
 declare const __AUI_VERSION__: string;
@@ -6,7 +8,6 @@ declare const __AUI_EXPORTS__: number;
 export const PKG = "@adminui/react";
 export const VERSION = __AUI_VERSION__;
 export const EXPORTS_COUNT = __AUI_EXPORTS__;
-export const GITHUB = "https://github.com/xx2468171796/admin-ui";
 export const RELEASES = `${GITHUB}/releases`;
 export const doc = (slug: string) => `${slug}.html`;
 
@@ -50,14 +51,6 @@ export const STACKS: readonly Stack[] = [
   { name: "Node · Fastify / Hono", note: "grid-query 服务端分组", status: "已验证" },
   { name: "Go 单二进制", note: "go:embed + SQLite", status: "已验证" },
   { name: "Rust 单二进制", note: "include_dir + rusqlite", status: "已验证" },
-];
-
-export const NAV_LINKS: readonly [string, string][] = [
-  ["文档", "install"],
-  ["组件", "button"],
-  ["页面模板", "templates-gallery"],
-  ["给 AI 用", "ai"],
-  ["对比", "why"],
 ];
 
 /** Docs pages offered in the top-bar command palette (Ctrl K). */

@@ -19,7 +19,7 @@ body { -webkit-font-smoothing: antialiased; }
 .h-home p { margin: 0; }
 .h-wrap { max-width: var(--h-wrap); margin: 0 auto; padding: 0 var(--h-gap); box-sizing: border-box; }
 .h-section { padding: 96px 0; }
-.h-home main section[id] { scroll-margin-top: 64px; }
+.h-home main section[id] { scroll-margin-top: var(--sh-h); }
 .h-alt { background: var(--aui-tile); border-top: 1px solid var(--aui-line); border-bottom: 1px solid var(--aui-line); }
 .h-skip { position: absolute; left: -9999px; top: 8px; z-index: 100; padding: 8px 12px; border-radius: 8px; background: var(--aui-surface); }
 .h-skip:focus { left: 8px; }
@@ -29,29 +29,8 @@ body { -webkit-font-smoothing: antialiased; }
   .h-reveal[data-in="1"] { opacity: 1; transform: none; }
 }
 
-/* Top bar */
-.h-nav { position: sticky; top: 0; z-index: 40; background: color-mix(in srgb, var(--aui-surface) 84%, transparent); backdrop-filter: saturate(1.4) blur(12px); border-bottom: 1px solid var(--aui-line); }
-.h-nav-in { display: flex; align-items: center; gap: 24px; height: 64px; }
-.h-nav-links { display: flex; gap: 4px; }
-.h-nav-links a { text-decoration: none; font-size: 14px; color: var(--aui-secondary); padding: 6px 10px; border-radius: 6px; }
-.adminui .h-nav-links a { color: var(--aui-secondary); }
-.h-nav-links a:hover { color: var(--aui-text); background: var(--aui-hover); }
-.h-nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; min-width: 0; }
-.h-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
-.adminui a.h-logo { color: var(--aui-text); }
-.h-logo svg { flex: none; }
-.h-star:focus-visible, .h-swatch:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 2px; }
-.h-star { display: inline-flex; align-items: center; gap: 6px; flex: none; height: 36px; padding: 0 4px 0 10px; box-sizing: border-box; border-radius: 8px; border: 1px solid var(--aui-line); background: var(--aui-surface); text-decoration: none; font-size: 13px; font-weight: 600; }
-.adminui a.h-star { color: var(--aui-text); }
-.h-star > svg { width: 16px; height: 16px; }
-.h-star b { display: inline-flex; align-items: center; gap: 3px; padding: 4px 8px; border-radius: 6px; background: var(--aui-surface-subtle); font-weight: 600; color: var(--aui-secondary); }
-.h-star b svg { width: 12px; height: 12px; color: var(--aui-warning); fill: currentColor; }
-@media (max-width: 900px) { .h-nav-links { display: none; } }
-@media (max-width: 560px) {
-  .h-nav-in { gap: 12px; }
-  .h-star span, .h-star b { display: none; }
-  .h-star { width: 36px; padding: 0; justify-content: center; }
-}
+/* The top bar is the shared site header (src/shell/site-header.tsx / .css). */
+.h-swatch:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 2px; }
 
 /* Small shared pieces */
 .h-badges { display: flex; flex-wrap: wrap; gap: 8px; }
