@@ -34,14 +34,30 @@ function chunkClasses() {
       const prelude = (block.split("{")[0] ?? "").trim();
       if (!prelude || prelude.startsWith("@")) continue;
       for (const sel of splitTop(prelude, ",")) {
-        const subject = splitTop(sel.replace(/\s*([>+~])\s*/g, " "), " ").at(-1) ?? "";
+        // classes inside :not(…) are excluded by the rule, not styled by it (8.6 page flush lists every block that
+        // keeps its own inset in one :not())
+        const subject = stripGroup(splitTop(sel.replace(/\s*([>+~])\s*/g, " "), " ").at(-1) ?? "", ":not");
         for (const m of subject.matchAll(/\.(aui-[a-z0-9-]+)/g)) own.add(m[1]);
         // an anonymous child of an SDK element (`.aui-x > *`): the parent class needs the chunk
-        if (!/\.aui-/.test(subject)) for (const m of sel.matchAll(/\.(aui-[a-z0-9-]+)/g)) own.add(m[1]);
+        // (:where(…) groups are zero-specificity contexts, not the parent being styled)
+        if (!/\.aui-/.test(subject)) for (const m of stripGroup(stripGroup(sel, ":where"), ":not").matchAll(/\.(aui-[a-z0-9-]+)/g)) own.add(m[1]);
       }
     }
     own.delete("adminui");
     out.set(file.slice(0, -4), own);
+  }
+  return out;
+}
+/** `text` without its `${name}(…)` groups (nested parentheses included), e.g. stripGroup(sel, ":not"). */
+function stripGroup(text, name) {
+  let out = "";
+  for (let i = 0; i < text.length; i++) {
+    if (!text.startsWith(`${name}(`, i)) { out += text[i]; continue; }
+    let depth = 0;
+    for (i += name.length; i < text.length; i++) {
+      if (text[i] === "(") depth++;
+      else if (text[i] === ")" && --depth === 0) break;
+    }
   }
   return out;
 }

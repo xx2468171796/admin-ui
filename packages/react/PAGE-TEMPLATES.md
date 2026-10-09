@@ -7,6 +7,10 @@
 - 机器可读清单：`import { PAGE_TEMPLATES } from "@adminui/react/catalog"`（每个模板的用途、骨架、组件、演示文件、starter 页）。
 - 浏览器验收：`npm run test:page-templates`（1440×900 浅 / 深色 + 390 手机，T15–T17 另查外壳几何、目录收起 / 搜索 / 键盘、手机底栏和抽屉、触屏尺寸、搭建器三栏；截图在 `test/artifacts/page-templates/`）。
 
+## 所有模板共同：贴边，栏与栏一条线（8.6）
+
+每个模板的页面都铺在白底上、贴着工作标签行、侧栏和窗口边：**块与块、栏与栏之间只有一条 1px 分隔线，不露灰色画布、不做成一张张圆角卡片**（以前的「卡片流」页面也一样，和工作区页面看起来一致）。下文骨架里说的「卡」「卡片」指一个区块（有标题行的一块），不再是带框带阴影的浮动卡片。只有看板 / KPI 卡（放在看板自己的浅色画布带上）、画册 / 看板 / 记录卡片、工作项卡片这类真正独立的对象之间留缝。页面或分区里只有一个带标题的区块时不再重复标题（标题只给读屏，数量、「?」和按钮并进筛选行或一条紧凑的工具行）；只有一个分区的 `TabbedPage` 不出分区标签行。starter「系统 → 页面贴边」把工作区分区（角色）和普通列表分区（部门）放在同一个 `TabbedPage` 里对照，另有「租户成员」（单分区）；浏览器验收 `test/page-flush-checks.mjs`（截图像素检查块之间不露画布，截图 `test/artifacts/page-flush/`）。
+
 ## 怎么选
 
 | 页面要干什么 | 模板 |
@@ -159,7 +163,7 @@
 ## T08 设置 / 表单页
 
 - **什么时候用**：一组配置项、产品授权、告警规则、个人设置——一页有好几组字段。
-- **骨架**：左 200 分节导航（直接在画布上、不包卡片；分组小标题 + 34px 行；滚动时高亮当前节，改过的节琥珀圆点、出错的节红色叹号；窄屏变吸顶胶囊）+ 右边一节一张卡（只读事实用字段方块；可改项两列表单，标签在上，提示只在需要处）+ 有未保存改动时底部浮起保存条（改动数 · 有误数 · 放弃 / 保存）。
+- **骨架**：左 200 分节导航（白底、右边一条竖线，不包卡片；分组小标题 + 34px 行；滚动时高亮当前节，改过的节琥珀圆点、出错的节红色叹号；窄屏变吸顶胶囊）+ 右边一节一张卡（只读事实用字段方块；可改项两列表单，标签在上，提示只在需要处）+ 有未保存改动时底部浮起保存条（改动数 · 有误数 · 放弃 / 保存）。
 - **组件**：`SideNavLayout`（`sections` 带 `group` / `dirty` / `error`，`footer={<SaveBar …/>}`；每节不各放保存按钮）；同样的设置放在抽屉里（表设置）用 `SettingsSheet`（左 184 分节 + 右边一次一节 + 底部保存条）、`Panel`、`DescriptionList columns={3}`、`FormSection`（不写标题 = 两列网格）、`FormField`（`changed` 显示「已改」）、`SaveBar`。改动可以接 `changedFields` 算差异。
 - **演示 / starter**：`design/templates/t08-settings.png` · 「T08 设置 / 表单」
 - **典型用到它的页面（以运维平台为例）**：产品授权、客户授权设置、镜像设置、告警规则、个人设置。
@@ -196,8 +200,8 @@
 ## T10 工具 / 工作区页
 
 - **什么时候用**：AI 助理、网页终端、游戏制作、远程桌面这类整屏工具。
-- **骨架**：占满工作标签下的整屏、**页面本身不滚**：左 240 列表（搜索 + 新建 + 条目）| 中间工作区（对话 / 终端，自己滚，底部输入框）| 右 280 上下文（当前对象、可用工具、花费）。宽屏贴边（贴住工作标签条、侧栏、窗口边），栏与栏之间一条线分隔，不留缝、不做成一张张卡片（对标飞书文档 / 多维表格）；栏里的表格、列表面板、筛选栏、画册、表单搭建器、表格权限、有效权限、记录头部、页内标签条都自动贴边（AI-RULES 附录 R）。放在 `TabbedPage` 分区里时，分区标签条也贴着工作区、下面不留缝，同一页的卡片流分区不受影响。窄屏（≤ 1100px）上下排：默认 `narrow="card"` 排成一张带框的圆角卡片；文档阅读 / 编辑器页用 `narrow="flush"`——外壳内容区不留内边距、没有外框和圆角，栏贴着左右边、上下之间一条横线（在 `TabbedPage` 里分区标签条照样贴边）。
-- **手机**：有「列表 + 详情」的工作区用 `WorkspaceLayout narrow="steps" detailOpen onBack`：先列表、点进详情、← 返回，右栏收进详情；单栏阅读页（文档）照旧 `narrow="flush"`。
+- **骨架**：占满工作标签下的整屏、**页面本身不滚**：左 240 列表（搜索 + 新建 + 条目）| 中间工作区（对话 / 终端，自己滚，底部输入框）| 右 280 上下文（当前对象、可用工具、花费）。宽屏贴边（贴住工作标签条、侧栏、窗口边），栏与栏之间一条线分隔，不留缝、不做成一张张卡片（对标飞书文档 / 多维表格）；栏里的表格、列表面板、筛选栏、画册、表单搭建器、表格权限、有效权限、记录头部、页内标签条都自动贴边（AI-RULES 附录 R）。放在 `TabbedPage` 分区里时，分区标签条也贴着工作区、下面不留缝（8.6 起同一页的普通分区也一样贴边）。窄屏（≤ 1100px）上下排也贴边（8.6 起唯一的样子，`narrow="card"` 已删除）：外壳内容区不留内边距、没有外框和圆角，栏贴着左右边、上下之间一条横线（在 `TabbedPage` 里分区标签条照样贴边）。
+- **手机**：有「列表 + 详情」的工作区用 `WorkspaceLayout narrow="steps" detailOpen onBack`：先列表、点进详情、← 返回，右栏收进详情；单栏阅读页（文档）用默认（8.6 起窄屏上下排一律贴边，`narrow="card"` 已删除）。
 - **组件**：`WorkspaceLayout`（自动量出高度）、三栏都是 `Pane`；左 `SearchField` + `SelectList`（未读 `unreadCount` = 名字加粗 + 主色数量徽标，只有布尔 `unread` 时是小圆点；按天分组）；中 `ChatThread` + `ChatMessage` + `ToolCallCard` + `InlineAlert`（要确认的操作）+ `LoadingDots` + `Composer`；右 `PaneSection` + `InfoList` + `DescriptionList` + `Meter`。终端 / 远程桌面画面由业务放进中间的 `Pane`。
 - **演示 / starter**：`design/templates/t10-workspace.png` · 「T10 工具 / 工作区」
 - **典型用到它的页面（以运维平台为例）**：AI 助理、网页终端、游戏制作、自我进化、远程桌面。
@@ -223,10 +227,10 @@
 </WorkspaceLayout>
 ```
 
-文档阅读 / 编辑器页（starter「系统 → 工作区贴边 · 文档」）：窄屏不做成卡片，正文用纯中性灰，栏头是面包屑：
+文档阅读 / 编辑器页（starter「系统 → 工作区贴边 · 文档」）：窄屏上下排贴边（默认），正文用纯中性灰，栏头是面包屑：
 
 ```tsx
-<WorkspaceLayout narrow="flush" left={<Pane title="个人空间"><SelectList … /></Pane>} right={<Pane title="大纲" padding="md">…</Pane>}>
+<WorkspaceLayout left={<Pane title="个人空间"><SelectList … /></Pane>} right={<Pane title="大纲" padding="md">…</Pane>}>
   <Pane label="文档正文" padding="md" header={<Breadcrumbs items={[{ label: "个人空间", onClick: goSpace }, { label: doc.title }]} />}>
     <article className="aui-neutral-text">…</article>
   </Pane>
@@ -252,7 +256,7 @@
 ## T12 向导页
 
 - **什么时候用**：新增机器、一键接入、新增远控接入、激活授权、导入——要按顺序走几步的操作。
-- **骨架**：居中一组：向导卡（最宽 880：标题行（? · 一句提示 · 关闭）→ 步骤条 → 每步一块内容 → 底栏 上一步 / 下一步，**不能下一步时在旁边写原因**）+ 右侧 260 小卡（常见问题、最近记录）。
+- **骨架**：向导（标题行（? · 一句提示 · 关闭）→ 步骤条 → 每步一块内容（最宽 880）→ 底栏 上一步 / 下一步，**不能下一步时在旁边写原因**）| 右侧 260 一栏（常见问题、最近记录）。8.6.1 起和其它页面一样贴边：向导不是浮动卡片，和右栏之间一条竖线、右栏撑到底。
 - **组件**：`WizardLayout`（`steps` / `current` / `onBack` / `onNext` / `nextDisabledReason` / `aside`）、`FormField`、`ChoiceTiles`（大选项单选）、`SegmentedControl`、`CopyBlock`（命令）、`InlineAlert`（等待状态 + 「马上检查」）、`ActionList wrap`（常见问题）、`InfoList`。导入 CSV / Excel 用现成的 `ImportWizard`。
 - **演示 / starter**：`design/templates/t12-wizard.png` · 「T12 向导页」
 - **典型用到它的页面（以运维平台为例）**：新增机器、一键接入、新增远控接入、激活授权、导入。
@@ -378,8 +382,8 @@
 | `SplitLayout` | 主栏 + 右栏（默认 340），1100px 以下上下排 |
 | `SideNavLayout` | 设置页：左分节导航（滚动高亮、改动小点）+ 右分节卡 + 底部保存条 |
 | `ListDetailLayout` | 左列表（默认 260）+ 右内容，放在 `Panel flush` 里 |
-| `WorkspaceLayout` | 整屏三栏工具页，页面本身不滚；`narrow="card" \| "flush"` 选窄屏上下排时是一张卡片（默认）还是贴边 |
-| `WizardLayout` | 居中向导卡 + 右侧小卡 |
+| `WorkspaceLayout` | 整屏三栏工具页，页面本身不滚；窄屏上下排贴边（默认 `"flush"`），`narrow="steps"` 手机上列表 → 详情两步走 |
+| `WizardLayout` | 向导（贴边，内容最宽 880）\| 右侧 260 一栏 |
 | `GraphLayout` | 关系图 / 监控墙：标题行 + 图例 + 画布 + 右侧详情 |
 | `LogTimeline` | 按天分组的一行一条日志，展开看改前改后，加载更多；手机上每条拆成几行、不横着滚 |
 | `WorkItemCard` / `WorkItemList` | 工作项卡片（步骤、进度、动态、操作、等人确认） |

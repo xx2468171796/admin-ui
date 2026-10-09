@@ -127,3 +127,7 @@
 .adminui .aui-suggest-option[aria-selected=true] { background: var(--aui-hover); }
 .adminui .aui-suggest-option[aria-disabled=true] { opacity: .5; cursor: not-allowed; }
 .adminui .aui-suggest-empty { margin: 0; padding: 8px 10px; color: var(--aui-note); font-size: calc(12.5px * var(--aui-font-scale)); }
+
+/* —— page flush (8.6): flat in the page flow, one line above when something comes before —— */
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-prompt) { border:0; border-radius:0; box-shadow:none; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(:not([hidden], .aui-sr-only, style, script, template)) ~ :is(.aui-prompt) { border-top:1px solid var(--aui-line); }

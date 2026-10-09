@@ -82,7 +82,7 @@
   min-width: 120px;
   max-width: 100%;
 }
-.adminui .aui-page-header[data-sticky=true] { position:sticky; top:0; z-index:3; background:var(--aui-canvas); padding-block:8px; }
+.adminui .aui-page-header[data-sticky=true] { position:sticky; top:0; z-index:3; background:var(--aui-surface); padding-block:8px; }
 .adminui .aui-panel {
   --aui-panel-pad: 16px;
   background: var(--aui-surface);
@@ -127,12 +127,14 @@
 .adminui .aui-detail {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 16px;
+  gap: 0;
 }
+.adminui .aui-detail > aside { border-left: 1px solid var(--aui-line); }
 @media (max-width: 1100px) {
   .adminui .aui-detail {
       grid-template-columns: minmax(0, 1fr);
     }
+  .adminui .aui-detail > aside { border-left: 0; border-top: 1px solid var(--aui-line); }
 }
 @media (max-width: 760px) {
   .adminui .aui-page-header h1 {
@@ -162,9 +164,8 @@
 .adminui .aui-dash-section-head { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:var(--aui-space-3); }
 .adminui .aui-dash-section-head h2 { margin:0; font-size:calc(14.5px * var(--aui-font-scale)); font-weight: 600; line-height:1.4; color:var(--aui-text); }
 .adminui .aui-dash-section-head .aui-note { margin:2px 0 0; font-size:calc(12.5px * var(--aui-font-scale)); line-height:1.5; }
-.adminui .aui-page-body { display:grid; grid-template-columns:minmax(0,1fr); gap:var(--aui-space-4); align-content:start; min-width:0; }
-.adminui :is(.aui-page-body, .aui-content > [role=tabpanel]) > * { margin-top:0; margin-bottom:0; }
-.adminui :is(.aui-page-body, .aui-content > [role=tabpanel]) > .aui-dash-section:not(:last-child) { margin-bottom:var(--aui-space-2); }
+.adminui .aui-page-body { display:flex; flex-direction:column; gap:0; min-width:0; }
+.adminui :where(.aui-page-body, .aui-content > [role=tabpanel]) > * { margin-top:0; margin-bottom:0; }
 .adminui .aui-page-body[data-fill] { flex:1 0 auto; display:flex; flex-direction:column; }
 /* DescriptionList (review 05 desc): label 96px beside the value by default; layout=stacked = label above (narrow cards, under KPIs). */
 .adminui .aui-desc { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 var(--aui-space-6); margin:0; }
@@ -189,7 +190,7 @@
   .adminui .aui-has-bottom-nav .aui-bottom-nav { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); position:fixed; left:0; right:0; bottom:0; z-index:40; min-height:56px; padding-bottom:env(safe-area-inset-bottom); background:var(--aui-surface); border-top:1px solid var(--aui-line); box-shadow:0 -4px 16px color-mix(in srgb, var(--aui-text) 8%, transparent); }
   :where(body):has(.adminui .aui-has-bottom-nav) { --aui-bottom-nav-offset:calc(56px + env(safe-area-inset-bottom)); }
 }
-.adminui .aui-tabbed-page { display:grid; grid-template-columns:minmax(0,1fr); align-content:start; min-width:0; }
+.adminui .aui-tabbed-page { display:flex; flex-direction:column; flex:1 0 auto; min-width:0; }
 .adminui .aui-page-header-embedded { align-items:flex-start; }
 .adminui .aui-page-header-embedded .aui-note { margin-top:0; }
 .adminui .aui-page-header[data-title-hidden] { justify-content:flex-end; min-height:0; }
@@ -1157,7 +1158,7 @@
   .adminui .aui-inline-alert-action { margin: 4px 0 0 26px; }
   .adminui .aui-inline-alert[data-banner] .aui-inline-alert-action { margin: 0; }
 }
-.adminui :is(.aui-inline-alert, .aui-breadcrumbs) + :is(.aui-dash-section, .aui-kpi-grid, .aui-inline-alert) { margin-top: var(--aui-space-4); }
+.adminui :where(.aui-inline-alert, .aui-breadcrumbs) + :is(.aui-dash-section, .aui-kpi-grid, .aui-inline-alert) { margin-top: var(--aui-space-4); }
 .adminui .aui-state { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 40px 16px; text-align: center; color: var(--aui-note); font-size: calc(13px * var(--aui-font-scale)); }
 .adminui .aui-empty-icon { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 8px; border-radius: 12px; background: var(--aui-surface-subtle); color: var(--aui-note); }
 .adminui .aui-empty-icon > svg { width: 22px; height: 22px; stroke-width: 1.5; }
@@ -2406,10 +2407,10 @@
   .adminui :is(.aui-workspace > .aui-resource, .aui-pane[data-fill] > .aui-pane-body > .aui-resource:last-child, .aui-pane[data-fill] > .aui-pane-body, :where(.aui-pane[data-fill] > .aui-pane-body > .aui-section-tabs-wrap:last-child > .aui-section-panel)) > .aui-table-panel:last-child > .aui-table-scroll th { position:sticky; top:0; z-index:2; box-shadow:0 1px var(--aui-line); }
   .adminui :is(.aui-workspace > .aui-resource, .aui-pane[data-fill] > .aui-pane-body > .aui-resource:last-child, .aui-pane[data-fill] > .aui-pane-body, :where(.aui-pane[data-fill] > .aui-pane-body > .aui-section-tabs-wrap:last-child > .aui-section-panel)) > .aui-table-panel:last-child > .aui-table-scroll th[data-pinned=true] { z-index:3; }
 }
-.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-taccess > :is(.aui-taccess-impact, .aui-gov-impact) { margin:12px 16px 0; }
-.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-taccess > :is(.aui-taccess-impact, .aui-gov-impact) ~ .aui-taccess-body { margin-top:12px; border-top:1px solid var(--aui-line); }
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-taccess > :is(.aui-taccess-impact, .aui-gov-impact) { margin:12px 16px 0; }
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-taccess > :is(.aui-taccess-impact, .aui-gov-impact) ~ .aui-taccess-body { margin-top:12px; border-top:1px solid var(--aui-line); }
 @media (max-width:760px) {
-  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-taccess > :is(.aui-taccess-impact, .aui-gov-impact) { margin-inline:12px; }
+  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-taccess > :is(.aui-taccess-impact, .aui-gov-impact) { margin-inline:12px; }
   .adminui :is(.aui-pane-body, :where(.aui-pane-body > .aui-section-tabs-wrap > .aui-section-panel)) > .aui-grid-toolbar { padding-inline:12px; }
 }
 
@@ -2424,3 +2425,59 @@
 .adminui .aui-kvlist dd { margin:0; min-width:0; text-align:right; color:var(--aui-text); overflow-wrap:anywhere; }
 .adminui .aui-kvlist > div[data-full] dd { text-align:left; }
 .adminui .aui-kvlist dd[data-empty] { color:var(--aui-note); }
+
+/* —— page flush (8.6) ——
+   Page content sits on the surface edge to edge, like a workspace: the blocks of the page flow are flat (no border,
+   radius, shadow or gap) and one 1px line separates neighbouring blocks; nothing shows the grey canvas between them.
+   Page flow = [data-aui-page] (the AdminShell work page, a TabbedPage section) and [data-aui-flow=stack] (PageBody,
+   SplitLayout / SideNavLayout / DetailLayout columns, the access console stacks), plus a class-less <div> or stack
+   wrapper right inside them; a host wrapper with its own class opts in with data-aui-flow="stack" (8.6.1: at any depth,
+   no inset, no gap); in-page Tabs there mark themselves data-aui-flow="tabs" (panel = "stack"). Inset: 16px (12px on phones)
+   for headers, filters and loose content; tables run edge to edge. Exception: dashboards (KPI / metric grids,
+   DashboardSection, DashboardView) keep separate tiles on a canvas band of their own. Area chunks add the same rules for
+   their own blocks (search 「page flush」). */
+.adminui :where([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack) { display:flex; flex-direction:column; gap:0; }
+/* a wrapper of the host (its own class or none) holding page blocks is transparent: no inset, no gap between the blocks */
+.adminui :where([data-aui-page], [data-aui-flow=stack]) > div:not([class]) { gap:0; }
+/* 8.6.1: any element marked data-aui-flow="stack" (a host wrapper with its own class, nested ones too) is page flow: no gap of its own */
+.adminui [data-aui-flow=stack] { gap:0; }
+/* 8.6.1: in-page Tabs in the page flow (Tabs marks itself data-aui-flow="tabs", its panel "stack"): the tab row is flush, one bottom line */
+.adminui .aui-section-tabs-wrap[data-aui-flow=tabs] > .aui-section-tabs-bar { margin-bottom:0; padding-inline:16px; background:var(--aui-surface); }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-panel, .aui-resource, .aui-scard) { margin:0; border:0; border-radius:0; box-shadow:none; background:var(--aui-surface); }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-panel { --aui-panel-pad:16px; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(:not([hidden], .aui-sr-only, style, script, template)) ~ :is(.aui-panel, .aui-resource, .aui-scard, .aui-page-body, .aui-stack, .aui-workflow-stack, .aui-tabbed-page, .aui-detail, div:not([class]), [data-aui-flow], .aui-metrics) { border-top:1px solid var(--aui-line); }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-page-header { margin:0; padding:12px 16px; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :not([hidden], .aui-sr-only, style, script, template, .aui-page-header, .aui-panel, .aui-resource, .aui-scard, .aui-table-panel, .aui-query, .aui-grid-panel, .aui-pane, .aui-fb, .aui-taccess, .aui-dbb, .aui-gallery-view, .aui-access-profile, .aui-access-effective, .aui-rhead, .aui-transcript, .aui-prompt, .aui-page-body, .aui-stack, .aui-workflow-stack, .aui-tabbed-page, .aui-split, .aui-sidenav-layout, .aui-sidenav-section, .aui-listdetail, .aui-workspace, .aui-access-split, .aui-access-stack, .aui-access-console, .aui-detail, [data-aui-flow], :is([data-aui-page], [data-aui-flow=stack]) > div:not([class]), .aui-kpi-grid, .aui-metrics, .aui-dash-section, .aui-dbb-grid) { max-width:calc(100% - 32px); margin:12px 16px; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-metrics) { margin:0; padding:16px; background:var(--aui-canvas); align-content:start; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(.aui-kpi-grid, .aui-metrics, .aui-dash-section, .aui-dbb-grid) + :is(.aui-metrics) { border-top:0; padding-top:0; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-page-body, .aui-stack, .aui-workflow-stack, .aui-detail, [data-aui-flow=stack], .aui-metrics):last-child { flex:1 0 auto; }
+.adminui .aui-panel-header[data-bar]:not(:has(.aui-panel-title > *, .aui-header-actions > :not(.aui-page-actions-slot:empty))) { display:none; }
+.adminui .aui-panel > .aui-panel-header[data-bar] { min-height:48px; padding-block:8px; }
+.adminui .aui-resource > .aui-panel-header[data-bar] { min-height:48px; padding-block:8px; }
+.adminui .aui-resource-filters[data-bar] { display:flex; align-items:flex-start; gap:8px 12px; }
+.adminui .aui-resource-filters[data-bar] > .aui-resource-filters-main { flex:1 1 auto; min-width:0; }
+/* the search shrinks (down to 200px) before a filter wraps; the count and buttons keep to the first line's right end */
+.adminui .aui-resource-filters-main .aui-query-search { flex:1 1 200px; max-width:320px; }
+.adminui .aui-resource-filters[data-bar] > :is(.aui-panel-title, .aui-header-actions) { min-height:var(--aui-control-height); }
+.adminui .aui-resource-filters[data-bar] > .aui-panel-title { flex:none; }
+.adminui .aui-resource-filters[data-bar] > .aui-header-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; flex:none; max-width:100%; margin-left:auto; }
+.adminui .aui-resource-filters[data-bar] > .aui-header-actions > * { flex-shrink:0; }
+/* no count twice: the table footer already says 「共 N 条」 (cursor lists say 「已显示 …」, so the count stays) */
+.adminui .aui-resource[data-lead]:has(> .aui-table-panel > .aui-pagination:not([data-mode=cursor])) > :is(.aui-resource-filters, .aui-panel-header) .aui-resource-count { display:none; }
+/* 8.6.1: …and when that hidden count was all the toolbar row had (no buttons, no 「?」), the row goes too */
+.adminui .aui-resource[data-lead]:has(> .aui-table-panel > .aui-pagination:not([data-mode=cursor])) > .aui-panel-header[data-bar]:not(:has(.aui-header-actions > :not(.aui-page-actions-slot:empty))) { display:none; }
+.adminui .aui-resource:not([data-lead]):has(> .aui-table-panel > .aui-pagination:not([data-mode=cursor])) > .aui-panel-header h2 > .aui-resource-count { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+/* one 「?」 per row: a lone block's own 「?」 (right end, after the buttons) stands in for the page's */
+.adminui :is(.aui-panel, .aui-resource)[data-lead] .aui-header-actions > .aui-help-tip { order:1; }
+.adminui :is(.aui-panel, .aui-resource)[data-lead] .aui-header-actions:has(> .aui-help-tip) > .aui-page-actions-slot .aui-help-tip { display:none; }
+@media (max-width:760px) {
+  .adminui .aui-resource-filters[data-bar] { flex-wrap:wrap; }
+  .adminui .aui-resource-filters[data-bar] > .aui-resource-filters-main { flex-basis:100%; }
+  .adminui .aui-resource-filters-main .aui-query-search { flex-basis:100%; max-width:none; }
+  .adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-panel { --aui-panel-pad:12px; }
+  .adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-page-header { padding-inline:12px; }
+  .adminui .aui-section-tabs-wrap[data-aui-flow=tabs] > .aui-section-tabs-bar { padding-inline:12px; }
+  .adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :not([hidden], .aui-sr-only, style, script, template, .aui-page-header, .aui-panel, .aui-resource, .aui-scard, .aui-table-panel, .aui-query, .aui-grid-panel, .aui-pane, .aui-fb, .aui-taccess, .aui-dbb, .aui-gallery-view, .aui-access-profile, .aui-access-effective, .aui-rhead, .aui-transcript, .aui-prompt, .aui-page-body, .aui-stack, .aui-workflow-stack, .aui-tabbed-page, .aui-split, .aui-sidenav-layout, .aui-sidenav-section, .aui-listdetail, .aui-workspace, .aui-access-split, .aui-access-stack, .aui-access-console, .aui-detail, [data-aui-flow], :is([data-aui-page], [data-aui-flow=stack]) > div:not([class]), .aui-kpi-grid, .aui-metrics, .aui-dash-section, .aui-dbb-grid) { max-width:calc(100% - 24px); margin-inline:12px; }
+  .adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-metrics) { padding:12px; }
+  .adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(.aui-kpi-grid, .aui-metrics, .aui-dash-section, .aui-dbb-grid) + :is(.aui-metrics) { padding-top:0; }
+}

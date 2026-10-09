@@ -45,7 +45,8 @@ try{
  const tabBars=await p.evaluate(()=>[...document.querySelectorAll('.aui-section-tabs,.aui-tabs')].map(el=>{const cs=getComputedStyle(el);return{cls:el.className,overflowY:cs.overflowY,extra:el.scrollHeight-el.clientHeight};}));
  assert.ok(tabBars.length>=2,'前置条件：页内分区和工作标签都在页面上');
  for(const bar of tabBars){assert.equal(bar.overflowY,'hidden',`${bar.cls} 必须写明 overflow-y:hidden`);assert.ok(bar.extra<=0,`${bar.cls} 纵向溢出 ${bar.extra}px`);}
- const underline=await p.evaluate(()=>{const tab=document.querySelector('.aui-section-tab.aui-active').getBoundingClientRect();const bar=document.querySelector('.aui-section-tabs-bar').getBoundingClientRect();return Math.abs(tab.bottom-bar.bottom);});
+ // 8.6: in a TabbedPage the line is the tab row's bottom border (the bar itself has none): the underline must sit on that line
+const underline=await p.evaluate(()=>{const tab=document.querySelector('.aui-section-tab.aui-active').getBoundingClientRect();const barEl=document.querySelector('.aui-section-tabs-bar');const host=parseFloat(getComputedStyle(barEl).borderBottomWidth)>0?barEl:(barEl.closest('.aui-tabbed-tabs-row')??barEl);return Math.abs(tab.bottom-host.getBoundingClientRect().bottom);});
  assert.ok(underline<=0.5,`激活下划线应压在分区条底线上，差 ${underline}px`);
  await p.keyboard.press('Home');assert.equal(await modulesTab.getAttribute('aria-selected'),'true');
  const resultTrigger=p.getByRole('button',{name:'查看生成结果'});await resultTrigger.click();const resultDialog=p.getByRole('dialog');await resultDialog.getByRole('heading',{name:'生成结果'}).waitFor();
@@ -101,7 +102,8 @@ for(const width of [390,360]){
   assert.equal(crowd.fadeAfter,'false',`${width} 滑到头了还在渐隐 ${JSON.stringify(crowd)}`);
 }
 await p.setViewportSize({width:390,height:844});await p.waitForTimeout(300);
-await click('打开菜单');await p.waitForTimeout(250);assert.ok(await p.getByRole('navigation',{name:'主导航'}).locator('.aui-nav-group-title').first().isVisible(),'手机抽屉仍显示组标题');await p.screenshot({path:resolve(root,'test/artifacts/mobile-grouped-nav.png')});await nav('用户管理');await p.waitForTimeout(300);assert.ok(await p.locator('.aui-sidebar').evaluate(el=>el.getBoundingClientRect().right<=0),'点分组内菜单后抽屉收回屏外');const pageHeader=await p.locator('#aui-page-users .aui-resource > .aui-panel-header').first().evaluate(el=>{const r=n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,right:b.right,bottom:b.bottom,height:b.height};};return{text:r(el.querySelector('.aui-panel-title')),actions:r(el.querySelector(':scope > .aui-header-actions'))};});
+await click('打开菜单');await p.waitForTimeout(250);assert.ok(await p.getByRole('navigation',{name:'主导航'}).locator('.aui-nav-group-title').first().isVisible(),'手机抽屉仍显示组标题');await p.screenshot({path:resolve(root,'test/artifacts/mobile-grouped-nav.png')});await nav('用户管理');await p.waitForTimeout(300);assert.ok(await p.locator('.aui-sidebar').evaluate(el=>el.getBoundingClientRect().right<=0),'点分组内菜单后抽屉收回屏外');// 8.6: the lone list has no title row; its first row is the filters row (filters + buttons)
+const pageHeader=await p.locator('#aui-page-users .aui-resource > :is(.aui-panel-header, .aui-resource-filters[data-bar])').first().evaluate(el=>{const r=n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,right:b.right,bottom:b.bottom,height:b.height};};return{text:r(el.querySelector('.aui-resource-filters-main, .aui-panel-title')),actions:r(el.querySelector(':scope > .aui-header-actions'))};});
  assert.ok(!(pageHeader.text.x<pageHeader.actions.right&&pageHeader.actions.x<pageHeader.text.right&&pageHeader.text.y<pageHeader.actions.bottom&&pageHeader.actions.y<pageHeader.text.bottom),`390 页面头标题与操作重叠 ${JSON.stringify(pageHeader)}`);
  assert.ok(pageHeader.actions.height<=44,`390 页面头操作区控件被压成 ${pageHeader.actions.height}px`);
  await click('新增用户');await p.waitForTimeout(400);const footer=await p.locator('.aui-dialog-footer').boundingBox();assert.ok(footer.y+footer.height<=844);

@@ -131,6 +131,10 @@ import { AudioLines, LayoutDashboard, ListOrdered } from "lucide-react";
 const TranscriptShowcase = lazy(() => import("./TranscriptShowcase").then((m) => ({ default: m.TranscriptShowcase })));
 const RulesShowcase = lazy(() => import("./RulesShowcase").then((m) => ({ default: m.RulesShowcase })));
 const FlushWorkspaceShowcase = lazy(() => import("./FlushWorkspaceShowcase").then((m) => ({ default: m.FlushWorkspaceShowcase }))); // bt/flush
+const PageFlushShowcase = lazy(() => import("./PageFlushShowcase").then((m) => ({ default: m.PageFlushShowcase }))); // 8.6 page flush
+const SingleSectionShowcase = lazy(() => import("./PageFlushShowcase").then((m) => ({ default: m.SingleSectionShowcase }))); // 8.6 page flush
+const LeadCountShowcase = lazy(() => import("./PageFlushShowcase").then((m) => ({ default: m.LeadCountShowcase }))); // 8.6.1 lone list: no empty toolbar row
+const AccessConsoleShowcase = lazy(() => import("./AccessConsoleShowcase").then((m) => ({ default: m.AccessConsoleShowcase }))); // 8.6.1 AccessConsole flush
 const DashboardBuilderShowcase = lazy(() => import("./DashboardBuilderShowcase").then((m) => ({ default: m.DashboardBuilderShowcase })));
 // （组件库审阅 06「图表与仪表盘」）：图表在 charts 子路径，整页按需加载
 const ChartsShowcase = lazy(() => import("./ChartsShowcase").then((m) => ({ default: m.ChartsShowcase })));
@@ -392,6 +396,10 @@ function App({ motion, onMotionChange, dark, onToggleMode }: { motion: "system" 
     transcript: { id: "transcript", title: "录音文字稿", icon: AudioLines, content: <Suspense fallback={<StatePanel kind="loading" />}><TranscriptShowcase /></Suspense> },
     rules: { id: "rules", title: "分配规则", icon: ListOrdered, content: <Suspense fallback={<StatePanel kind="loading" />}><RulesShowcase /></Suspense> },
     flush: { id: "flush", title: "工作区贴边", icon: LayoutDashboard, content: <Suspense fallback={<StatePanel kind="loading" />}><FlushWorkspaceShowcase /></Suspense> }, // bt/flush
+    pageflush: { id: "pageflush", title: "页面贴边", icon: LayoutDashboard, content: <Suspense fallback={<StatePanel kind="loading" />}><PageFlushShowcase /></Suspense> }, // 8.6 page flush
+    tenant: { id: "tenant", title: "租户成员", icon: Users, content: <Suspense fallback={<StatePanel kind="loading" />}><SingleSectionShowcase /></Suspense> }, // 8.6: single-section TabbedPage
+    leadcount: { id: "leadcount", title: "单块数量", icon: LayoutDashboard, content: <Suspense fallback={<StatePanel kind="loading" />}><LeadCountShowcase /></Suspense> }, // 8.6.1
+    accessconsole: { id: "accessconsole", title: "权限控制台", icon: ShieldCheck, content: <Suspense fallback={<StatePanel kind="loading" />}><AccessConsoleShowcase active={active === "accessconsole"} /></Suspense> }, // 8.6.1
     dashbuilder: { id: "dashbuilder", title: "看板搭建", icon: LayoutDashboard, content: <Suspense fallback={<StatePanel kind="loading" />}><DashboardBuilderShowcase /></Suspense> },
     workflows: { id: "workflows", title: "后台工作流", icon: SlidersHorizontal, content: <Suspense fallback={<StatePanel kind="loading" />}><WorkflowShowcase active={active === "workflows"} /></Suspense> },
     motion: { id: "motion", title: "动效示例", icon: SlidersHorizontal,
@@ -743,6 +751,10 @@ function App({ motion, onMotionChange, dark, onToggleMode }: { motion: "system" 
     { id: "transcript", group: "系统", keywords: "录音 文字稿 转写 说话人 波形 标注 打码 跟着播放 导出 D27t" },
     { id: "rules", group: "系统", keywords: "分配规则 如果 那么 第一条命中 兜底 拖动排序 命中数 条件 D26" },
     { id: "flush", group: "系统", keywords: "工作区 贴边 飞书 Pane 撑满 内边距 提示条 QueryBar flush TabbedPage 画册 表单搭建 表格权限 有效权限 记录头部 useIsMobile" }, // bt/flush
+    { id: "pageflush", group: "系统", keywords: "页面贴边 卡片 灰底 画布 一条线 不重复标题 部门 成员 审计 审批 列表详情 8.6" },
+    { id: "tenant", group: "系统", keywords: "单分区 TabbedPage 不出标签条 租户成员 8.6" },
+    { id: "leadcount", group: "系统", keywords: "单块 数量 共 N 条 工具行 空行 8.6.1" },
+    { id: "accessconsole", group: "系统", keywords: "AccessConsole 权限控制台 部门 岗位 角色 人员授权 用户组 字段权限 权限解释 授权审计 中档 8.6.1" },
     { id: "dashbuilder", group: "看板", keywords: "看板搭建 拖动 组件库 画布 指标字典 标准口径 自定义口径 撤销 预览 D32" },
     // 页面模板（PAGE-TEMPLATES.md）：每个后台页面都从其中一个起步，布局定死、内容换成自己的。
     ...TEMPLATE_PAGES.map((t) => ({ id: t.id, group: "页面模板", keywords: t.keywords })),

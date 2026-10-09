@@ -271,7 +271,7 @@ try {
   await page.locator('[role=dialog]').waitFor({ state: 'detached' }).catch(() => undefined);
   const sgrid = page.getByRole('grid', { name: '合同台账（服务端）' });
   await sgrid.locator('[data-row-key]').first().waitFor();
-  assert.equal(await sgrid.getAttribute('aria-rowcount'), String(100000 + 2), '服务端总数 10 万');
+  assert.equal(await sgrid.getAttribute('aria-rowcount'), String(100000 + 3), '服务端总数 10 万（表头 + 「新增一行」 + 统计栏）');
   assert.match(await area.locator('.aui-grid-summary-total').innerText(), /100000 条/);
   await area.locator('.aui-grid-summary-value').first().waitFor();
   await sgrid.evaluate((el) => { el.scrollTop = el.scrollHeight * 0.6; });
@@ -282,14 +282,25 @@ try {
   await page.waitForTimeout(400);
   const idx = await sgrid.locator('[role=row][data-row-key]').evaluateAll((rows) => rows.map((r) => Number(r.getAttribute('aria-rowindex'))));
   assert.ok(Math.min(...idx) > 50000, `滚到 60% 处加载那一段（${idx[0]}），加载中出现骨架行 ${skeletons}`);
+  // 8.7 服务端新增记录：底栏「+」→ 服务端在最后加一条 → 表格自己重取、滚到最后、第一格进入编辑，打字回车保存
+  await sgrid.evaluate((el) => { el.scrollTop = 0; });
+  await sgrid.getByRole('button', { name: '新增记录', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('[role=grid][aria-label="合同台账（服务端）"]')?.getAttribute('aria-rowcount') === '100004', null, { timeout: 15000 });
+  const newEditor = sgrid.locator('[data-row-key="HT-100001"] .aui-grid-editor input');
+  await newEditor.waitFor({ timeout: 15000 });
+  assert.equal(await newEditor.evaluate((el) => el === document.activeElement), true, '服务端新增：新行第一格直接是输入框');
+  await page.keyboard.type('服务端新增的合同');
+  await page.keyboard.press('Enter');
+  await sgrid.locator('[data-row-key="HT-100001"]').getByText('服务端新增的合同').waitFor();
+  await page.screenshot({ path: resolve(output, 'server-add-row.png') });
   // 服务端搜索后总数变化
   await area.getByRole('searchbox', { name: '搜索记录' }).fill('远山精密');
-  await page.waitForFunction(() => { const g = document.querySelector('[role=grid][aria-label="合同台账（服务端）"]'); return g && g.getAttribute('aria-rowcount') !== '100002' && g.getAttribute('aria-rowcount') !== '2' && !g.closest('[aria-busy=true]'); }, null, { timeout: 15000 });
-  const filtered = Number(await sgrid.getAttribute('aria-rowcount')) - 2;
+  await page.waitForFunction(() => { const g = document.querySelector('[role=grid][aria-label="合同台账（服务端）"]'); return g && g.getAttribute('aria-rowcount') !== '100004' && g.getAttribute('aria-rowcount') !== '3' && !g.closest('[aria-busy=true]'); }, null, { timeout: 15000 });
+  const filtered = Number(await sgrid.getAttribute('aria-rowcount')) - 3;
   assert.ok(filtered > 0 && filtered < 100000, `服务端搜索后 ${filtered} 条`);
   await page.screenshot({ path: resolve(output, 'server.png') });
   assert.deepEqual(errors, [], errors.join('; '));
-  console.log('PASS grid-edit: edit / type-to-edit / validate / select / checkbox / range copy-paste / external paste skip / undo-redo / clear / reject rollback / fill height / deadline tones + overdue suffix / create option (pending, pick, reject) / server 100k infinite scroll + search');
+  console.log('PASS grid-edit: edit / type-to-edit / validate / select / checkbox / range copy-paste / external paste skip / undo-redo / clear / reject rollback / fill height / deadline tones + overdue suffix / create option (pending, pick, reject) / server 100k infinite scroll + search + add row (refetch, scroll to the end, edit the first cell)');
 } finally {
   await browser.close();
   await server.close();

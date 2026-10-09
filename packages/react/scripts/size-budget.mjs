@@ -34,7 +34,7 @@ const only = onlyArg ? (onlyArg.includes("=") ? onlyArg.split("=")[1] : args[arg
 const KB = 1024;
 /** Budgets in KB gzip (8.0.0 measured + ~10 % headroom). Probe JS excludes react / react-dom and the heavy peers; probe CSS = styles.css + the chunks the entry pulls in. */
 export const BUDGETS = {
-  core: { js: 28, css: 25 },
+  core: { js: 28, css: 26 }, // 8.6: page-flush rules for every page live in core (+0.6 KB gzip; 25.0 → 26 keeps the headroom)
   root: { js: 330, css: 100 },
   charts: { js: 22, css: 31 },
   markdown: { js: 11, css: 26 },
@@ -195,7 +195,9 @@ async function measureTier(name, dir) {
 
 const pkg = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf8"));
 const self = pkg.name;
-const subpaths = Object.keys(pkg.exports).filter((k) => k !== "." && !k.endsWith(".css")).map((k) => k.slice(2));
+/** Node-only subpaths (build tooling, never imported by the app) have no browser bundle to measure. */
+const NODE_ONLY = new Set(["vite"]);
+const subpaths = Object.keys(pkg.exports).filter((k) => k !== "." && !k.endsWith(".css")).map((k) => k.slice(2)).filter((k) => !NODE_ONLY.has(k));
 
 const probes = [
   ["core", { from: self, names: ["AdminProvider", "Button", "Input", "Dialog"], css: `${self}/styles.css` }],

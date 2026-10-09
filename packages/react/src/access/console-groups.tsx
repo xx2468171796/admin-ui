@@ -32,7 +32,7 @@ export function GroupSection() {
   const [deleting, setDeleting] = useState<GroupDto | null>(null);
   const act = useAction();
   return (
-    <div className="aui-access-stack">
+    <div className="aui-access-stack" data-aui-flow="stack">
       <ReadOnlyNote show={!manage} />
       <ErrorAlert error={act.error} onReload={() => { act.clear(); c.reload("groups"); }} onDismiss={act.clear} />
       <StatusLine text={act.done} />

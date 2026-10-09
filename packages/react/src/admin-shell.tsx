@@ -295,7 +295,7 @@ export function AdminShell(props: AdminShellProps) {
         {portal ? (
           <div className="aui-content" ref={contentRef}>
             {active && (
-              <div key={active.id} id={`aui-page-${active.id}`}>
+              <div key={active.id} id={`aui-page-${active.id}`} data-aui-page="">
                 {active.content}
               </div>
             )}
@@ -305,7 +305,7 @@ export function AdminShell(props: AdminShellProps) {
             <WorkTabs tabs={tabs} {...tabActions} />
             <div className="aui-content" ref={contentRef}>
               {tabs.map((t) => (
-                <div key={t.id} id={`aui-page-${t.id}`} role="tabpanel" aria-labelledby={`aui-tab-${t.id}`} hidden={activeId !== t.id}>
+                <div key={t.id} id={`aui-page-${t.id}`} data-aui-page="" role="tabpanel" aria-labelledby={`aui-tab-${t.id}`} hidden={activeId !== t.id}>
                   {t.content}
                 </div>
               ))}

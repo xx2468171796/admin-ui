@@ -8,7 +8,7 @@
 .adminui .aui-page-body[data-fill] > .aui-panel:last-child .aui-listdetail-main .aui-table-panel:last-child > .aui-state { flex:1 0 auto; justify-content:center; align-items:center; }
 
 /* —— templates —— */
-.adminui .aui-sidenav-layout { display:grid; grid-template-columns:var(--aui-sidenav-width, 200px) minmax(0,1fr); gap:16px; align-items:start; min-width:0; }
+.adminui .aui-sidenav-layout { display:grid; grid-template-columns:var(--aui-sidenav-width, 200px) minmax(0,1fr); gap:0; align-items:stretch; min-width:0; }
 .adminui .aui-sidenav { position:sticky; top:16px; display:grid; gap:2px; padding:6px; background:var(--aui-surface); border:1px solid var(--aui-line); border-radius:var(--aui-radius-lg); box-shadow:var(--aui-shadow-sm); }
 .adminui .aui-sidenav > a { display:flex; align-items:center; gap:9px; min-height:var(--aui-control-height); padding:0 10px; border-radius:var(--aui-radius); color:var(--aui-secondary); font-size:calc(13px * var(--aui-font-scale)); text-decoration:none; }
 .adminui .aui-sidenav > a > svg { width:16px; height:16px; flex:none; }
@@ -17,8 +17,8 @@
 .adminui .aui-sidenav > a[aria-current] { background:var(--aui-soft); color:var(--aui-primary); font-weight: 600; }
 .adminui .aui-sidenav > a:focus-visible { outline:2px solid var(--aui-primary); outline-offset:-2px; }
 .adminui .aui-sidenav-dot { flex:none; width:7px; height:7px; border-radius:50%; background:var(--aui-warning); }
-.adminui .aui-sidenav-body { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; min-width:0; }
-.adminui .aui-sidenav-section { scroll-margin-top:16px; min-width:0; }
+.adminui .aui-sidenav-body { display:flex; flex-direction:column; gap:0; min-width:0; border-left:1px solid var(--aui-line); }
+.adminui .aui-sidenav-section { display:flex; flex-direction:column; scroll-margin-top:0; min-width:0; }
 @media (max-width:1100px) {
   .adminui .aui-sidenav-layout { grid-template-columns:minmax(0,1fr); }
   .adminui .aui-sidenav { position:static; display:flex; overflow-x:auto; overflow-y:hidden; }
@@ -35,10 +35,11 @@
 /* —— navigation-pages —— */
 .adminui .aui-sidenav {
   position: sticky;
-  top: 16px;
+  top: 0;
+  align-self: start;
   display: grid;
   gap: 1px;
-  padding: 0;
+  padding: 12px 8px;
   background: none;
   border: 0;
   border-radius: 0;
@@ -98,7 +99,12 @@
       overflow-x: auto;
       overflow-y: hidden;
       scrollbar-width: none;
-      background: var(--aui-canvas);
+      padding-inline: 12px;
+      border-bottom: 1px solid var(--aui-line);
+      background: var(--aui-surface);
+    }
+  .adminui .aui-sidenav-body {
+      border-left: 0;
     }
   .adminui .aui-sidenav::-webkit-scrollbar {
       display: none;
@@ -507,3 +513,9 @@
 .adminui .aui-settings-panel[hidden] {
   display: none;
 }
+
+/* —— page flush (8.6): in the page flow these blocks get one line above when something comes before and the last one fills the page —— */
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(:not([hidden], .aui-sr-only, style, script, template)) ~ :is(.aui-sidenav-layout, .aui-sidenav-section, .aui-listdetail) { border-top:1px solid var(--aui-line); }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-sidenav-layout, .aui-listdetail, .aui-panel:has(> .aui-listdetail)):last-child { flex:1 0 auto; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-panel:has(> .aui-listdetail) { display:flex; flex-direction:column; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-panel:has(> .aui-listdetail) > .aui-listdetail { flex:1 0 auto; }

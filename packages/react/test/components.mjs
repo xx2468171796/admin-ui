@@ -68,9 +68,12 @@ try {
     await p.locator('#aui-page-users tbody tr').first().waitFor();
   }
 
-  // 5.3：页面按钮不单独占一行，并进下面列表面板的标题行（和面板自己的按钮一行，靠右）。
+  // 5.3：页面按钮不单独占一行，并进下面列表面板的第一行（和面板自己的按钮一行，靠右）。8.6：用户列表是页面里唯一的
+  // 列表，标题不再单独占一行（读屏标题还在），第一行就是筛选行，数量和按钮在它右端。
   assert.equal(await p.locator('#aui-page-users .aui-page-header').count(), 0, '没有单独的页面头一行');
-  const header = await p.locator('#aui-page-users .aui-resource > .aui-panel-header').first().evaluate((el) => {
+  assert.equal(await p.locator('#aui-page-users .aui-resource > .aui-panel-header').count(), 0, '8.6：唯一的列表不再有标题行');
+  assert.match(await p.locator('#aui-page-users .aui-resource > h2.aui-sr-only').innerText(), /^用户列表/, '8.6：标题留给读屏');
+  const header = await p.locator('#aui-page-users .aui-resource > .aui-resource-filters[data-bar]').first().evaluate((el) => {
     const box = el.getBoundingClientRect();
     const actions = el.querySelector(':scope > .aui-header-actions');
     const add = [...actions.querySelectorAll('button')].find((b) => b.textContent.includes('新增用户'));
@@ -79,7 +82,7 @@ try {
     return { right: Math.round(box.right - actions.getBoundingClientRect().right), hasAdd: Boolean(add), oneRow: Math.max(...centers) - Math.min(...centers) <= 1 };
   });
   await shot(p, 'desktop-users-header');
-  assert.ok(header.hasAdd && header.oneRow && header.right < 24, '「新增用户」并进用户列表标题行、一行靠右，实测 ' + JSON.stringify(header));
+  assert.ok(header.hasAdd && header.oneRow && header.right < 24, '「新增用户」并进用户列表第一行（筛选行）、一行靠右，实测 ' + JSON.stringify(header));
 
   // Silent refresh keeps rows: no loading state, rows stay on screen.
   await p.getByRole('button', { name: '刷新', exact: true }).click();

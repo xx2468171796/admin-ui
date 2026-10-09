@@ -332,6 +332,7 @@ export { TargetProgressCard, type TargetProgressData } from "./dashboard-target-
 export { targetProgress, type TargetProgress, type TargetProgressInput, type TargetPeriod } from "./dashboard-target-core.ts";
 export { formatDuration, DURATION_UNIT } from "./duration-format.ts";
 export { WidgetBody, WidgetContent, useWidgetData, skeletonShape, type DashboardWidgetData, type DashboardTableRow, type LoadWidgetData } from "./dashboard-builder-widget.tsx";
+export { WidgetNoteTag, type DashboardWidgetNote } from "./dashboard-widget-note.tsx";
 export {
   DASHBOARD_COLUMNS,
   DASHBOARD_SCHEMA_VERSION,

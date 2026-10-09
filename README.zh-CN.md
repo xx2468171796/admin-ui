@@ -25,7 +25,7 @@ npm install @adminui/react react@^19 react-dom@^19
 **npm 上还没有这个包之前**，装 GitHub Release 附带的 tarball（和 npm 包内容一样）：
 
 ```sh
-npm install https://github.com/xx2468171796/admin-ui/releases/download/v8.4.0/adminui-react-8.4.0.tgz react@^19 react-dom@^19
+npm install https://github.com/xx2468171796/admin-ui/releases/download/v8.8.0/adminui-react-8.8.0.tgz react@^19 react-dom@^19
 ```
 
 想用别的包名导入的项目可以用 npm 别名（`"my-ui": "npm:@adminui/react@^8"`）；`admin-ui-audit` 会从你的 `package.json` 认出这种别名。

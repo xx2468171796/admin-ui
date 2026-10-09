@@ -11,7 +11,7 @@
 .adminui .aui-report-source { width: 168px; }
 .adminui .aui-report-end { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
 .adminui .aui-report-toolbar > .aui-error { margin: 6px 0 0; }
-.adminui .aui-kpi { display:flex; flex-direction:column; gap:var(--aui-space-2); min-height:132px; flex:1; }
+.adminui .aui-kpi { display:flex; flex-direction:column; gap:var(--aui-space-2); flex:1; }
 .adminui .aui-kpi-head { display:flex; align-items:center; gap:6px; min-height:24px; }
 .adminui .aui-kpi-title { margin:0; font-size:calc(12.5px * var(--aui-font-scale)); font-weight:500; line-height:1.4; color:var(--aui-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
 .adminui .aui-kpi-info { display:inline-grid; place-items:center; width:24px; height:24px; margin:-4px 0; padding:0; border:0; border-radius:var(--aui-radius-sm); background:none; color:var(--aui-note); cursor:pointer; flex:none; }
@@ -53,9 +53,6 @@
 .adminui .aui-chart-table td { padding:6px 10px; border-bottom:1px solid var(--aui-line); text-align:left; white-space:nowrap; }
 .adminui .aui-chart-table th { position:sticky; top:0; background:var(--aui-surface-subtle); color:var(--aui-secondary); font-weight:600; }
 .adminui .aui-chart-table td[data-numeric] { text-align:right; }
-@media (max-width:760px) {
-  .adminui .aui-kpi { min-height:120px; }
-}
 @media (prefers-reduced-motion:no-preference) {
   .adminui[data-aui-motion=system]:not([data-aui-paused=true]) .aui-live-live .aui-live-dot { animation:aui-dot-pulse 1.6s ease-in-out infinite; }
 }
@@ -301,3 +298,13 @@
 .adminui .aui-dbb-body .aui-kpi-head { display: none; }
 .adminui .aui-dbb-body > .aui-rollup { border: 0; padding: 0; }
 .adminui .aui-dbb-body > :is(.aui-compact, .aui-funnel, .aui-cohort) { min-height: 0; overflow: auto; }
+
+/* —— page flush (8.6): KPI grids and dashboard sections in the page flow are a canvas band of their own; the tiles stay cards —— */
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(:not([hidden], .aui-sr-only, style, script, template)) ~ :is(.aui-kpi-grid, .aui-dash-section) { border-top:1px solid var(--aui-line); }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-kpi-grid, .aui-dash-section) { margin:0; padding:16px; background:var(--aui-canvas); align-content:start; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(.aui-kpi-grid, .aui-metrics, .aui-dash-section, .aui-dbb-grid) + :is(.aui-kpi-grid, .aui-dash-section) { border-top:0; padding-top:0; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-kpi-grid, .aui-dash-section):last-child { flex:1 0 auto; }
+@media (max-width:760px) {
+  .adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-kpi-grid, .aui-dash-section) { padding:12px; }
+  .adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(.aui-kpi-grid, .aui-metrics, .aui-dash-section, .aui-dbb-grid) + :is(.aui-kpi-grid, .aui-dash-section) { padding-top:0; }
+}

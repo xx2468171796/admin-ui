@@ -591,9 +591,9 @@ export function PaneSection({ title, icon, count, actions, children, flush }: { 
 /** Main column + a right rail (default 340px) of smaller cards; stacks under 1100px. */
 export function SplitLayout({ children, rail, railWidth = 340 }: { children: ReactNode; rail: ReactNode; railWidth?: number }) {
   return (
-    <div className="aui-split" style={cssVars({ "--aui-rail-width": `${railWidth}px` })}>
-      <div className="aui-split-main">{children}</div>
-      <div className="aui-split-rail">{rail}</div>
+    <div className="aui-split" data-aui-flow="columns" style={cssVars({ "--aui-rail-width": `${railWidth}px` })}>
+      <div className="aui-split-main" data-aui-flow="stack">{children}</div>
+      <div className="aui-split-rail" data-aui-flow="stack">{rail}</div>
     </div>
   );
 }
@@ -614,16 +614,16 @@ import "#aui-css/templates.css";
  * Full-height tool page under the work tabs: left list / centre work area / right context, each a
  * Pane that scrolls on its own — the page itself never scrolls. On wide screens it sits flush against
  * the work tabs, the sidebar and the window edge (the shell drops its content padding) and the columns
- * are divided by a single line, no gaps. Under 1100px the panes stack (normal page scroll): `narrow="card"`
- * (default) = one bordered rounded card inside the shell padding; `narrow="flush"` = no card — the shell content
- * padding goes, no outer border / radius, panes edge-to-edge split by one horizontal line (document reading /
- * editor pages). With a `Pane fill` the stack reaches down to the bottom of the shell content (the fill pane grows).
+ * are divided by a single line, no gaps. Under 1100px the panes stack (normal page scroll), still flush (8.6: the
+ * only narrow look; the old `narrow="card"` is gone): no outer border / radius, panes edge-to-edge split by one
+ * horizontal line; `narrow="steps"` shows list → detail in two steps on phones. With a `Pane fill` the stack reaches
+ * down to the bottom of the shell content (the fill pane grows).
  * bottomGap: space kept under it on wide screens (0 = down to the window edge).
  */
-export type WorkspaceNarrowMode = "card" | "flush" | "steps";
-export function WorkspaceLayout({ left, children, right, leftWidth = 240, rightWidth = 280, bottomGap = 0, narrow = "card", detailOpen = false, onBack, backLabel = "返回列表" }: {
+export type WorkspaceNarrowMode = "flush" | "steps";
+export function WorkspaceLayout({ left, children, right, leftWidth = 240, rightWidth = 280, bottomGap = 0, narrow = "flush", detailOpen = false, onBack, backLabel = "返回列表" }: {
   left?: ReactNode; children: ReactNode; right?: ReactNode; leftWidth?: number; rightWidth?: number; bottomGap?: number;
-  /** Under 760px: card / flush stack the panes; "steps" = list → detail in two steps (`left` is the list). */
+  /** Under 1100px the panes stack flush (default); "steps" = list → detail in two steps under 760px (`left` is the list). */
   narrow?: WorkspaceNarrowMode;
   /** narrow="steps": the detail (centre + right) is showing instead of the list. */
   detailOpen?: boolean;
@@ -653,7 +653,7 @@ export function WorkspaceLayout({ left, children, right, leftWidth = 240, rightW
   }, [bottomGap]);
   const cols = [left ? `${leftWidth}px` : null, "minmax(0,1fr)", right ? `${rightWidth}px` : null].filter(Boolean).join(" ");
   return (
-    <div ref={box} className="aui-workspace" data-narrow={narrow === "card" ? undefined : narrow} data-step={narrow === "steps" ? (detailOpen ? "detail" : "list") : undefined} style={cssVars({ "--aui-workspace-cols": cols, ...(size ? { "--aui-workspace-height": `${size.height}px`, "--aui-workspace-fill-height": `${size.fill}px` } : {}) })}>
+    <div ref={box} className="aui-workspace" data-narrow={narrow === "steps" ? "steps" : undefined} data-step={narrow === "steps" ? (detailOpen ? "detail" : "list") : undefined} style={cssVars({ "--aui-workspace-cols": cols, ...(size ? { "--aui-workspace-height": `${size.height}px`, "--aui-workspace-fill-height": `${size.fill}px` } : {}) })}>
       {left}
       {narrow === "steps" && onBack && <NarrowBackBar label={backLabel} onBack={onBack} />}
       {children}
@@ -808,11 +808,15 @@ export type WizardLayoutProps = {
   /** Max width of the wizard card (default 880). */
   width?: number;
 };
-/** A centred step-by-step card: step band, one block of content per step, back / next with the reason when blocked. */
+/**
+ * A step-by-step page: step band, one block of content per step, back / next with the reason when blocked. In the page flow
+ * (8.6.1) it is flat and edge to edge like the rest of the page; the content keeps to `width` and the aside is a column.
+ */
 export function WizardLayout({ title, description, note, onClose, steps, current, children, onBack, onNext, backLabel = "上一步", nextLabel = "下一步", nextDisabledReason, aside, width = 880 }: WizardLayoutProps) {
   const first = steps[0]?.key === current;
   return (
-    <div className="aui-wizard" data-aside={aside ? true : undefined} style={cssVars({ "--aui-wizard-width": `${width}px` })}>
+    // 8.6.1 page flush: the wizard is page flow — flat, edge to edge, the aside a column after one vertical line
+    <div className="aui-wizard" data-aui-flow="columns" data-aside={aside ? true : undefined} style={cssVars({ "--aui-wizard-width": `${width}px` })}>
       <Panel
         title={title}
         description={description}
@@ -835,7 +839,7 @@ export function WizardLayout({ title, description, note, onClose, steps, current
           {onNext && <Button disabled={Boolean(nextDisabledReason)} onClick={onNext}>{nextLabel}<ChevronRight /></Button>}
         </div>
       </Panel>
-      {aside && <div className="aui-wizard-aside">{aside}</div>}
+      {aside && <div className="aui-wizard-aside" data-aui-flow="stack">{aside}</div>}
     </div>
   );
 }

@@ -238,12 +238,53 @@ try {
   await page.keyboard.press('Alt+Shift+ArrowDown');
   await page.waitForFunction((id) => document.querySelectorAll('[role=grid][aria-label=客户] [role=row][data-row-key]')[1]?.dataset.rowKey === id, first[2]);
   // 新增一行 under every expanded group
+  // (virtualised: the last rendered group may end below the window, so check every expanded group that is followed by
+  // another rendered group — its 「新增一行」 must come before that next group)
+  const missingAdd = await grid.evaluate((el) => {
+    const rows = [...el.querySelectorAll('[role=row]')].sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+    const out = [];
+    rows.forEach((row, i) => {
+      if (!row.matches('.aui-grid-group[aria-expanded=true]')) return;
+      const next = rows.findIndex((r, j) => j > i && r.matches('.aui-grid-group'));
+      if (next < 0) return;
+      if (!rows.slice(i + 1, next).some((r) => r.matches('.aui-grid-add-row'))) out.push(row.textContent.trim().slice(0, 20));
+    });
+    return out;
+  });
+  assert.deepEqual(missingAdd, [], '每个展开的组底下一行「新增一行」');
   const addRows = grid.locator('[role=row].aui-grid-add-row');
-  assert.equal(await addRows.count(), await grid.locator('[role=row].aui-grid-group[aria-expanded=true]').count(), '每个展开的组底下一行「新增一行」');
+  assert.ok(await addRows.count() >= 1, '至少有一行「新增一行」');
   const quoteCount = () => grid.locator('[role=row].aui-grid-group').nth(1).locator('.aui-grid-group-count').textContent();
   const quoteBefore = await quoteCount();
   await addRows.nth(1).click();
   await page.waitForFunction(([b]) => document.querySelectorAll('[role=grid][aria-label=客户] [role=row].aui-grid-group')[1]?.querySelector('.aui-grid-group-count')?.textContent !== b, [quoteBefore]);
+  // 8.7 新增记录: the new row's first editable cell opens for typing (onAddRow answered the id)
+  const editor = grid.locator('.aui-grid-editor');
+  await editor.waitFor();
+  assert.equal(await editor.locator('input, textarea').first().evaluate((el) => el === document.activeElement), true, '新行第一个能改的格子进入编辑、光标在里面');
+  await page.keyboard.press('Escape');
+  await editor.waitFor({ state: 'detached' });
+  // Footer 「+」 at the bottom-left, visible without scrolling; click → a blank record at the end, its first cell editing
+  const footerAdd = grid.getByRole('button', { name: '新增记录', exact: true });
+  const [addBox, gridBox] = [await footerAdd.boundingBox(), await grid.boundingBox()];
+  assert.ok(addBox && gridBox && addBox.y + addBox.height <= gridBox.y + gridBox.height + 1 && addBox.x - gridBox.x < 48, `页脚「+」在表格左下角、不用滚动就看得见 ${JSON.stringify([addBox, gridBox])}`);
+  const footerRow = grid.locator('.aui-grid-summary-row');
+  assert.match(await footerRow.textContent(), /条记录/, '「+」旁边是「N 条记录」');
+  await footerAdd.click();
+  await editor.waitFor();
+  await page.keyboard.type('页脚新增的客户');
+  await page.keyboard.press('Enter');
+  await editor.waitFor({ state: 'detached' });
+  await grid.getByText('页脚新增的客户').first().waitFor();
+  // Keyboard: Tab-focusable, Enter adds another one
+  await footerAdd.focus();
+  await page.keyboard.press('Enter');
+  await editor.waitFor();
+  await page.keyboard.press('Escape');
+  await editor.waitFor({ state: 'detached' });
+  await shot('add-record-footer-1440');
+  await grid.evaluate((el) => { el.scrollTop = 0; });
+  await grid.locator('[role=row][data-row-key="KH-0001"]').waitFor();
   // Badge and tone
   const badgeCell = await cell('KH-0006', '跟进');
   assert.equal(await badgeCell.locator('.aui-grid-badge').count(), 1, '有评论的格子右上角有角标');

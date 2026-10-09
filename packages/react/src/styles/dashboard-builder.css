@@ -88,6 +88,20 @@
 .adminui .aui-dbb-tag[data-icon] { position: relative; display: inline-grid; place-items: center; flex: none; width: 22px; padding: 0; overflow: visible; }
 .adminui .aui-dbb-tag[data-icon] svg { width: 12px; height: 12px; }
 .adminui .aui-dbb-tag[data-kind=override] { background: var(--aui-info-soft); color: var(--aui-info); }
+/* 8.8 widget note (DashboardWidgetData.note): next to the title, cut with an ellipsis, never taller than the head row */
+.adminui .aui-dbb-tag[data-kind=note] { flex: 0 1 auto; max-width: 60%; background: var(--aui-surface-subtle); color: var(--aui-secondary); font-family: inherit; text-align: left; }
+.adminui .aui-dbb-tag[data-kind=note][data-tone=warning] { background: var(--aui-warning-soft); color: var(--aui-warning); }
+.adminui button.aui-dbb-tag[data-kind=note] { cursor: pointer; }
+.adminui button.aui-dbb-tag[data-kind=note]:hover { box-shadow: inset 0 0 0 1px currentColor; }
+.adminui button.aui-dbb-tag[data-kind=note]:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 1px; }
+.adminui .aui-dbb-group-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.adminui .aui-dbb-group-head > .aui-dbb-group-title { flex: 1 1 auto; min-width: 0; }
+.adminui .aui-dbb-group-head > .aui-dbb-tag[data-kind=note] { height: 18px; line-height: 18px; }
+.adminui .aui-dbb-note-detail { margin: 0; color: var(--aui-text); font-size: calc(13px * var(--aui-font-scale)); line-height: 1.6; white-space: pre-line; }
+@media (max-width: 760px) {
+  .adminui .aui-dbb-head:has(> .aui-dbb-tag[data-kind=note]) { flex-wrap: wrap; row-gap: 2px; }
+  .adminui .aui-dbb-head > .aui-dbb-tag[data-kind=note] { max-width: 100%; }
+}
 .adminui .aui-dbb-toolbar { display: none; flex: none; align-items: center; gap: 0; margin-left: auto; }
 .adminui .aui-dbb-widget:is(:hover, :focus-within, [data-selected]) .aui-dbb-toolbar { display: inline-flex; }
 .adminui .aui-dbb-toolbar .aui-icon-btn { --aui-ibtn: 26px; --aui-ibtn-icon: 14px; }
@@ -184,3 +198,17 @@
   .adminui .aui-dbb-filters { padding: 8px 12px; }
 }
 .adminui .aui-dbb-chart-host { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+
+/* —— page flush (8.6): flat in the page flow, one line above when something comes before —— */
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-dbb) { border:0; border-radius:0; box-shadow:none; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(:not([hidden], .aui-sr-only, style, script, template)) ~ :is(.aui-dbb) { border-top:1px solid var(--aui-line); }
+
+/* —— page flush (8.6): in the page flow these blocks get one line above when something comes before and the last one fills the page —— */
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(:not([hidden], .aui-sr-only, style, script, template)) ~ :is(.aui-dbb-grid) { border-top:1px solid var(--aui-line); }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-dbb-grid):last-child { flex:1 0 auto; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-dbb-grid { margin:0; padding:16px; background:var(--aui-canvas); align-content:start; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(.aui-kpi-grid, .aui-metrics, .aui-dash-section, .aui-dbb-grid) + .aui-dbb-grid { border-top:0; padding-top:0; }
+@media (max-width:760px) {
+  .adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-dbb-grid { padding:12px; }
+  .adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(.aui-kpi-grid, .aui-metrics, .aui-dash-section, .aui-dbb-grid) + .aui-dbb-grid { padding-top:0; }
+}

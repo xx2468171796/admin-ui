@@ -24,6 +24,7 @@ import type { GridField } from "./grid-core.ts";
 import { TargetProgressCard, type TargetProgressData } from "./dashboard-target-card.tsx";
 import { durationColumns, isDurationUnit } from "./duration-format.ts";
 import type { DashboardFilterValue } from "./dashboard-filters-core.ts";
+import { WidgetNoteTag, type DashboardWidgetNote } from "./dashboard-widget-note.tsx";
 import { compactNumberText, kpiFitScale, widgetDataKey, widgetFilterContext, type DashboardWidget, type WidgetKind } from "./dashboard-builder-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard-builder.css";
@@ -37,9 +38,11 @@ export type DashboardTableRow = Record<string, unknown>;
 /**
  * What `loadWidgetData` resolves with; `kind` must fit the widget's kind. `bar` data also draws a ranking
  * (hbar), a donut (categories = slices) or a one-segment stack, so switching the chart type in 「样式」
- * needs no new loader.
+ * needs no new loader. Any kind may carry a `note` (8.8): a small tag next to the frame title (「按成交日汇率折算 ·
+ * 缺汇率 3 条」, neutral or warning) whose `detail` opens in a popover.
  */
-export type DashboardWidgetData =
+export type DashboardWidgetData = WidgetDataByKind & { note?: DashboardWidgetNote };
+type WidgetDataByKind =
   | { kind: "kpi"; card: KpiData }
   /** 「数字组」: one card per item, in the widget's item order (`id` = the item's id). */
   | { kind: "group"; items: readonly { id: string; title?: string; card: KpiData }[] }
@@ -198,16 +201,22 @@ function FittedKpi({ title, card, size }: { title: string; card: KpiData; size?:
   );
 }
 
-/** 「数字组」: 2–6 equal-width numbers (2 columns on phones, an odd last one spans the row). */
-function NumberGroup({ widget, items }: { widget: DashboardWidget; items: readonly { id: string; title?: string; card: KpiData }[] }) {
+/**
+ * 「数字组」: 2–6 equal-width numbers (2 columns on phones, an odd last one spans the row). `note` = the widget's
+ * note when the frame hides its own title row (read-only view): it goes into the last (top-right) number's title row.
+ */
+function NumberGroup({ widget, items, note }: { widget: DashboardWidget; items: readonly { id: string; title?: string; card: KpiData }[]; note?: DashboardWidgetNote }) {
   const titles = new Map((widget.items ?? []).map((i) => [i.id, i.title]));
+  // Desktop shows all numbers in one row: the last one is the top-right one
+  const noteAt = note ? items.length - 1 : -1;
   return (
     <div className="aui-dbb-group" data-count={items.length} data-odd={(items.length % 2 === 1 && items.length > 1) || undefined} role="list" aria-label={widget.title}>
-      {items.map((item) => {
+      {items.map((item, index) => {
         const title = item.title ?? titles.get(item.id) ?? "";
+        const head = <span className="aui-dbb-group-title" data-tip={title}>{title}</span>;
         return (
           <div key={item.id} className="aui-dbb-group-item" role="listitem">
-            <span className="aui-dbb-group-title" data-tip={title}>{title}</span>
+            {note && index === noteAt ? <div className="aui-dbb-group-head">{head}<WidgetNoteTag note={note} /></div> : head}
             <FittedKpi title={title} card={item.card} size={widget.size} />
           </div>
         );
@@ -238,7 +247,7 @@ function DonutBox({ label, data }: { label: string; data: Extract<DashboardWidge
 }
 
 /** The content of a widget for its data (no frame). */
-export function WidgetContent({ widget, data, onClearFilters, onSetTarget }: { widget: DashboardWidget; data: DashboardWidgetData; onClearFilters?: () => void; /** 「设目标」 on a target card without a target. */ onSetTarget?: () => void }) {
+export function WidgetContent({ widget, data, onClearFilters, onSetTarget, inlineNote }: { widget: DashboardWidget; data: DashboardWidgetData; onClearFilters?: () => void; /** 「设目标」 on a target card without a target. */ onSetTarget?: () => void; /** The note when the frame has no visible title row (a bare 「数字组」). */ inlineNote?: DashboardWidgetNote }) {
   const { mode } = useAdminTheme();
   if (data.kind === "empty") return <ChartState kind={data.filtered ? "no-match" : "empty"} message={data.message} onClearFilters={onClearFilters} />;
   if (data.kind === "forbidden") return <ChartState kind="forbidden" message={data.message} />;
@@ -246,9 +255,9 @@ export function WidgetContent({ widget, data, onClearFilters, onSetTarget }: { w
   const metricName = widget.query?.metric?.kind === "custom" ? widget.query.metric.name : widget.title;
   switch (data.kind) {
     case "kpi":
-      return widget.kind === "group" ? <NumberGroup widget={widget} items={[{ id: "only", title: widget.title, card: data.card }]} /> : <FittedKpi title={widget.title} card={data.card} size={widget.size} />;
+      return widget.kind === "group" ? <NumberGroup widget={widget} items={[{ id: "only", title: widget.title, card: data.card }]} note={inlineNote} /> : <FittedKpi title={widget.title} card={data.card} size={widget.size} />;
     case "group":
-      return <NumberGroup widget={widget} items={data.items} />;
+      return <NumberGroup widget={widget} items={data.items} note={inlineNote} />;
     case "bullet":
       return (
         <div className="aui-dbb-bullet">
@@ -283,9 +292,21 @@ export function WidgetContent({ widget, data, onClearFilters, onSetTarget }: { w
   }
 }
 
+type BodyProps = { widget: DashboardWidget; context: DashboardFilterValue; load?: LoadWidgetData; onClearFilters?: () => void; onSetTarget?: () => void };
+
 /** Widget body: text note, or load + states + content. `onClearFilters` = 「清空筛选」 on a no-match state; `onSetTarget` = 「设目标」. */
-export function WidgetBody({ widget, context, load, onClearFilters, onSetTarget }: { widget: DashboardWidget; context: DashboardFilterValue; load?: LoadWidgetData; onClearFilters?: () => void; onSetTarget?: () => void }) {
-  const { state, reload } = useWidgetData(widget, context, load);
+export function WidgetBody(props: BodyProps) {
+  return <WidgetStates {...props} loaded={useWidgetData(props.widget, props.context, props.load)} />;
+}
+
+/** The note of the data on screen (ready, or the kept data of a failed refresh). */
+export function widgetNoteOf(state: ReturnType<typeof useWidgetData>["state"]): DashboardWidgetNote | undefined {
+  return state.status === "ready" || state.status === "stale" ? state.data.note : undefined;
+}
+
+/** WidgetBody with the data loaded by the caller (WidgetFrame also needs it for the note in its header). */
+export function WidgetStates({ widget, load, onClearFilters, onSetTarget, loaded, inlineNote }: BodyProps & { loaded: ReturnType<typeof useWidgetData>; inlineNote?: DashboardWidgetNote }) {
+  const { state, reload } = loaded;
   if (widget.kind === "text") return <div className="aui-dbb-note">{widget.text?.trim() ? widget.text : <span className="aui-dbb-placeholder">在右边「样式」里写说明</span>}</div>;
   if (!load) return <ChartState kind="empty" message="没有数据接口" />;
   if (state.status === "loading") return <ChartState kind="loading" shape={skeletonShape(widget.kind)} label={widget.title} />;
@@ -293,8 +314,8 @@ export function WidgetBody({ widget, context, load, onClearFilters, onSetTarget 
   if (state.status === "stale")
     return (
       <ChartState kind="stale" message={`刷新失败，显示的是 ${clock(state.at)} 的数据`} onRetry={reload}>
-        <WidgetContent widget={widget} data={state.data} onClearFilters={onClearFilters} onSetTarget={onSetTarget} />
+        <WidgetContent widget={widget} data={state.data} onClearFilters={onClearFilters} onSetTarget={onSetTarget} inlineNote={inlineNote} />
       </ChartState>
     );
-  return <WidgetContent widget={widget} data={state.data} onClearFilters={onClearFilters} onSetTarget={onSetTarget} />;
+  return <WidgetContent widget={widget} data={state.data} onClearFilters={onClearFilters} onSetTarget={onSetTarget} inlineNote={inlineNote} />;
 }

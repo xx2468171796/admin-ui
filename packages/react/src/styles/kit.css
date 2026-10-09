@@ -253,7 +253,7 @@
 /* —— flush —— */
 .adminui .aui-pane-head > .aui-rhead { flex:1 1 auto; min-width:0; padding:12px 16px; border-bottom:0; background:var(--aui-surface); }
 .adminui .aui-pane-head > .aui-rhead:has(.aui-rhead-tabs) { padding-bottom:0; }
-.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-rhead { padding:12px 16px 0; background:var(--aui-surface); }
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-rhead { padding:12px 16px 0; background:var(--aui-surface); }
 @media (max-width:760px) {
   .adminui .aui-pane-head > .aui-rhead { padding:12px; }
   .adminui .aui-pane-head > .aui-rhead:has(.aui-rhead-tabs) { padding-bottom:0; }

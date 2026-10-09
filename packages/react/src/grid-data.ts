@@ -92,7 +92,8 @@ export function useGridServerData<T>(source: GridDataSource<T> | undefined, quer
     const next = refreshBlockState(stateRef.current);
     setState(next);
     stateRef.current = next;
-    load(missingBlocks(next, range.current.start, range.current.end, blockSize), next);
+    // The kept total may be out of date (rows added since — an empty list had 0): fetch the whole visible range.
+    load(missingBlocks({ ...next, total: null }, range.current.start, range.current.end, blockSize), next);
   }, [load, blockSize]);
   const patch = useCallback((rows: ReadonlyMap<string, T>) => setState((old) => patchBlockRows(old, rows, getRowId)), [getRowId]);
 

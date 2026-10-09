@@ -179,7 +179,8 @@ export function ShareManager(props: ShareManagerProps) {
     return { value, label: `${{ active: "有效", paused: "已暂停", void: "已作废" }[value]}${n === undefined ? "" : ` ${n}`}` };
   });
   return (
-    <div className="aui-share-manager">
+    // 8.6.1 page flush: the strip and the list are page flow (flat, one line between), no card of its own
+    <div className="aui-share-manager" data-aui-flow="stack">
       {props.stats && props.stats.length > 0 && <StatStrip items={props.stats} label="分享概况" />}
       <ResourcePanel
         title={props.title ?? "我的分享"}

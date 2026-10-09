@@ -73,7 +73,7 @@ export function SideNavLayout({ sections, label = "分节", navWidth = 200, foot
     if (rect.left < box.left || rect.right > box.right) nav.scrollLeft += rect.left - box.left - 12;
   }, [active]);
   return (
-    <div className="aui-sidenav-layout" style={cssVars({ "--aui-sidenav-width": `${navWidth}px` })}>
+    <div className="aui-sidenav-layout" data-aui-flow="columns" style={cssVars({ "--aui-sidenav-width": `${navWidth}px` })}>
       <nav ref={navRef} className="aui-sidenav" aria-label={label}>
         {sections.map((s, i) => (
           <Fragment key={s.id}>
@@ -99,8 +99,8 @@ export function SideNavLayout({ sections, label = "分节", navWidth = 200, foot
           </Fragment>
         ))}
       </nav>
-      <div className="aui-sidenav-body">
-        {sections.map((s) => <div key={s.id} id={idOf(s.id)} className="aui-sidenav-section">{s.content}</div>)}
+      <div className="aui-sidenav-body" data-aui-flow="stack">
+        {sections.map((s) => <div key={s.id} id={idOf(s.id)} className="aui-sidenav-section" data-aui-flow="stack">{s.content}</div>)}
         {footer}
       </div>
     </div>

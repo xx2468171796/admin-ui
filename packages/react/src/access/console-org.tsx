@@ -132,11 +132,11 @@ export function DeptSection() {
 
   if (!c.depts.length && !manage) return <StatePanel kind="empty" message="还没有部门" />;
   return (
-    <div className="aui-access-stack">
+    <div className="aui-access-stack" data-aui-flow="stack">
       <ReadOnlyNote show={!manage} />
       <ErrorAlert error={act.error} onReload={() => { act.clear(); c.reload("depts"); }} onDismiss={act.clear} />
       <StatusLine text={act.done} />
-      <div className="aui-access-split">
+      <div className="aui-access-split" data-aui-flow="columns">
         <Panel title="部门" actions={manage ? <Button size="sm" onClick={openCreate}><Plus size={14} aria-hidden="true" />新建部门</Button> : undefined}>
           {c.depts.length ? (
             <CheckableTree label="部门" mode="single" nodes={c.orgTree} value={picked ? [picked] : []} onValueChange={(v) => { if (v[0]) { setPicked(v[0]); revealDetail(); } }} toolbar={false} maxHeight={480} />
@@ -145,7 +145,7 @@ export function DeptSection() {
           )}
         </Panel>
         {dept ? (
-          <div className="aui-access-stack">
+          <div className="aui-access-stack" data-aui-flow="stack">
             <Panel
               title={dept.name}
               description={c.deptIdx.path(dept.id)}
@@ -284,7 +284,7 @@ export function PostSection() {
   const act = useAction();
   const dirty = !!form && (form.post ? form.name !== form.post.name || form.code !== form.post.code || (form.dept[0] ?? null) !== form.post.deptId || form.sort !== String(form.post.sort) || form.enabled !== (form.post.status === "enabled") : !!(form.name || form.code));
   return (
-    <div className="aui-access-stack">
+    <div className="aui-access-stack" data-aui-flow="stack">
       <ReadOnlyNote show={!manage} />
       <ErrorAlert error={act.error} onDismiss={act.clear} />
       <StatusLine text={act.done} />
@@ -324,7 +324,7 @@ export function PostSection() {
         />
       </Panel>
       {rolesOf && (
-        <div className="aui-access-stack">
+        <div className="aui-access-stack" data-aui-flow="stack">
           <div className="aui-access-bar">
             <Building2 size={16} aria-hidden="true" />
             <strong>{rolesOf.name}</strong>
@@ -425,7 +425,7 @@ export function DimSection() {
   const dirty = !!form && (form.value ? form.name !== form.value.name || form.sort !== String(form.value.sort) || form.enabled !== (form.value.status === "enabled") : !!(form.name || form.id));
   if (!c.dims.length) return <StatePanel kind="empty" message="宿主没有登记维度（业务线 / 区域等在代码里 definePolicy({ dimensions }) 登记）" />;
   return (
-    <div className="aui-access-stack">
+    <div className="aui-access-stack" data-aui-flow="stack">
       <ReadOnlyNote show={!manage} />
       <ErrorAlert error={act.error} onReload={() => { act.clear(); c.reload("dims"); }} onDismiss={act.clear} />
       <StatusLine text={act.done} />

@@ -9,6 +9,7 @@ import { Check, ChevronDown, Minus, X } from "lucide-react";
 import { ScrollStrip } from "./scroll-strip.tsx";
 import { MenuButton } from "./menu.tsx";
 import { tipProps } from "./tooltip.tsx";
+import { usePageFlow } from "./page-lead.ts";
 export const cn = clsx;
 
 /**
@@ -350,6 +351,10 @@ export function Tabs({
   const ownedPanelId = children === undefined ? undefined : `${base}panel`;
   const controls = panelId ?? ownedPanelId;
   const enabled = items.filter((item) => !item.disabled);
+  // 8.6.1: Tabs straight in the page flow (e.g. sub-views under a page) are page flow too: the tab row is flush with one
+  // bottom line and the blocks in the panel are flat like the page's own (page-flush CSS, data-aui-flow).
+  const wrapRef = React.useRef<HTMLDivElement>(null);
+  const flow = usePageFlow(wrapRef);
   const move = (event: React.KeyboardEvent, offset: number | "home" | "end") => {
     if (!enabled.length) return;
     event.preventDefault();
@@ -368,7 +373,7 @@ export function Tabs({
     document.getElementById(tabId(next.value))?.focus();
   };
   return (
-    <div className="aui-section-tabs-wrap" data-size={size === "sm" ? "sm" : undefined}>
+    <div ref={wrapRef} className="aui-section-tabs-wrap" data-size={size === "sm" ? "sm" : undefined} data-aui-flow={flow ? "tabs" : undefined}>
       <div className="aui-section-tabs-bar">
         <ScrollStrip
           className="aui-section-tabs-scroll"
@@ -428,6 +433,7 @@ export function Tabs({
           role="tabpanel"
           aria-labelledby={tabId(value)}
           className="aui-section-panel"
+          data-aui-flow={flow ? "stack" : undefined}
           tabIndex={0}
         >
           {children}

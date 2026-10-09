@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { HelpTip } from "./help-tip.tsx";
+import { useSolePageBlock } from "./page-lead.ts";
 import { sharedContext } from "./context.ts";
 import { IconButton } from "./buttons.tsx";
 const EmbeddedPageContext = sharedContext<boolean>("embedded-page");
@@ -50,7 +51,7 @@ export function PageHeader(props: PageHeaderProps) {
   const { title, actions, description } = props;
   if (!description && !actions) return null;
   return (
-    <SlottedActions title={title}>
+    <SlottedActions title={title} helpOnly={!actions}>
       {(slotted, bar) => slotted ? null : (
         <div className="aui-page-header aui-page-header-embedded" role="group" aria-label={title}>{bar}</div>
       )}
@@ -66,7 +67,7 @@ const PAGE_BLOCKS = ".aui-panel, .aui-resource, .aui-dash-section, .aui-kpi-grid
  * the page / section when that block has one (list panel, dashboard section); otherwise the section
  * tab row of the enclosing TabbedPage (e.g. a page that opens with KPI cards); null = stay in place.
  */
-function findActionsSlot(anchor: HTMLElement): HTMLElement | null {
+function findActionsSlot(anchor: HTMLElement, helpOnly: boolean): HTMLElement | null {
   // A header inside a hidden (kept-mounted) section stays put and invisible: never lend its buttons to
   // the visible section or the shared tab row.
   if (anchor.parentElement?.closest("[hidden]")) return null;
@@ -82,9 +83,18 @@ function findActionsSlot(anchor: HTMLElement): HTMLElement | null {
     first = block;
     break;
   }
-  const own = first?.querySelector<HTMLElement>(":scope > .aui-panel-header .aui-page-actions-slot, :scope > .aui-dash-section-head .aui-page-actions-slot, :scope > .aui-dfilter-row .aui-page-actions-slot");
-  if (own) return own;
-  return anchor.closest(".aui-tabbed-page")?.querySelector<HTMLElement>(":scope > .aui-tabbed-tabs-row > .aui-page-actions-slot") ?? null;
+  const own = first?.querySelector<HTMLElement>(":scope > .aui-panel-header .aui-page-actions-slot, :scope > .aui-resource-filters .aui-page-actions-slot, :scope > .aui-dash-section-head .aui-page-actions-slot, :scope > .aui-dfilter-row .aui-page-actions-slot");
+  const tabRow = anchor.closest(".aui-tabbed-page")?.querySelector<HTMLElement>(":scope > .aui-tabbed-tabs-row:not([hidden]) > .aui-page-actions-slot") ?? null;
+  // 8.6.1: a lone block's compact toolbar row that would hold nothing but the page's 「?」 (no count, buttons or 「?」 of
+  // its own, and the page has no buttons) is not worth a row: the 「?」 goes to the section tab row, the toolbar row goes.
+  if (own && tabRow && helpOnly && isBareBar(own)) return tabRow;
+  return own ?? tabRow;
+}
+/** The slot sits in a lead block's toolbar row (no filters) with nothing else visible in it. */
+function isBareBar(slot: HTMLElement): boolean {
+  const bar = slot.closest(".aui-panel-header[data-bar]");
+  if (!bar) return false;
+  return [...bar.querySelectorAll(":scope > .aui-panel-title > *, :scope > .aui-header-actions > :not(.aui-page-actions-slot)")].every((el) => el.getClientRects().length === 0);
 }
 /**
  * The page's buttons (+ its 「?」) never take a row of their own when a list panel follows: they are
@@ -92,7 +102,7 @@ function findActionsSlot(anchor: HTMLElement): HTMLElement | null {
  * that panel's own buttons (owner 2026-10-02: 「不要单独占一排……放在下面那一行」). Re-targets when the
  * section tab changes; renders in place when the page has no panel header.
  */
-function SlottedActions({ title, children }: { title: string; children: [(slotted: boolean, bar: ReactNode) => ReactNode, ...ReactNode[]] }) {
+function SlottedActions({ title, helpOnly = false, children }: { title: string; /** The page has a 「?」 but no buttons (8.6.1). */ helpOnly?: boolean; children: [(slotted: boolean, bar: ReactNode) => ReactNode, ...ReactNode[]] }) {
   const [renderShell, ...items] = children;
   const anchor = useRef<HTMLSpanElement>(null);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
@@ -100,7 +110,7 @@ function SlottedActions({ title, children }: { title: string; children: [(slotte
     const node = anchor.current;
     if (!node) return;
     const update = () => {
-      const next = findActionsSlot(node);
+      const next = findActionsSlot(node, helpOnly);
       setSlot((old) => (old === next ? old : next));
     };
     update();
@@ -109,7 +119,7 @@ function SlottedActions({ title, children }: { title: string; children: [(slotte
     const observer = new MutationObserver(update);
     observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ["hidden"] });
     return () => observer.disconnect();
-  }, []);
+  }, [helpOnly]);
   const bar = <div className="aui-header-actions" role="group" aria-label={`${title}操作`}>{items}</div>;
   return (
     <>
@@ -138,7 +148,7 @@ function StandalonePageHeader({
       </header>
     );
   return (
-    <SlottedActions title={title}>
+    <SlottedActions title={title} helpOnly={!actions}>
       {(slotted, bar) => slotted ? <h1 className="aui-sr-only">{title}</h1> : (
         <header className="aui-page-header" data-sticky={sticky} data-title-hidden>
           <div className="aui-header-text"><h1 className="aui-sr-only">{title}</h1></div>
@@ -171,7 +181,7 @@ export function PageBody({
   fill?: boolean;
 }) {
   return (
-    <div className={`aui-page-body ${className}`.trim()} data-fill={fill || undefined}>
+    <div className={`aui-page-body ${className}`.trim()} data-fill={fill || undefined} data-aui-flow="stack">
       {children}
     </div>
   );
@@ -232,21 +242,39 @@ export function Panel({
   /** No body padding: the content (strip, list rows, table, split body) runs edge to edge (6.0). */
   flush?: boolean;
 }) {
+  const ref = useRef<HTMLElement>(null);
+  const id = useId();
+  // 8.6: the only titled block of the page / section shows no title row (the work tab already names it).
+  const lead = useSolePageBlock(ref, Boolean(title));
+  const help = description && <HelpTip label={`${title ?? ""}说明`}>{description}</HelpTip>;
+  const tools = <div className="aui-header-actions">{actions}<span className="aui-page-actions-slot" /></div>;
   return (
-    <section className={`aui-panel ${className}`.trim()} data-flush={flush || undefined}>
-      {(title || actions) && (
+    <section ref={ref} className={`aui-panel ${className}`.trim()} data-flush={flush || undefined} data-lead={lead || undefined} aria-labelledby={lead ? id : undefined}>
+      {lead ? (
+        <>
+          <h2 id={id} className="aui-sr-only">{title}</h2>
+          <header className="aui-panel-header" data-bar>
+            <div className="aui-panel-title">{count !== undefined && count !== null && <span className="aui-panel-count">{count}</span>}</div>
+            <div className="aui-header-actions">{actions}{help}<span className="aui-page-actions-slot" /></div>
+          </header>
+        </>
+      ) : (title || actions) && (
         <header className="aui-panel-header">
           <div className="aui-header-text">
-            <div className="aui-panel-title"><h2>{title}</h2>{count !== undefined && count !== null && <span className="aui-panel-count">{count}</span>}{description && <HelpTip label={`${title ?? ""}说明`}>{description}</HelpTip>}</div>
+            <div className="aui-panel-title"><h2>{title}</h2>{count !== undefined && count !== null && <span className="aui-panel-count">{count}</span>}{help}</div>
           </div>
-          <div className="aui-header-actions">{actions}<span className="aui-page-actions-slot" /></div>
+          {tools}
         </header>
       )}
       {children}
     </section>
   );
 }
-/** One resource surface: heading/actions, filters, contextual feedback, then table. */
+/**
+ * One resource surface: heading/actions, filters, contextual feedback, then table. As the only titled block of
+ * its page / section (8.6) the title is kept for screen readers only and the count, 「?」 and actions move into the
+ * filters row (or one compact toolbar row when there are no filters; no row when nothing is left).
+ */
 export function ResourcePanel({ title, count, unit, description, actions, filters, feedback, children, loading }: {
   title: string;
   /** Omit when the service does not provide an accurate total. */
@@ -262,13 +290,43 @@ export function ResourcePanel({ title, count, unit, description, actions, filter
   children: ReactNode;
 }) {
   const id = useId();
+  const ref = useRef<HTMLElement>(null);
+  const lead = useSolePageBlock(ref, true);
+  const hasCount = count !== undefined || loading;
+  const shown = loading || count === undefined ? "—" : count.toLocaleString();
+  const help = description && <HelpTip label={`${title}说明`}>{description}</HelpTip>;
+  const tools = <div className="aui-header-actions">{actions}<span className="aui-page-actions-slot" /></div>;
+  // The heading (and so the region's accessible name) reads the same with or without the visible title row.
+  const heading = <span className="aui-resource-count">{unit ? ` ${shown} ${unit}` : ` (${shown})`}</span>;
+  if (lead) {
+    // One row: count on the left of the buttons (hidden by CSS when the table footer already says 「共 N 条」), the
+    // 「?」 at the right end with the actions (the page's own 「?」 is dropped there, see core.css).
+    const meta = hasCount && <div className="aui-panel-title"><span className="aui-resource-count">共 {shown} {unit ?? "条"}</span></div>;
+    const leadTools = <div className="aui-header-actions">{actions}{help}<span className="aui-page-actions-slot" /></div>;
+    return (
+      <section ref={ref} className="aui-resource" aria-labelledby={id} data-lead>
+        <h2 id={id} className="aui-sr-only">{title}{hasCount && heading}</h2>
+        {filters ? (
+          <div className="aui-resource-filters" data-bar>
+            <div className="aui-resource-filters-main">{filters}</div>
+            {meta}
+            {leadTools}
+          </div>
+        ) : (
+          <header className="aui-panel-header" data-bar>{meta || <span />}{leadTools}</header>
+        )}
+        {feedback && <div className="aui-resource-feedback">{feedback}</div>}
+        {children}
+      </section>
+    );
+  }
   return (
-    <section className="aui-resource" aria-labelledby={id}>
+    <section ref={ref} className="aui-resource" aria-labelledby={id}>
       <header className="aui-panel-header">
         <div className="aui-header-text">
-          <div className="aui-panel-title"><h2 id={id}>{title}{(count !== undefined || loading) && <span className="aui-resource-count">{unit ? ` ${loading || count === undefined ? "—" : count.toLocaleString()} ${unit}` : ` (${loading || count === undefined ? "—" : count.toLocaleString()})`}</span>}</h2>{description && <HelpTip label={`${title}说明`}>{description}</HelpTip>}</div>
+          <div className="aui-panel-title"><h2 id={id}>{title}{hasCount && heading}</h2>{help}</div>
         </div>
-        <div className="aui-header-actions">{actions}<span className="aui-page-actions-slot" /></div>
+        {tools}
       </header>
       {filters && <div className="aui-resource-filters">{filters}</div>}
       {feedback && <div className="aui-resource-feedback">{feedback}</div>}
@@ -320,9 +378,9 @@ export function DetailLayout({
   aside: ReactNode;
 }) {
   return (
-    <div className="aui-detail">
-      <div className="aui-stack">{children}</div>
-      <aside className="aui-stack">{aside}</aside>
+    <div className="aui-detail" data-aui-flow="columns">
+      <div className="aui-stack" data-aui-flow="stack">{children}</div>
+      <aside className="aui-stack" data-aui-flow="stack">{aside}</aside>
     </div>
   );
 }

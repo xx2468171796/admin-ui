@@ -10,7 +10,7 @@ import { CalendarClock, Eye, Pencil, Plus, Trash2, UserMinus } from "lucide-reac
 import { Button, Checkbox, Choice, Input, StatusBadge, Tabs } from "../primitives.tsx";
 import { SegmentedControl } from "../choices.tsx";
 import { ConfirmDialog, FormDialog, FormField } from "../forms.tsx";
-import { DescriptionList, InlineAlert, Panel, StatePanel } from "../layout.tsx";
+import { DescriptionList, InlineAlert, Panel, ResourcePanel, StatePanel } from "../layout.tsx";
 import { DataTable } from "../data.tsx";
 import { CellText } from "../cells.tsx";
 import { RowActionBar } from "../row-actions.tsx";
@@ -486,20 +486,26 @@ export function PeopleSection() {
   // The list sits in a narrow column: show up to LIMIT people and ask to search / pick a department beyond that.
   const pageRows = filtered.slice(0, LIMIT);
   return (
-    <div className="aui-access-stack">
+    <div className="aui-access-stack" data-aui-flow="stack">
       <ReadOnlyNote show={c.readOnly || (!c.rights.assign && !c.rights.org.manage)} />
       <ErrorAlert error={act.error} onDismiss={act.clear} />
-      <div className="aui-access-split">
-        <Panel title="人员">
-          <div className="aui-access-filters">
-            <FormField label="搜索" htmlFor="aui-access-people-q">
-              <Input id="aui-access-people-q" type="search" clearable placeholder="姓名 / 账号" value={query} onChange={(e) => { setQuery(e.target.value); }} />
-            </FormField>
-            <FormField label="部门（含下级）" htmlFor="aui-access-people-dept">
-              <OrgTreePicker id="aui-access-people-dept" label="部门（含下级）" nodes={c.orgTree} value={dept} onChange={(v) => { setDept(v); }} placeholder="全部部门" />
-            </FormField>
-          </div>
-          {filtered.length > LIMIT && <p className="aui-note" role="status">共 {filtered.length} 人，只列出前 {LIMIT} 个；请搜索或选部门缩小范围。</p>}
+      <div className="aui-access-split" data-aui-flow="columns">
+        {/* 8.6.1: a ResourcePanel, so the list runs edge to edge and the page's 「?」 sits at the end of the filters row
+            (as the page's only titled block its title row would otherwise hold nothing but that 「?」). */}
+        <ResourcePanel
+          title="人员"
+          filters={
+            <div className="aui-access-filters">
+              <FormField label="搜索" htmlFor="aui-access-people-q">
+                <Input id="aui-access-people-q" type="search" clearable placeholder="姓名 / 账号" value={query} onChange={(e) => { setQuery(e.target.value); }} />
+              </FormField>
+              <FormField label="部门（含下级）" htmlFor="aui-access-people-dept">
+                <OrgTreePicker id="aui-access-people-dept" label="部门（含下级）" nodes={c.orgTree} value={dept} onChange={(v) => { setDept(v); }} placeholder="全部部门" />
+              </FormField>
+            </div>
+          }
+          feedback={filtered.length > LIMIT && <p className="aui-note" role="status">共 {filtered.length} 人，只列出前 {LIMIT} 个；请搜索或选部门缩小范围。</p>}
+        >
           <DataTable rowHeight="medium"
             caption="人员列表"
             rows={pageRows}
@@ -513,12 +519,12 @@ export function PeopleSection() {
               { key: "open", title: "操作", kind: "actions", render: (u) => <RowActionBar label={`${u.name}的更多操作`} actions={[{ key: "open", label: "查看", icon: <Eye />, ariaLabel: `查看 ${u.name} 的授权`, onSelect: () => { setPicked(u.id); revealDetail(); } }]} /> },
             ]}
           />
-        </Panel>
+        </ResourcePanel>
         {user ? (
           <Panel title={user.name} description={[user.deptIds.map(c.deptIdx.path).join("；"), user.hint].filter(Boolean).join(" · ")}>
             {editsSelf(c.snapshot, user.id) && <InlineAlert tone="info" title="这是你自己">不能改自己的角色、部门和岗位（防止自己给自己提权），请找其他管理员。</InlineAlert>}
             <Tabs label={`${user.name}的授权`} value={current} onValueChange={(v) => setTab(v as Tab)} items={tabs}>
-              <div className="aui-access-stack">
+              <div className="aui-access-stack" data-aui-flow="stack">
                 {current === "org" && <OrgTab key={`${user.id}-org`} user={user} onChanged={() => { setRev((r) => r + 1); c.reload("depts"); }} />}
                 {current === "roles" && <RolesTab key={`${user.id}-roles`} user={user} onChanged={() => setRev((r) => r + 1)} />}
                 {current === "overrides" && <OverridesTab key={`${user.id}-ovr`} user={user} onChanged={() => setRev((r) => r + 1)} />}

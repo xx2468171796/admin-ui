@@ -11,6 +11,7 @@ import { createServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import { chromium } from 'playwright';
 import { checkFlushSection, edges } from './flush-checks.mjs';
+import { bareRows, checkPageFlush } from './page-flush-checks.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const output = resolve(root, 'test/artifacts/access');
@@ -355,8 +356,39 @@ try {
     assert.ok(table.x === box.ix && table.right === box.iright && table.radius === 0 && table.bl === 0, `${label}：有效权限表贴着栏边`);
   });
 
+  // 8.6.1: AccessConsole (starter「权限控制台」) follows the page flush: the sections sit right under the tab row, the left |
+  // right columns touch with one line, lists and the department tree run edge to edge in their column (no framed card),
+  // and no row holds only a 「?」 (人员授权 / 授权审计: it sits at the end of the filters row).
+  const flushOut = resolve(root, 'test/artifacts/page-flush');
+  mkdirSync(flushOut, { recursive: true });
+  const consoleUrl = server.resolvedUrls.local[0];
+  const inColumn = async (page, label, what, sel) => {
+    const res = await page.locator('.aui-tabbed-panel:not([hidden]) .aui-access-split > :first-child').first().evaluate((col, sel) => {
+      const el = col.querySelector(sel);
+      const c = col.getBoundingClientRect(), r = el.getBoundingClientRect(), s = getComputedStyle(el);
+      return { col: [Math.round(c.left), Math.round(c.right) - (parseFloat(getComputedStyle(col).borderRightWidth) || 0)], el: [Math.round(r.left), Math.round(r.right)], radius: parseFloat(s.borderTopLeftRadius), bl: parseFloat(s.borderLeftWidth) };
+    }, sel);
+    assert.ok(res.el[0] === res.col[0] && Math.abs(res.el[1] - res.col[1]) <= 1 && res.radius === 0 && res.bl === 0, `${label}：${what}贴着栏边、没有外框（${JSON.stringify(res)}）`);
+  };
+  await checkPageFlush(browser, consoleUrl, '权限控制台', '人员授权', flushOut, 'console-people', { columns: true }, async (p, page, facts, { label }) => {
+    assert.deepEqual(await bareRows(p), { help: [], empty: [] }, `${label}：没有只放「?」的行`);
+    const filters = page.locator('.aui-tabbed-panel:not([hidden]) .aui-resource > .aui-resource-filters');
+    assert.equal(await filters.locator('.aui-help-tip').filter({ visible: true }).count(), 1, `${label}：「?」在筛选行末尾`);
+    await inColumn(page, label, '人员列表', '.aui-table-panel');
+  });
+  await checkPageFlush(browser, consoleUrl, '权限控制台', '角色', flushOut, 'console-roles', {}, async (p, page, facts, { label }) => {
+    await inColumn(page, label, '角色列表', '.aui-table-panel');
+  });
+  await checkPageFlush(browser, consoleUrl, '权限控制台', '部门', flushOut, 'console-depts', { columns: true }, async (p, page, facts, { label }) => {
+    await inColumn(page, label, '部门树', '.aui-access-tree');
+  });
+  await checkPageFlush(browser, consoleUrl, '权限控制台', '授权审计', flushOut, 'console-audit', {}, async (p, page, facts, { label }) => {
+    assert.deepEqual(await bareRows(p), { help: [], empty: [] }, `${label}：没有只放「?」的行`);
+    assert.equal(await page.locator('.aui-tabbed-panel:not([hidden]) .aui-resource > .aui-resource-filters .aui-help-tip').filter({ visible: true }).count(), 1, `${label}：「?」在筛选行末尾`);
+  });
+
   assert.deepEqual(errors, []);
-  console.log(`PASS access: matrix diff/undo/scope/fields/read-only, tree keyboard/tri-state/linkage/search, scope dialog validation, org full path, user transfer by dept, effective filters, explain unknown-NULL, team transfer, request approve/reject, review, audit secrets hidden, 360/390/1440, dark contrast, profile + effective table flush in a workspace Pane (${output})`);
+  console.log(`PASS access: matrix diff/undo/scope/fields/read-only, tree keyboard/tri-state/linkage/search, scope dialog validation, org full path, user transfer by dept, effective filters, explain unknown-NULL, team transfer, request approve/reject, review, audit secrets hidden, 360/390/1440, dark contrast, profile + effective table flush in a workspace Pane, AccessConsole page flush (人员授权 / 角色 / 部门 / 授权审计) (${output})`);
 } finally {
   await browser.close();
   await server.close();

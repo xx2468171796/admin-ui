@@ -187,10 +187,13 @@
   .adminui .aui-access-transfer-list { max-height:220px; }
   .adminui .aui-access-matrix-actions { margin-left:0; }
 }
-.adminui :is(.aui-access-console,.aui-pz) { display:grid; gap:12px; min-width:0; }
-.adminui .aui-access-split { display:grid; grid-template-columns:minmax(240px,320px) minmax(0,1fr); gap:12px; align-items:start; min-width:0; }
+.adminui .aui-pz { display:grid; gap:12px; min-width:0; }
+.adminui .aui-access-console { display:flex; flex-direction:column; flex:1 0 auto; gap:0; min-width:0; }
+.adminui .aui-access-split { display:grid; grid-template-columns:minmax(240px,320px) minmax(0,1fr); gap:0; align-items:stretch; min-width:0; }
 .adminui .aui-access-split > * { min-width:0; }
-.adminui .aui-access-stack { display:grid; gap:12px; min-width:0; }
+.adminui .aui-access-split > :where(.aui-panel, .aui-resource) { border:0; border-radius:0; box-shadow:none; }
+.adminui .aui-access-split > * + * { border-left:1px solid var(--aui-line); }
+.adminui .aui-access-stack { display:flex; flex-direction:column; gap:0; min-width:0; }
 .adminui .aui-access-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
 .adminui .aui-access-bar > .aui-access-bar-end { margin-left:auto; display:flex; flex-wrap:wrap; gap:8px; }
 .adminui .aui-access-filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px 12px; align-items:end; }
@@ -204,6 +207,7 @@
 .adminui .aui-pz-value { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:calc(12.5px * var(--aui-font-scale)); overflow-wrap:anywhere; }
 @media (max-width:960px) {
   .adminui .aui-access-split { grid-template-columns:minmax(0,1fr); }
+  .adminui .aui-access-split > * + * { border-left:0; border-top:1px solid var(--aui-line); }
 }
 @media (max-width:760px) {
   .adminui .aui-access-bar > .aui-access-bar-end { margin-left:0; }
@@ -639,22 +643,30 @@
 }
 
 /* —— flush —— */
-.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-taccess { gap:0; }
-.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-taccess > .aui-taccess-bar { padding:10px 16px; border-bottom:1px solid var(--aui-line); }
-.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-taccess > .aui-taccess-body { gap:0; align-items:stretch; }
-.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-taccess > .aui-taccess-body > * { border:0; border-radius:0; }
-.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-taccess > .aui-taccess-body > * + * { border-left:1px solid var(--aui-line); }
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-taccess { gap:0; }
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-taccess > .aui-taccess-bar { padding:10px 16px; border-bottom:1px solid var(--aui-line); }
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-taccess > .aui-taccess-body { gap:0; align-items:stretch; }
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-taccess > .aui-taccess-body > * { border:0; border-radius:0; }
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-taccess > .aui-taccess-body > * + * { border-left:1px solid var(--aui-line); }
 @media (max-width:1180px) {
-  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-taccess > .aui-taccess-body > .aui-taccess-fields { border-left:0; border-top:1px solid var(--aui-line); }
+  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-taccess > .aui-taccess-body > .aui-taccess-fields { border-left:0; border-top:1px solid var(--aui-line); }
 }
 @media (max-width:760px) {
-  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-taccess > .aui-taccess-body > * + * { border-left:0; border-top:1px solid var(--aui-line); }
-  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-taccess > .aui-taccess-bar { padding:10px 12px; }
+  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-taccess > .aui-taccess-body > * + * { border-left:0; border-top:1px solid var(--aui-line); }
+  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-taccess > .aui-taccess-bar { padding:10px 12px; }
 }
-.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-access-profile { padding:12px 16px; border:0; border-bottom:1px solid var(--aui-line); border-radius:0; }
-.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-access-effective { gap:0; }
-.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-access-effective > .aui-access-filters { padding:10px 16px; border-bottom:1px solid var(--aui-line); }
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-access-profile { padding:12px 16px; border:0; border-bottom:1px solid var(--aui-line); border-radius:0; }
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-access-effective { gap:0; }
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-access-effective > .aui-access-filters { padding:10px 16px; border-bottom:1px solid var(--aui-line); }
 @media (max-width:760px) {
-  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-access-profile,
-  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel) > .aui-access-effective > .aui-access-filters { padding-inline:12px; }
+  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-access-profile,
+  .adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace, :is(.aui-pane:not([data-padding]) > .aui-pane-body, .aui-rail-main, .aui-workspace) > .aui-section-tabs-wrap > .aui-section-panel, [data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-access-effective > .aui-access-filters { padding-inline:12px; }
 }
+
+/* —— page flush (8.6): in the page flow these blocks get one line above when something comes before and the last one fills the page —— */
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(:not([hidden], .aui-sr-only, style, script, template)) ~ :is(.aui-access-split, .aui-access-stack, .aui-access-console) { border-top:1px solid var(--aui-line); }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-access-split, .aui-access-stack):last-child { flex:1 0 auto; }
+/* 8.6.1: a tree straight in a page-flow or column Panel (部门树) runs edge to edge like a table: no frame of its own */
+.adminui :where([data-aui-page], [data-aui-flow], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-panel:not([data-flush]) > .aui-access-tree { margin-inline:calc(var(--aui-panel-pad) * -1); border-inline:0; border-radius:0; }
+.adminui :where([data-aui-page], [data-aui-flow], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-panel:not([data-flush]) > .aui-access-tree:last-child { margin-bottom:calc(var(--aui-panel-pad) * -1); border-bottom:0; }
+.adminui :where([data-aui-page], [data-aui-flow], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-panel:not([data-flush]) > .aui-panel-header + .aui-access-tree { margin-top:calc(var(--aui-panel-pad) * -1); border-top:0; }

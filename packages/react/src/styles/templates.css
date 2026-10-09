@@ -213,11 +213,13 @@
 .adminui .aui-workitems-foot { display:flex; align-items:center; gap:10px; padding:6px 16px; color:var(--aui-note); font-size:calc(12.5px * var(--aui-font-scale)); }
 .adminui .aui-workitems-foot > svg { width:15px; height:15px; }
 .adminui .aui-workitems-foot > .aui-button:last-child { margin-left:auto; }
-.adminui .aui-split { display:grid; grid-template-columns:minmax(0,1fr) var(--aui-rail-width, 340px); gap:16px; align-items:start; min-width:0; }
+.adminui .aui-split { display:grid; grid-template-columns:minmax(0,1fr) var(--aui-rail-width, 340px); gap:0; align-items:stretch; min-width:0; }
 .adminui .aui-split-main,
-.adminui .aui-split-rail { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; align-content:start; min-width:0; }
+.adminui .aui-split-rail { display:flex; flex-direction:column; gap:0; min-width:0; }
+.adminui .aui-split-rail { border-left:1px solid var(--aui-line); }
 @media (max-width:1100px) {
   .adminui .aui-split { grid-template-columns:minmax(0,1fr); }
+  .adminui .aui-split-rail { border-left:0; border-top:1px solid var(--aui-line); }
 }
 .adminui .aui-listdetail-main > .aui-pane { flex:1 1 auto; }
 .adminui .aui-workspace { display:grid; grid-template-columns:var(--aui-workspace-cols); gap:0; height:var(--aui-workspace-height, calc(100dvh - 89px)); min-height:0; min-width:0; background:var(--aui-surface); }
@@ -225,11 +227,8 @@
 .adminui .aui-workspace > * + * { border-left:1px solid var(--aui-line); }
 .adminui .aui-workspace > .aui-pane { height:100%; }
 .adminui .aui-workspace .aui-section-tabs-bar { margin-bottom:0; }
-@media (min-width:1101px) {
-  .adminui .aui-content:has(> :not([hidden]) .aui-workspace:not([hidden] .aui-workspace)) { padding:0; }
-}
 @media (max-width:1100px) {
-  .adminui .aui-workspace { grid-template-columns:minmax(0,1fr); height:auto; border:1px solid var(--aui-line); border-radius:var(--aui-radius-lg); overflow:hidden; }
+  .adminui .aui-workspace { grid-template-columns:minmax(0,1fr); height:auto; min-height:var(--aui-workspace-fill-height, auto); }
   .adminui .aui-workspace > * + * { border-left:0; border-top:1px solid var(--aui-line); }
   .adminui .aui-workspace > .aui-pane { height:auto; max-height:80dvh; }
 }
@@ -294,8 +293,17 @@
 .adminui .aui-wizard-why > svg { width:15px; height:15px; }
 .adminui .aui-wizard-foot > .aui-button:last-child { margin-left:auto; }
 .adminui .aui-wizard-why + .aui-button:last-child { margin-left:0; }
+/* 8.6.1 page flush: the wizard is flat and edge to edge (no card on the page), the aside a column after one vertical line */
+.adminui .aui-wizard[data-aui-flow] { gap:0; justify-content:stretch; align-items:stretch; grid-template-columns:minmax(0,1fr); }
+.adminui .aui-wizard[data-aui-flow][data-aside] { grid-template-columns:minmax(0,1fr) 260px; }
+.adminui .aui-wizard[data-aui-flow] > .aui-wizard-card { border:0; border-radius:0; box-shadow:none; }
+.adminui .aui-wizard[data-aui-flow] > .aui-wizard-card > :is(.aui-wizard-steps, .aui-wizard-body) > * { max-width:var(--aui-wizard-width, 880px); }
+.adminui .aui-wizard[data-aui-flow] .aui-wizard-foot { border-radius:0; }
+.adminui .aui-wizard[data-aui-flow] > .aui-wizard-aside { gap:0; border-left:1px solid var(--aui-line); }
 @media (max-width:1100px) {
   .adminui .aui-wizard[data-aside] { grid-template-columns:minmax(0,1fr); }
+  .adminui .aui-wizard[data-aui-flow][data-aside] { grid-template-columns:minmax(0,1fr); }
+  .adminui .aui-wizard[data-aui-flow] > .aui-wizard-aside { border-left:0; border-top:1px solid var(--aui-line); }
 }
 @media (max-width:760px) {
   .adminui .aui-wizard-steps,
@@ -432,11 +440,6 @@
 }
 
 /* —— flush —— */
-@media (min-width:1101px) {
-  .adminui .aui-tabbed-page:has(> .aui-tabbed-panel:not([hidden]) .aui-workspace:not([hidden] .aui-workspace)) > .aui-tabbed-tabs-row { padding-inline:2px 16px; border-bottom:1px solid var(--aui-line); background:var(--aui-surface); }
-  .adminui .aui-tabbed-page:has(> .aui-tabbed-panel:not([hidden]) .aui-workspace:not([hidden] .aui-workspace)) > .aui-tabbed-tabs-row .aui-section-tabs-bar { margin-bottom:0; border-bottom:0; }
-  .adminui .aui-tabbed-page:has(> .aui-tabbed-panel:not([hidden]) .aui-workspace:not([hidden] .aui-workspace)) > .aui-page-header { padding-inline:16px; }
-}
 .adminui .aui-pane[data-padding=sm] > .aui-pane-body { padding:8px 12px; }
 .adminui .aui-pane[data-padding=md] > .aui-pane-body { padding:12px 16px; }
 .adminui .aui-pane-notice { flex:none; display:grid; gap:8px; min-width:0; padding:10px 16px; }
@@ -454,7 +457,7 @@
 .adminui .aui-pane[data-fill][data-padding] > .aui-pane-body > .aui-section-tabs-wrap:last-child > .aui-section-panel { gap:12px; }
 .adminui .aui-pane-head:has(> .aui-rhead) { align-items:stretch; padding:0; }
 .adminui .aui-pane-head:has(> .aui-rhead) > .aui-pane-actions { align-self:flex-start; padding:12px 16px 0 0; }
-.adminui .aui-workspace .aui-query:not([data-variant]):not(.aui-resource-filters > *):not(.aui-pane-head > *) { margin:0; padding:10px 16px; border:0; border-bottom:1px solid var(--aui-line); border-radius:0; box-shadow:none; }
+.adminui .aui-workspace .aui-query:not([data-variant]):not(:is(.aui-resource-filters, .aui-resource-filters-main) > *):not(.aui-pane-head > *) { margin:0; padding:10px 16px; border:0; border-bottom:1px solid var(--aui-line); border-radius:0; box-shadow:none; }
 .adminui .aui-workspace .aui-table-panel :is(.aui-pagination, .aui-table-toolbar) { padding-inline:16px; }
 .adminui .aui-workspace .aui-resource > .aui-panel-header { min-height:50px; padding:10px 16px; }
 .adminui .aui-workspace .aui-resource > .aui-panel-header h2 { font-size:calc(14.5px * var(--aui-font-scale)); }
@@ -477,18 +480,9 @@
   .adminui .aui-pane[data-fill] > .aui-pane-body > :last-child,
   .adminui .aui-pane[data-fill] > .aui-pane-body > .aui-section-tabs-wrap:last-child > .aui-section-panel,
   .adminui .aui-pane[data-fill] > .aui-pane-body > .aui-section-tabs-wrap:last-child > .aui-section-panel > :last-child { flex:1 0 auto; }
-  .adminui .aui-content:has(> :not([hidden]) .aui-workspace[data-narrow=flush]:not([hidden] .aui-workspace)) { padding:0 0 var(--aui-bottom-nav-offset, 0px); }
-  .adminui .aui-workspace[data-narrow=flush] { border:0; border-radius:0; background:var(--aui-surface); min-height:var(--aui-workspace-fill-height, auto); }
-  .adminui .aui-workspace[data-narrow=flush] > .aui-pane,
-  .adminui .aui-workspace[data-narrow=flush] > .aui-pane[data-fill] { height:auto; max-height:none; }
-  .adminui .aui-workspace[data-narrow=flush] > .aui-pane > .aui-pane-body { overflow-x:hidden; overflow-y:visible; }
-  .adminui .aui-tabbed-page:has(> .aui-tabbed-panel:not([hidden]) .aui-workspace[data-narrow=flush]:not([hidden] .aui-workspace)) > .aui-tabbed-tabs-row { padding-inline:2px 16px; border-bottom:1px solid var(--aui-line); background:var(--aui-surface); }
-  .adminui .aui-tabbed-page:has(> .aui-tabbed-panel:not([hidden]) .aui-workspace[data-narrow=flush]:not([hidden] .aui-workspace)) > .aui-tabbed-tabs-row .aui-section-tabs-bar { margin-bottom:0; border-bottom:0; }
-  .adminui .aui-tabbed-page:has(> .aui-tabbed-panel:not([hidden]) .aui-workspace[data-narrow=flush]:not([hidden] .aui-workspace)) > .aui-page-header { padding-inline:16px; }
-}
-@media (max-width:760px) {
-  .adminui .aui-tabbed-page:has(> .aui-tabbed-panel:not([hidden]) .aui-workspace[data-narrow=flush]:not([hidden] .aui-workspace)) > .aui-tabbed-tabs-row { padding-inline:2px 12px; }
-  .adminui .aui-tabbed-page:has(> .aui-tabbed-panel:not([hidden]) .aui-workspace[data-narrow=flush]:not([hidden] .aui-workspace)) > .aui-page-header { padding-inline:12px; }
+  .adminui .aui-workspace:not([data-narrow=steps]) > .aui-pane,
+  .adminui .aui-workspace:not([data-narrow=steps]) > .aui-pane[data-fill] { height:auto; max-height:none; }
+  .adminui .aui-workspace:not([data-narrow=steps]) > .aui-pane > .aui-pane-body { overflow-x:hidden; overflow-y:visible; }
 }
 @media (min-width:1101px) {
   .adminui .aui-workspace > * + * { border-left:1px solid var(--aui-line); }
@@ -496,3 +490,11 @@
 @media (max-width:1100px) {
   .adminui .aui-workspace > * + * { border-left:0; border-top:1px solid var(--aui-line); }
 }
+
+/* —— page flush (8.6): in the page flow these blocks get one line above when something comes before and the last one fills the page —— */
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(:not([hidden], .aui-sr-only, style, script, template)) ~ :is(.aui-split, .aui-workspace) { border-top:1px solid var(--aui-line); }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-split, .aui-wizard):last-child { flex:1 0 auto; }
+/* —— page flush (8.6): a Pane straight in the page flow (not in a workspace) is flat too, one line above, the last one fills the page —— */
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-pane { border:0; border-radius:0; box-shadow:none; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(:not([hidden], .aui-sr-only, style, script, template)) ~ .aui-pane { border-top:1px solid var(--aui-line); }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > .aui-pane:last-child { flex:1 0 auto; }

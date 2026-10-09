@@ -8,7 +8,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { Eye, RefreshCw } from "lucide-react";
 import { Button, Choice, Input, StatusBadge } from "../primitives.tsx";
 import { FormField } from "../forms.tsx";
-import { DescriptionList, InlineAlert, Panel, StatePanel } from "../layout.tsx";
+import { DescriptionList, InlineAlert, Panel, ResourcePanel, StatePanel } from "../layout.tsx";
 import { DataTable } from "../data.tsx";
 import { CellText } from "../cells.tsx";
 import { DateTimeDisplay } from "../displays.tsx";
@@ -41,7 +41,7 @@ export function ExplainSection() {
   const places = useMemo(() => (c.catalog?.scopedAssignments ? c.dimensions.flatMap((d) => d.values.map((v) => ({ id: `${d.id}:${v.id}`, label: c.dimensions.length > 1 ? `${d.label} · ${v.name}` : v.name, within: { dim: d.id, value: v.id } }))) : []), [c.catalog, c.dimensions]);
   if (!c.catalog) return <StatePanel kind="loading" message="正在加载权限目录…" />;
   return (
-    <div className="aui-access-stack">
+    <div className="aui-access-stack" data-aui-flow="stack">
       <ExplainPanel
         places={places}
         placeLabel={c.dimensions.length === 1 ? `按${c.dimensions[0]!.label}看` : "按哪里看"}
@@ -110,7 +110,7 @@ function ViewAsPanel() {
           </div>
         </div>
       ) : (
-        <div className="aui-access-stack">
+        <div className="aui-access-stack" data-aui-flow="stack">
           <div className="aui-access-bar">
             <StatusBadge tone="warning">只读预览</StatusBadge>
             <strong>{name(view.userId)}</strong>
@@ -212,9 +212,11 @@ export function AuditSection() {
     return snapshotName(e) ?? e.targetId;
   };
   return (
-    <div className="aui-access-stack">
-      <Panel title="授权审计" description="部门、岗位、角色、分配、个人加减、用户组、记录团队、视角预览的每一次改动；和改动在同一个事务里写入。">
-        <div className="aui-access-filters">
+    <div className="aui-access-stack" data-aui-flow="stack">
+      {/* 8.6.1: one ResourcePanel (filters row + list) — as the section's only block its 「?」 sits at the end of the
+          filters row instead of a row of its own, and the list runs edge to edge. */}
+      <ResourcePanel title="授权审计" description="部门、岗位、角色、分配、个人加减、用户组、记录团队、视角预览的每一次改动；和改动在同一个事务里写入。"
+        filters={<div className="aui-access-filters">
           <FormField label="动作" htmlFor={`${ids}-action`}>
             <Choice id={`${ids}-action`} label="动作" value={filter.action ?? "__all"} options={[{ value: "__all", label: "全部动作" }, ...actionOptions]} onChange={(v) => set({ action: v === "__all" ? undefined : v })} />
           </FormField>
@@ -231,8 +233,8 @@ export function AuditSection() {
             <Button onClick={() => setApplied({ ...filter })}>查询</Button>
             {filtered && <Button variant="ghost" onClick={() => { setFilter({}); setApplied({}); }}>清空</Button>}
           </div>
-        </div>
-      </Panel>
+        </div>}
+      >
       <DataTable rowHeight="medium"
         caption="授权审计"
         rows={rows}
@@ -252,6 +254,7 @@ export function AuditSection() {
           { key: "reason", title: "原因", minWidth: 120, maxWidth: 280, truncate: (e) => e.reason || "—", render: (e) => e.reason || "—" },
         ]}
       />
+      </ResourcePanel>
       {error && rows.length > 0 && <InlineAlert tone="error" title="加载失败" action={<Button size="sm" variant="outline" onClick={() => void load(applied, true)}>重试</Button>}>{error}（已显示的记录仍然有效）</InlineAlert>}
       {more && (
         <div className="aui-access-bar">

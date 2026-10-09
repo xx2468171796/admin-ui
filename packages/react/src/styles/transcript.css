@@ -152,3 +152,7 @@
   .adminui .aui-tx-skip { width: 40px; height: 40px; }
   .adminui .aui-tx-side { padding: 12px; }
 }
+
+/* —— page flush (8.6): flat in the page flow, one line above when something comes before —— */
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-transcript) { border:0; border-radius:0; box-shadow:none; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(:not([hidden], .aui-sr-only, style, script, template)) ~ :is(.aui-transcript) { border-top:1px solid var(--aui-line); }

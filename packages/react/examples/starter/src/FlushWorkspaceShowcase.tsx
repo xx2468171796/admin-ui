@@ -33,10 +33,10 @@ import { FORM_DEFINITION, FORM_FIELDS, FORM_SETTINGS, FORM_URL } from "./forms-d
 import { ACTIONS, COND_FIELDS, FIELDS as ACCESS_FIELDS, ICONS, IMPACT, ROLES, SAVED } from "./TableAccessShowcase";
 import { NOW, ROWS } from "./PersonAccessDemo";
 
-// 工作区贴边示例（bt/flush）：TabbedPage 里几个分区是整屏工作区（WorkspaceLayout + Pane），最后一个是普通卡片流。
+// 工作区贴边示例（bt/flush）：TabbedPage 里几个分区是整屏工作区（WorkspaceLayout + Pane），最后一个是普通页面块（8.6 起同样贴边）。
 // 演示 Pane 的 padding / fill / notice、QueryBar variant、ResourcePanel 当一栏自己滚、GridToolbar 去掉行高、
 // 画册 / 表单搭建器 / 表格权限 / 有效权限 / 记录头部放进 Pane 自动贴边；「页签」= Pane fill 里放 Tabs（面板里的画册 / 表格照样贴边、
-// 撑满），Pane 的 ref 和右键事件直接写在 Pane 上；「文档」= 文档阅读页：窄屏 narrow="flush"（不做成卡片、栏之间一条横线），
+// 撑满），Pane 的 ref 和右键事件直接写在 Pane 上；「文档」= 文档阅读页：窄屏上下排也贴边（8.6 起默认，栏之间一条横线），
 // 正文用 aui-neutral-text 换成纯中性灰，栏头是面包屑。数据都是演示的。
 const SECTIONS = [
   { id: "table", label: "客户表" },
@@ -204,7 +204,7 @@ function TabsSection() {
   );
 }
 
-// 文档阅读页（对标飞书文档）：窄屏不做成一张卡片（narrow="flush"）；正文区 className="aui-neutral-text" 用纯中性灰，
+// 文档阅读页（对标飞书文档）：窄屏上下排也贴边（8.6 起默认，不再有卡片模式）；正文区 className="aui-neutral-text" 用纯中性灰，
 // 目录、大纲照常带主色调。栏头放面包屑「个人空间 / 文档名」。
 const DOCS = [
   { key: "guide", title: "客户跟进指南", hint: "10-05 更新" },
@@ -222,7 +222,7 @@ function DocSection() {
   const [doc, setDoc] = useState("guide");
   const current = DOCS.find((d) => d.key === doc) ?? DOCS[0]!;
   return (
-    <WorkspaceLayout narrow="flush"
+    <WorkspaceLayout
       left={<Pane title="个人空间" label="文档目录"><SelectList label="文档" items={DOCS} selected={doc} onSelect={setDoc} /></Pane>}
       right={
         <Pane title="文字灰阶" label="文字灰阶" padding="md">
@@ -250,7 +250,7 @@ function CardsSection() {
   const [query, setQuery] = useState("");
   return (
     <PageBody>
-      <InlineAlert title="普通卡片流分区">同一页的工作区分区贴边，这个分区照常有内边距、卡片之间 16px（{mobile ? "手机" : "宽屏"}布局，来自 useIsMobile）。</InlineAlert>
+      <InlineAlert title="普通页面块">8.6 起普通块也贴边：白底、没有灰色画布，块与块之间一条线（{mobile ? "手机" : "宽屏"}布局，来自 useIsMobile）。</InlineAlert>
       <Panel title="本周概况"><DescriptionList items={[{ label: "新客户", value: 12 }, { label: "成交", value: 3 }]} /></Panel>
       <ResourcePanel title="客户" count={ALL.length} unit="位" filters={<QueryBar variant="bare" value={draft} onChange={setDraft} onSearch={() => setQuery(draft.trim())} onReset={() => { setDraft(""); setQuery(""); }} placeholder="搜客户名称" />}>
         <DataTable caption="客户（卡片流）" rows={ALL.filter((c) => !query || c.name.includes(query)).slice(0, 5)} rowKey={(r) => r.id} columns={columns} pagination={{ mode: "all" }} />
@@ -262,7 +262,7 @@ function CardsSection() {
 export function FlushWorkspaceShowcase() {
   const [section, setSection] = useState("table");
   return (
-    <TabbedPage title="工作区贴边" description="TabbedPage 里的整屏工作区：分区标签条贴边，工作区里的表格、画册、表单、权限、记录头部都不再是一张张卡片；最后一个分区是普通卡片流。"
+    <TabbedPage title="工作区贴边" description="TabbedPage 里的整屏工作区：分区标签条贴边，工作区里的表格、画册、表单、权限、记录头部都不再是一张张卡片；最后一个分区是普通页面块，8.6 起同样贴边。"
       sections={SECTIONS} value={section} onValueChange={setSection}
       render={(id) =>
         id === "table" ? <TableSection /> : id === "views" ? <ViewsSection /> : id === "form" ? <FormSection /> : id === "access" ? <AccessSection /> : id === "person" ? <PersonSection /> : id === "record" ? <RecordSection /> : id === "tabs" ? <TabsSection /> : id === "doc" ? <DocSection /> : <CardsSection />

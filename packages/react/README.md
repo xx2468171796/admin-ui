@@ -13,6 +13,8 @@ npm 包发布之前，可以安装 GitHub Release 里的 tarball：`npm install 
 
 应用入口第一行 `import '@adminui/react/styles.css'`（只有 token、基础和核心组件），其它样式跟着组件自动进来；只从公开入口导入，重的子路径（grid / views / charts / dashboard-builder / form-builder / access / markdown / excel）懒加载。小 / 中 / 大项目分别从 `examples/small` / `examples/starter` / `examples/large` 起步（INTEGRATION.md §1.0，三档只是默认起点，任何子路径都能加）。
 
+整个后台要繁体中文（台湾用语）：`vite.config.ts` 加 `adminUiLocale({ locale: "zh-Hant" })`（`@adminui/react/vite`，组件库自带文字在构建时转换，见 INTEGRATION.md §1.3）。
+
 装了包就有界面漂移检查命令，放进项目的 verify 门禁：`npx admin-ui-audit apps/web/src --baseline apps/web/ui-audit-baseline.json`（规则和忽略注释见 `npx admin-ui-audit --help`，接入见 [INTEGRATION.md](INTEGRATION.md) §10）。
 
 ## 文档

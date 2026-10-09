@@ -1,6 +1,6 @@
-// WorkspaceLayout narrow="card" | "flush", Breadcrumbs separator spacing and the .aui-neutral-text document area.
-// Used by test:page-templates (系统 → 工作区贴边: 客户表 = default card, 文档 = narrow="flush" + Breadcrumbs + neutral
-// text) and test:design (Breadcrumbs on 后台工作流).
+// WorkspaceLayout stacked under 1100px (8.6: always flush, the old narrow="card" is gone), Breadcrumbs separator spacing
+// and the .aui-neutral-text document area. Used by test:page-templates (系统 → 工作区贴边: 客户表 and 文档 (Breadcrumbs +
+// neutral text) both flush) and test:design (Breadcrumbs on 后台工作流).
 import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
 import { assertFlush, flushFacts, openFlush } from './flush-checks.mjs';
@@ -60,11 +60,11 @@ function neutralFacts(p) {
   });
 }
 
-/** 390 / 900 × light / dark: 客户表 keeps the bordered card, 文档 (narrow="flush") sits edge to edge; screenshots. */
+/** 390 / 900 × light / dark: 客户表 and 文档 both sit edge to edge (no card, no content padding); screenshots. */
 export async function checkNarrowModes(browser, url, output) {
   for (const width of [390, 900]) {
     for (const dark of [false, true]) {
-      for (const [section, mode] of [['客户表', 'card'], ['文档', 'flush']]) {
+      for (const [section, mode] of [['客户表', 'table'], ['文档', 'doc']]) {
         const p = await browser.newPage();
         const errors = [];
         p.on('pageerror', (e) => errors.push(e.message));
@@ -81,12 +81,8 @@ export async function checkNarrowModes(browser, url, output) {
           const ws = facts.workspace;
           assert.ok(facts.cols.length >= 2, `${label}：上下排至少两栏`);
           for (const [i, pane] of geo.panes.entries()) assert.ok(pane.x === ws.left + ws.border && pane.right === ws.right - ws.border, `${label}：第 ${i + 1} 栏占满工作区宽（${pane.x}–${pane.right}，工作区 ${ws.left}–${ws.right}）`);
-          if (mode === 'card') {
-            assert.equal(geo.narrow, null, `${label}：默认不加 data-narrow`);
-            assert.ok(facts.contentPadding > 0, `${label}：卡片模式外壳内容区保留内边距`);
-            assert.ok(ws.radius > 0 && ws.border === 1, `${label}：卡片模式有外框和圆角（r=${ws.radius} b=${ws.border}）`);
-          } else {
-            assert.equal(geo.narrow, 'flush', `${label}：data-narrow=flush`);
+          {
+            assert.equal(geo.narrow, null, `${label}：贴边是默认，不加 data-narrow`);
             assert.equal(facts.contentPadding, 0, `${label}：外壳内容区没有内边距`);
             assert.ok(ws.radius === 0 && ws.border === 0, `${label}：没有外框和圆角（r=${ws.radius} b=${ws.border}）`);
             assert.ok(ws.left === geo.contentLeft && ws.right === geo.contentRight, `${label}：工作区贴着内容区左右边（${ws.left}–${ws.right}，内容区 ${geo.contentLeft}–${geo.contentRight}）`);
@@ -102,6 +98,8 @@ export async function checkNarrowModes(browser, url, output) {
             assert.ok(doc.bg !== 'rgba(0, 0, 0, 0)' && doc.bg !== 'transparent', `${label}：贴边模式工作区铺底色（${doc.bg}）`);
             assert.ok(doc.bottom - doc.top >= Math.floor(doc.fill), `${label}：工作区至少铺到可用高度（${doc.bottom - doc.top} / ${doc.fill}）`);
             assert.ok(facts.tabsLeft === geo.contentLeft && facts.tabsRight === geo.contentRight, `${label}：分区标签行贴着内容区左右边`);
+          }
+          if (mode === 'doc') {
             await assertCrumbs(area.locator('.aui-tabbed-panel:not([hidden]) nav[aria-label="面包屑"]'), label);
             const n = await neutralFacts(p);
             assert.deepEqual(n.body, n.neutral[0], `${label}：文档正文用中性 1`);

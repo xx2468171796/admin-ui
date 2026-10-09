@@ -147,8 +147,24 @@ const WAYS = ["上门", "电话", "微信", "其他"];
 const WAY_COLORS = [vizOptionColor("green"), vizOptionColor("blue"), vizOptionColor("teal"), vizOptionColor("gray")];
 const PEOPLE = ["阿杰", "美华", "小王", "小李", "小陈"];
 
+/**
+ * 8.8 组件说明标（DashboardWidgetData.note）：卡头标题旁的小标签，点开看 detail。演示：今天的有效跟进不含待审核的、
+ * 逾期客户里有没负责人的（警示色）、数字组按成交日汇率折算（数字组在只读看板里没有卡头，标签浮在右上角）。
+ */
+const NOTES: Record<string, DashboardWidgetData["note"]> = {
+  w1: { label: "不含待审核 2 条", detail: "定位 / 照片还在审核的跟进不算有效跟进，审核通过后自动计入。" },
+  w6: { label: "缺负责人 3 位", tone: "warning", detail: <ul className="starter-note-list"><li>何俊贤（离职交接中）</li><li>刘建宏（公海退回）</li><li>陈雅婷（新导入）</li></ul> },
+  group: { label: "按成交日汇率折算 · 缺汇率 3 条", tone: "warning", detail: "TWD → CNY：10-01 0.2236、10-02 0.2241；10-05 的 3 笔没有汇率，暂按 0 计。" },
+};
+
 /** Stand-in for the host's server aggregation (respecting the viewer's scope there). */
 async function loadWidgetData(widget: DashboardWidget, ctx: DashboardFilterValue, signal: AbortSignal): Promise<DashboardWidgetData> {
+  const data = await widgetData(widget, ctx, signal);
+  const note = NOTES[widget.id] ?? (widget.kind === "group" ? NOTES.group : undefined);
+  return note ? { ...data, note } : data;
+}
+
+async function widgetData(widget: DashboardWidget, ctx: DashboardFilterValue, signal: AbortSignal): Promise<DashboardWidgetData> {
   await new Promise((r) => setTimeout(r, 250));
   if (signal.aborted) throw new Error("已取消");
   const k = scale(ctx);

@@ -216,7 +216,7 @@ export function AccessConsole({
   };
   return (
     <ConsoleProvider value={shared}>
-      <div className="aui-access-console">
+      <div className="aui-access-console" data-aui-flow="stack">
         {viewAs && <ViewAsBanner view={viewAs} userName={userName(viewAs.userId)} onEnd={endViewAs} />}
         <TabbedPage
           title={title}

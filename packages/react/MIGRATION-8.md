@@ -2,7 +2,7 @@
 
 8.0 是干净的大版本：被新规范取代的旧写法全部删掉，**不留兼容层**；CSS 按组件拆开，页面只带用到的样式。
 
-**旧项目升级可选，不强制**：钉着旧标签（如 `#adminUI-v8.4.0`）照常能用，谁要升谁升；新项目默认用最新。要升就照下面的表改，再跑一遍审计，审计零错误就改完了：
+**旧项目升级可选，不强制**：钉着旧标签（如 `#adminUI-v8.8.0`）照常能用，谁要升谁升；新项目默认用最新。要升就照下面的表改，再跑一遍审计，审计零错误就改完了：
 
 ```bash
 npx @adminui/react audit src          # 或 npx admin-ui-audit src；每条问题写 文件:行号 和 换成什么
@@ -58,6 +58,7 @@ npx @adminui/react audit src          # 或 npx admin-ui-audit src；每条问�
 | `<Avatar size="xs" \| "sm">` | `size={20}` / `size={24}` |
 | `<AvatarStack size="sm" \| "md">` | `size={20}` / `size={32}` |
 | `TranscriptCategory.tone`: brand / brandMid / solid / neutral | `"green" \| "teal" \| "greenSolid" \| "gray"`（同样的颜色） |
+| `<WorkspaceLayout narrow="card">`（8.6 删掉） | 去掉这个属性：窄屏上下排一律贴边（原来的 `narrow="flush"` 现在是默认，写着也照常）；手机列表 → 详情两步走用 `narrow="steps"`。类型 `WorkspaceNarrowMode` = `"flush" \| "steps"` |
 | 看板存档版本 1（64px 行）直接交给 `DashboardBuilder` / `normalizeDashboard` | 组件和 `normalizeDashboard` 只认版本 2：读存档时先 `migrateDashboardSpec(spec)`（或把表里的存档一次迁完） |
 
 ## 4. 选项色：只有 10 色 20 名
@@ -104,6 +105,7 @@ CSS 变量：8.0 没有删 `--aui-*` 变量（审计 `removed-css-var` 规则已
 - 字号都在 8 档里：零碎的 13.5 / 15 / 16 / 11 / 11.5 等对到 13 / 14.5 / 12（侧栏菜单 13.5 → 13、分组标题 11.5 → 12、图标栏文字 11 → 12）；例外只有弹框标题 16、数字卡 28 / 24 / 20 和键帽、头像字、角标这类微标。
 - 记录头部只有白底紧凑的一种（以前不给 `variant="flat"` 时是浅主色渐变底 + 发光头像）。
 - 分页页码不再是图标按钮（`.aui-page-num`），样子不变。
+- **8.6 页面贴边**：普通页面不再是灰底上的圆角卡片——外壳内容区不留内边距、白底；工作页、`PageBody`、`TabbedPage` 分区、`SplitLayout` / `SideNavLayout` / `DetailLayout` 栏里的 `Panel` / `ResourcePanel` / `DataTable` / `QueryBar` 没有边框、圆角、阴影和间距，块与块之间一条线，栏与栏之间一条竖线，最后的分栏（`ListDetailLayout`、`SplitLayout`、`SideNavLayout`）撑到页面底；分区标签行白底一条底线。看板（`KpiGrid` / `MetricGrid` / `DashboardSection` / `DashboardView`）照旧是卡片，放在自己的浅色画布带上。页面（或分区）里只有一个带标题的 `Panel` / `ResourcePanel` 时标题不再显示（只给读屏），数量、「?」和按钮并进筛选行或一条紧凑工具行（数量写成「共 N 条 / 个」）；只有一个分区的 `TabbedPage` 不出分区标签行（分区是 `role="region"`，名字 = 分区名）。项目里给内容区加回内边距、给面板加回边框的覆盖样式要删掉；按可见标题文字找元素的 e2e 改成按角色 / 名字找（标题还在，是读屏用的 h2）。
 
 ## 7. 体积前后对比
 
@@ -135,7 +137,8 @@ CSS 变量：8.0 没有删 `--aui-*` 变量（审计 `removed-css-var` 规则已
 
 ## 8. 跟最新版的项目要做的
 
-1. 依赖改到 `#adminUI-v8.4.0`，`npx @adminui/react audit apps modules platform packages` 清零（当前已知：`FieldTile/FieldTiles`（个人资料页）、`Button size="icon"`（多维表格仪表盘页）、`MenuButton size="icon"`（知识库标题栏）、bitable 原型里的旧色名）。
+1. 依赖改到 `#adminUI-v8.8.0`，`npx @adminui/react audit apps modules platform packages` 清零（当前已知：`FieldTile/FieldTiles`（个人资料页）、`Button size="icon"`（多维表格仪表盘页）、`MenuButton size="icon"`（知识库标题栏）、bitable 原型里的旧色名）。
 2. 入口里 `styles.css` 放第一行；模块前端按路由懒加载重子路径；删掉和 admin-ui 重复的手写样式。
 3. 存量看板存档：读的时候 `migrateDashboardSpec`；存的选项色旧名用 `legacyTone` 读（或一次性迁移成新名）。
 4. e2e 里按 `.aui-button-icon`、`.aui-menu-item`、`title` 属性找元素的改成按角色 / 名字找（IconButton 的名字就是 `label`）。
+5. 升到 8.6：删掉 `WorkspaceLayout narrow="card"`（审计 `removed-prop` 会报）；删掉自己写的「卡片之间留缝」「内容区内边距」之类覆盖；页面里和页名重复的标题行不用再自己去（SDK 自动收），但自己拼的标题 div 要删。

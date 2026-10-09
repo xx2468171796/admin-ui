@@ -221,7 +221,11 @@ export function GridCustomersShowcase() {
             { key: "child", label: "添加子记录", icon: <ListTree aria-hidden="true" />, onSelect: () => notify("演示：添加一条跟进记录", "info") },
             { key: "comment", label: "添加评论", icon: <MessageSquare aria-hidden="true" />, onSelect: () => notify("演示：打开评论", "info") },
           ]}
-          onAddRow={(group) => setRows((list) => [...list, blank(group.stage || "first")])}
+          onAddRow={(group) => {
+            const row = blank(group.stage || "first");
+            setRows((list) => [...list, row]);
+            return row.id;
+          }}
           onRowMove={move}
           cellBadge={(row, field) => {
             const n = COMMENTS[row.id]?.[field.key];

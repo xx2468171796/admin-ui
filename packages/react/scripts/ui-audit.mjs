@@ -67,6 +67,7 @@ export const MIGRATION_8 = {
   /** Removed props: component → prop → replacement. `value` limits the match to that literal value. */
   props: [
     { component: "Button", prop: "size", value: "icon", hint: "图标按钮用 IconButton（label 必填 = 读屏名 + 气泡）" },
+    { component: "WorkspaceLayout", prop: "narrow", value: "card", hint: "8.6 删掉：窄屏上下排一律贴边，去掉这个属性（手机两步走用 narrow=\"steps\"）" },
     { component: "Button", prop: "variant", value: "link", hint: "去别处用 Link，原地做事用 variant=\"text\"" },
     { component: "Button", prop: "title", hint: "Button 不再收 title：说明用 tooltip=，禁用原因用 disabledReason=" },
     { component: "IconButton", prop: "title", hint: "IconButton 的 label 就是气泡；另写说明用 tooltip=" },

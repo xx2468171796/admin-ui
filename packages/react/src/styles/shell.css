@@ -14,7 +14,7 @@
     to right,
     var(--aui-sidebar) calc(var(--aui-sidebar-width) - 1px),
     var(--aui-sidebarDeep) calc(var(--aui-sidebar-width) - 1px) var(--aui-sidebar-width),
-    var(--aui-canvas) var(--aui-sidebar-width)
+    var(--aui-surface) var(--aui-sidebar-width)
   );
 }
 :where(body):has(.adminui .aui-shell) {
@@ -379,7 +379,8 @@
 }
 .adminui .aui-main {
   min-width: 0;
-  background: var(--aui-canvas);
+  /* 8.6 page flush: page content sits on the surface, no grey canvas around or between blocks */
+  background: var(--aui-surface);
 }
 .adminui .aui-topbar {
   height: var(--aui-topbar-height);
@@ -420,7 +421,7 @@
   display: none;
 }
 .adminui .aui-content {
-  padding: 20px 20px 24px;
+  padding: 0;
   min-width: 0;
 }
 .adminui .aui-sidebar-backdrop {
@@ -429,7 +430,7 @@
 @media (max-width: 760px) {
   .adminui .aui-shell {
       display: block;
-      background: var(--aui-canvas);
+      background: var(--aui-surface);
     }
   .adminui .aui-sidebar {
       position: fixed;
@@ -549,7 +550,7 @@
       flex-shrink: 0;
     }
   .adminui .aui-content {
-      padding: 12px;
+      padding: 0;
     }
 }
 .adminui .aui-portal .aui-topbar-mobile-title { display:none; }
@@ -559,8 +560,7 @@
 }
 
 /* —— layout —— */
-.adminui .aui-content > [role=tabpanel]:not([hidden]) { display:grid; grid-template-columns:minmax(0,1fr); gap:var(--aui-space-4); align-content:start; min-width:0; }
-.adminui .aui-content > :not([hidden]):has(> .aui-page-body[data-fill]:last-child) { display:flex; flex-direction:column; min-height:calc(100dvh - var(--aui-content-offset, 137px)); }
+.adminui .aui-content > [data-aui-page]:not([hidden]) { display:flex; flex-direction:column; gap:0; min-width:0; min-height:calc(100dvh - var(--aui-content-offset, 89px)); }
 @media (max-width:760px) {
   .adminui .aui-has-bottom-nav .aui-content { padding-bottom:calc(76px + env(safe-area-inset-bottom)); }
 }

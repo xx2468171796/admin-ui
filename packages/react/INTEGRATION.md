@@ -22,7 +22,7 @@
 固定版本安装（`npm install @adminui/react`）：
 
 ```json
-{"dependencies":{"@adminui/react":"8.1.0","react":"^19.0.0","react-dom":"^19.0.0"}}
+{"dependencies":{"@adminui/react":"8.6.0","react":"^19.0.0","react-dom":"^19.0.0"}}
 ```
 
 
@@ -67,6 +67,7 @@
 | `@adminui/react/form-builder` | 收集表单搭建器 `FormBuilder` | — |
 | `@adminui/react/forms-public` | 公开填写页 `PublicForm` / `FormSuccess` | — |
 | `@adminui/react/record-detail-spec` | 记录详情布局 JSON 的规则（无 React，服务端校验用） | — |
+| `@adminui/react/vite` | Vite 插件 `adminUiLocale`：组件库自带文字换成繁体中文（台湾用语），见 §1.3（只在 `vite.config.ts` 里用，Node 专用，不进浏览器包） | `opencc-js@^1.4.2`（只在 `zh-Hant` 时） |
 
 根入口不导入任何可选依赖、也不再导出子路径的东西；子路径用 `React.lazy` 按页加载（样式随之按需加载）。
 
@@ -80,6 +81,37 @@ cd /tmp/adminui-starter && npm install && npm run dev
 ```
 
 starter 是完整的演示后台（用户列表 / 详情 / 弹框 / 客户与订单 / 轻量集合 / 多维表格 / 权限 / 工作流 / 动效 / 运营看板），数据虚构、没有生产副作用。
+
+### 1.3 界面文字：简体 / 繁体（台湾用语）
+
+组件库自带的界面文字（按钮、占位、分页「共 N 条」、校验和空状态提示、确认框……）默认是简体中文。整个后台要繁体中文（台湾用语）时，在 `vite.config.ts` 加一个插件：组件库自己的文字在构建时换掉，不用逐个组件传文案。
+
+```bash
+npm i -D opencc-js        # 只有 zh-Hant 用到（optional peer）
+```
+
+```ts
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { adminUiLocale } from "@adminui/react/vite";
+
+export default defineConfig({
+  plugins: [
+    react(),
+    adminUiLocale({ locale: "zh-Hant" }),
+    // 个别说法要换：键写转换后屏幕上看到的字（必须含汉字），最后套用
+    // adminUiLocale({ locale: "zh-Hant", overrides: { 簽核: "審批" } }),
+  ],
+});
+```
+
+- **只转组件库自己的文件**（它的 dist JS，包括编译成 `\uXXXX` 转义的 JSX 文字，和它的 CSS），按包所在目录认，npm / pnpm（`.pnpm/…/node_modules/…`）/ workspace 链接都认得；宿主自己的代码、别的包、运行时显示的数据（接口返回的客户名、订单内容）一律不碰。宿主自己的文字自己写成繁体。
+- **dev 和 build 都生效**：dev 时在依赖预构建（esbuild）里转，没进预构建的文件和 CSS 在 transform 里转；build 在 transform 里转。插件名带 locale / overrides / 版本的指纹，改了它们依赖缓存自动重建。
+- **用词**：先套审过的界面词表（`HANT_UI_PHRASES`），再用 OpenCC `cn → twp` 转其余汉字。例如「共 N 筆」「N 筆/頁」「（Enter 搜尋）」「標 * 為必填」「送出中…」「預設 / 儲存 / 設定 / 載入 / 欄位 / 權限 / 使用者 / 影片 / 螢幕 / 滑鼠 / 簽核」；表格的「列」（column）写成「欄」，「行」不动。结果确定、幂等；组件库里本来就是繁体的文字（如 `OrgPicker` 的 zh-TW 文案）保持原样。
+- **不转的**：运行时用 `Intl` / `toLocaleString` 生成的文字（数字、时间，一般不含汉字）；宿主传进组件的文字。
+- **少数地方组件按中文字样做判断**（例如权限控制台看服务器错误消息里有没有「刷新 / 重新加载」来决定提示重新加载）：转换后认的是繁体字样（「重新整理 / 重新載入」），后端返回简体消息时这类提示不再命中，只影响提示文字。
+- 只有 Vite 插件；别的打包器可以用同一子路径导出的 `createHantConverter` + `convertModuleText` 自己接。关掉 = 去掉插件或 `locale: "zh-Hans"`，产物和不装插件时逐字节相同。
 
 ## 2. Provider、外壳与色卡
 
@@ -381,7 +413,7 @@ tool/
 
 ## 11. 升级到 8.0
 
-- **升不升由项目自己定**：已有项目可以继续钉着原来的 tag，照常能用，不强制升级；**新项目一律用最新版**（当前 `adminUI-v8.4.0`）；大型宿主项目跟最新。
+- **升不升由项目自己定**：已有项目可以继续钉着原来的 tag，照常能用，不强制升级；**新项目一律用最新版**（当前 `adminUI-v8.8.0`）；大型宿主项目跟最新。
 - 这一版不留兼容层：被新组件取代的旧 API、旧 prop、旧类名和旧 CSS 变量都已去掉。旧 → 新对照表见 [MIGRATION-8.md](MIGRATION-8.md)。
 - 升级前先在项目里跑审计，按输出逐条改：
 

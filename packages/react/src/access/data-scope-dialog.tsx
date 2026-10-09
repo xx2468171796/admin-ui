@@ -50,7 +50,7 @@ function DimFilterField({ dim, value, onChange, readOnly }: { dim: AccessDimensi
   const mode = modeOf(value);
   return (
     <FormField label={dim.label} htmlFor={id} hint={`和上面的范围同时满足；没填${dim.label}的记录不算，除非勾选下面一项`}>
-      <div id={id} className="aui-access-stack">
+      <div id={id} className="aui-access-stack" data-aui-flow="stack">
         <SegmentedControl
           label={`${dim.label}过滤`}
           size="sm"

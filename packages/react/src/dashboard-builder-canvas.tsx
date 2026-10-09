@@ -14,7 +14,8 @@ import { forwardRef, useImperativeHandle, useRef, useState, type CSSProperties, 
 import { Copy, GripVertical, Filter, Settings2, Trash2 } from "lucide-react";
 import { cn } from "./primitives.tsx";
 import type { DashboardFilterValue } from "./dashboard-filters-core.ts";
-import { WidgetBody, type LoadWidgetData } from "./dashboard-builder-widget.tsx";
+import { WidgetStates, useWidgetData, widgetNoteOf, type LoadWidgetData } from "./dashboard-builder-widget.tsx";
+import { WidgetNoteTag } from "./dashboard-widget-note.tsx";
 import {
   cellAt,
   duplicateWidget,
@@ -32,6 +33,7 @@ import {
   type DashboardWidget,
 } from "./dashboard-builder-core.ts";
 import { IconButton } from "./buttons.tsx";
+import { hugNumberRows } from "./dashboard-view-rows.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard-builder.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
@@ -87,6 +89,8 @@ export function WidgetFrame({ widget, context, load, decor, edit, style }: Frame
   const pos = `第 ${widget.layout.x + 1} 列第 ${widget.layout.y + 1} 行，宽 ${widget.layout.w} 高 ${widget.layout.h}`;
   const bare = !edit && widget.kind === "group";
   const tip = badge?.kind === "standard" ? `${badge.label}${formula ? `：${formula}` : ""}` : undefined;
+  const loaded = useWidgetData(widget, context, load);
+  const note = widgetNoteOf(loaded.state);
   return (
     <section
       className="aui-dbb-widget"
@@ -109,6 +113,7 @@ export function WidgetFrame({ widget, context, load, decor, edit, style }: Frame
           </span>
         )}
         <h3 data-tip={widget.title}>{widget.title}</h3>
+        {note && !bare && <WidgetNoteTag note={note} />}
         {source && wide && <small className="aui-dbb-sub">{source}</small>}
         {badge?.kind === "custom" && <span className="aui-dbb-tag" data-kind="custom" data-tip={formula ? `口径：${formula}` : badge.label}>{badge.label}</span>}
         {inherit && inherit.overridden.length > 0 && (
@@ -119,7 +124,7 @@ export function WidgetFrame({ widget, context, load, decor, edit, style }: Frame
         {edit && edit.toolbar}
       </header>
       <div className="aui-dbb-body">
-        <WidgetBody widget={widget} context={context} load={load} onClearFilters={decor.onClearFilters} onSetTarget={decor.onSetTarget ? () => decor.onSetTarget?.(widget) : undefined} />
+        <WidgetStates widget={widget} context={context} load={load} loaded={loaded} inlineNote={bare ? note : undefined} onClearFilters={decor.onClearFilters} onSetTarget={decor.onSetTarget ? () => decor.onSetTarget?.(widget) : undefined} />
         {widget.caption && <p className="aui-dbb-caption">{widget.caption}</p>}
       </div>
       {edit?.selected && (
@@ -151,10 +156,13 @@ export type DashboardViewProps = {
 export function DashboardView({ widgets, context, load, decor = {}, stacked, label = "看板" }: DashboardViewProps) {
   const list = stacked ? readingOrder(widgets) : widgets;
   const lone = stacked ? loneNumbers(list) : new Set<string>();
+  // Number cards hug their content (8.6): stacked = one auto row each, wide = a band of them folds into one auto row.
+  const hug = stacked ? null : hugNumberRows(list);
+  const stackedRow = (w: DashboardWidget) => (w.kind === "group" || w.kind === "kpi" ? "span 1" : `span ${w.layout.h}`);
   return (
-    <div className="aui-dbb-grid" data-stacked={stacked || undefined} style={gridVars} role="region" aria-label={label}>
+    <div className="aui-dbb-grid" data-stacked={stacked || undefined} style={hug ? { ...gridVars, gridTemplateRows: hug.templateRows } : gridVars} role="region" aria-label={label}>
       {list.map((w) => (
-        <WidgetFrame key={w.id} widget={w} context={context} load={load} decor={decor} style={stacked ? { gridRow: w.kind === "group" ? "span 1" : `span ${w.layout.h}`, ...(lone.has(w.id) ? { gridColumn: "1 / -1" } : {}) } : place(w)} />
+        <WidgetFrame key={w.id} widget={w} context={context} load={load} decor={decor} style={stacked ? { gridRow: stackedRow(w), ...(lone.has(w.id) ? { gridColumn: "1 / -1" } : {}) } : (hug?.place.get(w.id) ?? place(w))} />
       ))}
     </div>
   );

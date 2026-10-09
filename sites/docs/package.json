@@ -17,6 +17,6 @@
     "serve:sandbox": "node scripts/serve-sandbox.mjs"
   },
   "dependencies": {
-    "@adminui/react": "8.4.0"
+    "@adminui/react": "8.8.0"
   }
 }

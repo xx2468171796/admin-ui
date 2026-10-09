@@ -263,6 +263,7 @@ const ENTRY_FILES: Record<string, string> = {
   "@adminui/react/forms-public": "form-builder/public.ts", // bt/builders-a
   "@adminui/react/dashboard-builder": "dashboard-builder.tsx", // bt/builders-b
   "@adminui/react/org-picker": "org-picker/index.ts",
+  "@adminui/react/vite": "vite.ts",
 };
 test("every catalog export is really exported from its entry", () => {
   for (const cap of CAPABILITIES) {

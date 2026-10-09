@@ -73,6 +73,7 @@ export type TabbedPageProps = {
   /** Accessible name of the tab list; default `${title}分区`. */
   tabsLabel?: string;
   /**
+   * With a single section the tab row is never shown (8.6): the panel is a region named by the section label.
    * Hide the section tab row while one section takes the whole page (e.g. a full-height workspace
    * opened inside it). Panels stay mounted; the row comes back when this turns false.
    */
@@ -103,13 +104,15 @@ export function TabbedPage({
   }, [value, keepMounted]);
   const panelId = (id: string) => `${base}panel-${id}`;
   const mounted = sections.filter((s) => s.id === value || (keepMounted && visited.includes(s.id)));
+  // 8.6: one section = no tab row (a lone tab only repeats the page name); the panel is then a named region.
+  const single = sections.length === 1;
   return (
     <div className="aui-tabbed-page">
       <EmbeddedPage embedded={false}>
         <PageHeader title={title} description={description} actions={actions} />
       </EmbeddedPage>
       {/* 分区标签一行的右端留插槽：分区一开头不是列表（例如 KPI 卡）时，页面按钮放这里，不单独占一行 */}
-      <div className="aui-tabbed-tabs-row" hidden={tabsHidden || undefined}>
+      <div className="aui-tabbed-tabs-row" hidden={tabsHidden || single || undefined}>
         <Tabs
           label={tabsLabel ?? `${title}分区`}
           value={value}
@@ -125,9 +128,11 @@ export function TabbedPage({
           <div
             key={s.id}
             id={panelId(s.id)}
-            role="tabpanel"
-            aria-labelledby={`${base}tab-${s.id}`}
+            role={single ? "region" : "tabpanel"}
+            aria-labelledby={single ? undefined : `${base}tab-${s.id}`}
+            aria-label={single ? s.label : undefined}
             className="aui-tabbed-panel"
+            data-aui-page=""
             hidden={s.id !== value}
           >
             <PanelErrorBoundary>{render(s.id, active && s.id === value)}</PanelErrorBoundary>

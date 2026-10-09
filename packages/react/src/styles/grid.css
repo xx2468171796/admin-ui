@@ -125,6 +125,12 @@
 .adminui .aui-grid-summary-cell[data-empty=true] .aui-grid-summary-label { visibility:hidden; }
 .adminui .aui-grid-summary-cell[data-empty=true]:is(:hover,:focus) .aui-grid-summary-label { visibility:visible; }
 .adminui .aui-grid-summary-total { color:var(--aui-note); white-space:nowrap; }
+.adminui .aui-grid-footer-add { display:inline-grid; place-items:center; width:28px; height:28px; padding:0; border:0; border-radius:var(--aui-radius-sm); background:transparent; color:var(--aui-secondary); cursor:pointer; }
+.adminui .aui-grid-footer-add > svg { width:16px; height:16px; }
+.adminui .aui-grid-footer-add:hover { background:var(--aui-soft); color:var(--aui-primary); }
+.adminui .aui-grid-footer-add:focus-visible { outline:2px solid var(--aui-primary); outline-offset:-2px; }
+.adminui .aui-grid-footer-add:disabled { cursor:progress; opacity:.5; }
+@media (max-width:760px) { .adminui .aui-grid-footer-add { width:36px; height:36px; } }
 .adminui .aui-grid-summary-cell:has(> .aui-grid-summary-total):not(.aui-grid-rownum-cell) { justify-content:flex-start; }
 .adminui .aui-grid-overlay { position:absolute; inset:var(--aui-grid-head-h) 0 0 0; display:grid; place-items:center; padding:16px; pointer-events:none; }
 .adminui .aui-grid-overlay > * { pointer-events:auto; }
@@ -421,3 +427,9 @@
 /* —— overlays-menus —— */
 .adminui .aui-grid-popover { border-radius: var(--aui-radius-lg); background: var(--aui-elev); box-shadow: var(--aui-pop-shadow); }
 .adminui .aui-grid-popover { --aui-scrollbar-size: 8px; }
+
+/* —— page flush (8.6): flat in the page flow, one line above when something comes before —— */
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :is(.aui-grid-panel) { border:0; border-radius:0; box-shadow:none; }
+.adminui :where([data-aui-page], [data-aui-flow=stack], :is([data-aui-page], [data-aui-flow=stack]) > :is(.aui-stack, .aui-workflow-stack, div:not([class]))) > :where(:not([hidden], .aui-sr-only, style, script, template)) ~ :is(.aui-grid-panel) { border-top:1px solid var(--aui-line); }
+/* a grid straight in an unpadded Pane body (a module page: title row + grid) is flat: the Pane is the frame */
+.adminui :where(.aui-pane:not([data-padding]) > .aui-pane-body) > .aui-grid-panel { border:0; border-radius:0; box-shadow:none; }

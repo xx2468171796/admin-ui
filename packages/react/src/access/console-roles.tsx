@@ -158,11 +158,11 @@ export function RoleSection() {
 
   if (!c.catalog) return <StatePanel kind="loading" message="正在加载权限目录…" />;
   return (
-    <div className="aui-access-stack">
+    <div className="aui-access-stack" data-aui-flow="stack">
       <ReadOnlyNote show={!manage} />
       <ErrorAlert error={act.error} onReload={() => { act.clear(); c.reload("roles"); }} onDismiss={act.clear} />
       <StatusLine text={act.done} />
-      <div className="aui-access-split">
+      <div className="aui-access-split" data-aui-flow="columns">
         <Panel title="角色" actions={manage ? <Button size="sm" onClick={() => setCreating({ name: "", code: "", description: "", copyFrom: "" })}><Plus size={14} aria-hidden="true" />新建角色</Button> : undefined}>
           <DataTable rowHeight="medium"
             caption="角色列表"
@@ -221,7 +221,7 @@ export function RoleSection() {
         )}
       </div>
       {role && (
-        <div className="aui-access-stack">
+        <div className="aui-access-stack" data-aui-flow="stack">
           {basics.superuser ? (
             <InlineAlert tone="warning" title="超级管理员拥有全部权限">矩阵对它不起作用；高危操作照样要二次验证。</InlineAlert>
           ) : (
@@ -412,7 +412,7 @@ export function FieldSection() {
   if (!withFields.length) return <StatePanel kind="empty" message="权限目录里没有声明字段策略的资源" />;
   const savedFields = matrixOf(role);
   return (
-    <div className="aui-access-stack">
+    <div className="aui-access-stack" data-aui-flow="stack">
       <ReadOnlyNote show={!manage} />
       <ErrorAlert error={act.error} onReload={() => { act.clear(); c.reload("roles"); }} onDismiss={act.clear} />
       <StatusLine text={act.done} />

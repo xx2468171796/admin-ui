@@ -99,7 +99,8 @@ import {
   type GridRange,
   type PlanContext,
 } from "./grid-edit-core.ts";
-import { gridQueryOf, type GridDataSource } from "./grid-data-core.ts";
+import { GRID_BLOCK_SIZE, gridQueryOf, type GridDataSource } from "./grid-data-core.ts";
+import { firstInlineEditColumn, useAddRow, type GridAddRowHandler } from "./grid-add-row.ts";
 import {
   defaultFieldWidth,
   GRID_ACTIONS_COLUMN,
@@ -156,6 +157,7 @@ export type * from "./grid-sql.ts";
 export { normalizeGridView, gridViewReducer, serializeGridView, parseGridView, filterGridRows, summarizeField } from "./grid-core.ts";
 export { planPaste, planClear, parseTsv, toTsv } from "./grid-edit-core.ts";
 export { gridQueryOf } from "./grid-data-core.ts";
+export { firstInlineEditColumn, ADD_ROW_REVEAL_MS, type GridAddRowHandler, type GridAddRowResult } from "./grid-add-row.ts";
 // bt/grid-a
 export type * from "./condition-core.ts";
 export type * from "./grid-group-core.ts";
@@ -359,8 +361,15 @@ export type BitableGridProps<T> = {
   onRowsDelete?: (rowIds: string[]) => void;
   /** Host items of the cell menu after 「展开记录」 (分享记录 / 复制记录链接 / 查看修改历史 / 添加子记录 / 添加评论). */
   cellMenuItems?: (context: GridCellMenuContext<T>) => readonly MenuItem[];
-  /** 「+ 新增一行」 under every expanded group (its group keys) and, ungrouped, at the bottom ({}). */
-  onAddRow?: (group: Readonly<Record<string, string>>) => void;
+  /**
+   * 「+ 新增一行」 under every expanded group (its group keys) and, ungrouped, at the bottom ({}); also the footer 「+」
+   * (`addRowButton`) with {}. Answer the new record's id (or a promise of it) and the grid scrolls to that row and
+   * opens its first editable cell (8.7; server mode: the grid refetches itself — keep the new row in the answer,
+   * e.g. pinned at the end). Answer nothing to place / focus it yourself.
+   */
+  onAddRow?: GridAddRowHandler;
+  /** The 「+」 at the left end of the bottom bar, next to 「N 条记录」 (default true when `onAddRow` is given; needs `summary`). */
+  addRowButton?: boolean;
   /** Drag records by the grip in the row-number column, or Alt + Shift + ↑ / ↓ (client rows, no sort). */
   onRowMove?: (move: GridRowMove) => void;
   /** A small corner marker on a cell (comments, pending approval); `label` is read by screen readers. */
@@ -585,6 +594,7 @@ export function BitableGrid<T extends RowData>(props: BitableGridProps<T>) {
   const clientRows = useMemo(() => (server ? (NO_ROWS as T[]) : clientTree ? groupedRowOrder(clientTree) : sortedRows), [server, clientTree, sortedRows]);
   // bt/grid-b 「+ 新增一行」: after every expanded leaf group (its group values), or at the bottom.
   const addRows = Boolean(props.onAddRow);
+  const footerAdd = addRows && summary && props.addRowButton !== false;
   const dataCount = server ? remote.total ?? 0 : clientRows.length;
   const layout = useMemo(
     () => (groupTree ? groupLayout(groupTree, view.collapsed, { addRows: addRows ? view.groupBy : undefined }) : flatLayout<T>(dataCount, { addRow: addRows && (!server || remote.total !== null) })),
@@ -888,6 +898,39 @@ export function BitableGrid<T extends RowData>(props: BitableGridProps<T>) {
     if (editRowGone) setEdit(null);
   }, [editRowGone]);
 
+  // 8.7 新增记录: run onAddRow, then find the new row (client rows / loaded server blocks) and open its first editable cell.
+  const blockSize = props.blockSize ?? GRID_BLOCK_SIZE;
+  const addRow = useAddRow({
+    onAddRow: props.onAddRow,
+    refresh: () => {
+      if (!server) return;
+      remote.refresh();
+      if (serverGroups) remoteGroups.refresh();
+    },
+    locate: (id) => {
+      if (!server) return displayIndexOf(id);
+      // Grouped: wait for the refreshed group headers too, or the row would land in the old layout and the edit end.
+      if (serverGroups && view.groupBy.length > 0 && remoteGroups.loading) return -1;
+      for (const [block, rows] of remote.state.blocks) {
+        const at = rows.findIndex((row) => getRowId(row) === id);
+        if (at >= 0) return layout.indexOfOffset(block * blockSize + at);
+      }
+      return -1;
+    },
+    reveal: (index) => {
+      const col = firstInlineEditColumn(dataCols, (c) => {
+        const field = fieldAt(c);
+        return { editable: canEditCell(index, c), type: field?.type, hostEditor: Boolean(field?.openEditor) };
+      });
+      virtualizer.scrollToIndex(index, { align: "auto" });
+      if (col === null) return moveTo({ row: index, col: firstDataCol });
+      startEdit(index, col);
+    },
+    seek: () => {
+      if (!layout.grouped && count > 0 && lastVisible < count - 1) virtualizer.scrollToIndex(count - 1, { align: "end" });
+    },
+  });
+
   const clearRange = () => {
     if (!editing.enabled || !effectiveRange) return;
     const plan = planClear(effectiveRange, planContext);
@@ -1106,7 +1149,7 @@ export function BitableGrid<T extends RowData>(props: BitableGridProps<T>) {
             toggle: () => dispatch({ type: "toggleGroup", key: item.key }),
             collapseAll: () => dispatch({ type: "setCollapsed", keys: groupKeys }),
             expandAll: () => dispatch({ type: "setCollapsed", keys: [] }),
-            add: () => props.onAddRow?.(groupValues(item.group, view.groupBy)),
+            add: () => void addRow.run(groupValues(item.group, view.groupBy)),
           },
         }),
       });
@@ -1247,7 +1290,7 @@ export function BitableGrid<T extends RowData>(props: BitableGridProps<T>) {
     }
     if (item?.kind === "add" && (action === "edit" || action === "expand")) {
       event.preventDefault();
-      props.onAddRow?.(item.group);
+      void addRow.run(item.group);
       return;
     }
     switch (action) {
@@ -1300,6 +1343,11 @@ export function BitableGrid<T extends RowData>(props: BitableGridProps<T>) {
         if (here.row === -1 && column?.id === GRID_ROW_COLUMN && selectable && action === "expand") {
           event.preventDefault();
           props.onSelectionChange?.(checkedCount === selectableIds.length ? selected.filter((id) => !selectableIds.includes(id)) : [...new Set([...selected, ...selectableIds])]);
+          return;
+        }
+        if (here.row === count && footerAdd && column?.id === GRID_ROW_COLUMN) {
+          event.preventDefault();
+          void addRow.run({});
           return;
         }
         if (here.row === count && summary && column && byKey.has(column.id)) {
@@ -1476,7 +1524,7 @@ export function BitableGrid<T extends RowData>(props: BitableGridProps<T>) {
       return (
         <div key={item.id} role="row" aria-rowindex={virtual.index + 2} className="aui-grid-row aui-grid-add-row" data-row-index={virtual.index} style={rowStyle}>
           <div role="gridcell" aria-colindex={1} aria-colspan={colCount} className="aui-grid-add-row-cell" data-cell={`${virtual.index}:${cell.col}`}
-            tabIndex={cell.row === virtual.index ? 0 : -1} onClick={() => props.onAddRow?.(item.group)}>
+            tabIndex={cell.row === virtual.index ? 0 : -1} onClick={() => void addRow.run(item.group)}>
             <span className="aui-grid-add-row-inner">
               <span className="aui-grid-add-row-icon" style={{ width: cols[0]?.getSize() }}><Plus aria-hidden="true" /></span>
               <span>新增一行</span>
@@ -1618,13 +1666,20 @@ export function BitableGrid<T extends RowData>(props: BitableGridProps<T>) {
   const totalText = server ? `${remote.total ?? 0} 条` : `${filtered.length} 条`;
   const firstFieldId = cols.find((column) => byKey.has(column.id))?.id;
   const countInField = firstFieldId !== undefined && !(server ? serverSummary(firstFieldId) : summaries.get(firstFieldId));
+  // 8.7: the footer 「+」 (飞书左下角「+」) takes the row-number cell; the count sits right of it in the first field's cell.
+  const addButton = footerAdd ? (
+    <button type="button" className="aui-grid-footer-add" data-inside aria-label="新增记录" data-tip={countInField ? "新增记录" : `新增记录（共 ${totalText}）`}
+      disabled={addRow.adding} onClick={(event) => { event.stopPropagation(); void addRow.run({}); }}>
+      <Plus aria-hidden="true" />
+    </button>
+  ) : null;
   const footer = summary && (
     <div role="row" aria-rowindex={ariaRowCount} className="aui-grid-row aui-grid-summary-row" style={{ height: footerHeight, width: totalWidth }}>
       {cols.map((column, col) => {
         if (column.id === GRID_ROW_COLUMN)
           // The 48px row-number column is too narrow for 「2000 条」: the count goes into the first field's cell when that
           // field has no statistic of its own (「24 条记录」), else it stays here.
-          return <div key={column.id} role="gridcell" className="aui-grid-cell aui-grid-summary-cell aui-grid-rownum-cell" {...cellAttrs(count, col, column.id)}>{countInField ? <span className="aui-sr-only">{totalText}</span> : <span className="aui-grid-summary-total">{totalText}</span>}</div>;
+          return <div key={column.id} role="gridcell" className="aui-grid-cell aui-grid-summary-cell aui-grid-rownum-cell" data-add={addButton ? true : undefined} {...cellAttrs(count, col, column.id)}>{addButton}{countInField || addButton ? <span className="aui-sr-only">{totalText}</span> : <span className="aui-grid-summary-total">{totalText}</span>}</div>;
         if (column.id === GRID_ACTIONS_COLUMN || column.id === GRID_ADD_COLUMN) return <div key={column.id} role="gridcell" className="aui-grid-cell aui-grid-summary-cell" {...cellAttrs(count, col, column.id)} />;
         const field = byKey.get(column.id)!;
         const result = server ? serverSummary(field.key) : summaries.get(field.key);
@@ -1790,7 +1845,7 @@ export function BitableGrid<T extends RowData>(props: BitableGridProps<T>) {
         ) : !dataCount ? (
           <div className="aui-grid-overlay">
             <StatePanel kind={emptyKind} message={emptyKind === "empty" ? props.emptyLabel : undefined}
-              action={emptyKind === "no-results" ? <Button variant="outline" onClick={() => dispatch({ type: "clearFilters" })}>清除筛选和搜索</Button> : props.onAddRow ? <Button variant="outline" onClick={() => props.onAddRow?.({})}><Plus />新增一行</Button> : undefined} />
+              action={emptyKind === "no-results" ? <Button variant="outline" onClick={() => dispatch({ type: "clearFilters" })}>清除筛选和搜索</Button> : props.onAddRow ? <Button variant="outline" onClick={() => void addRow.run({})}><Plus />新增一行</Button> : undefined} />
           </div>
         ) : null}
         {selectable && selected.length > 0 && (

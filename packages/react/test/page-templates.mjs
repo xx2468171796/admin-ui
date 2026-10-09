@@ -8,7 +8,7 @@
 // T17 = DashboardBuilder (232 | canvas | 324, rename / undo / redo / settings), t17-frame = BuilderLayout.
 // Compare with design/templates/t15-workspace.png, t16-public-form.png, t17-dashboard-builder.png.
 // bt/flush: 系统 → 工作区贴边 = TabbedPage with workspace sections + one card-flow section: the tab bar sits flush on the
-// workspace (no 16px strip), a hidden-but-mounted workspace never strips the card-flow section's padding, Pane fill /
+// workspace (no 16px strip), the card-flow section is flush too (8.6), Pane fill /
 // notice / padding, QueryBar flush, ResourcePanel as a column scrolling inside, RecordHeader flat in a Pane header
 // (test/flush-checks.mjs: no gaps, one line between columns, no rounded / shadowed panel inside .aui-workspace).
 import assert from 'node:assert/strict';
@@ -20,6 +20,7 @@ import react from '@vitejs/plugin-react';
 import { chromium } from 'playwright';
 import { checkFlushSection, edges, flushFacts, openFlush } from './flush-checks.mjs';
 import { checkNarrowModes } from './narrow-checks.mjs';
+import { bareRows, checkPageFlush } from './page-flush-checks.mjs';
 
 const executablePath = () => { const cached = '/home/admin/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome'; return process.env.CHROMIUM_PATH || (existsSync(cached) ? cached : chromium.executablePath()); };
 
@@ -323,8 +324,8 @@ async function flushPage(browser, url) {
     await p.setViewportSize({ width, height: 844 });
     await p.waitForTimeout(300);
   });
-  // Card flow next to mounted (hidden) workspaces keeps the content padding, the tab bar keeps its 16px gap and
-  // the cards stay cards; going back to a workspace section drops the padding again.
+  // 8.6 page flush: the card-flow section next to mounted (hidden) workspaces is flush too (no content padding, flat
+  // blocks, one line between them); going back to a workspace section keeps it flush.
   for (const width of [1440, 390]) {
     const p = await browser.newPage();
     try {
@@ -332,20 +333,125 @@ async function flushPage(browser, url) {
       for (const tab of ['画册', '记录', '卡片流']) { await area.getByRole('tab', { name: tab, exact: true }).click(); await p.waitForTimeout(300); }
       assert.ok(await area.locator('.aui-tabbed-panel[hidden] .aui-workspace').count() >= 3, '卡片流：前面打开过的工作区分区还挂着（隐藏）');
       const facts = await flushFacts(p);
-      assert.ok(facts.contentPadding > 0, `卡片流（${width}）：外壳内容区保留内边距（${facts.contentPadding}）`);
-      assert.equal(facts.tabsBarMargin, 16, `卡片流（${width}）：分区标签条下照常留 16px`);
+      assert.equal(facts.contentPadding, 0, `卡片流（${width}）：外壳内容区不留内边距（${facts.contentPadding}）`);
+      assert.equal(facts.tabsBarMargin, 0, `卡片流（${width}）：分区标签条下不留缝`);
       assert.ok(facts.overflowX <= 0, `卡片流（${width}）：横向溢出 ${facts.overflowX}px`);
       const cards = area.locator('.aui-tabbed-panel:not([hidden]) :is(.aui-panel, .aui-resource)');
-      for (let i = 0; i < await cards.count(); i++) assert.ok((await edges(cards.nth(i))).radius > 0, `卡片流（${width}）：卡片照常是圆角卡片`);
+      for (let i = 0; i < await cards.count(); i++) assert.equal((await edges(cards.nth(i))).radius, 0, `卡片流（${width}）：块是平的（8.6）`);
       assert.match(await area.locator('.aui-tabbed-panel:not([hidden]) .aui-inline-alert').innerText(), width > 760 ? /宽屏布局/ : /手机布局/, 'useIsMobile 跟着窗口宽度');
       await p.screenshot({ path: resolve(output, `flush-cards${width < 500 ? '-390' : ''}.png`), animations: 'disabled', fullPage: true });
       await area.getByRole('tab', { name: '客户表', exact: true }).click();
       await p.waitForTimeout(300);
-      if (width > 1100) assert.equal((await flushFacts(p)).contentPadding, 0, '回到工作区分区：内容区又贴边');
+      if (width > 1100) assert.equal((await flushFacts(p)).contentPadding, 0, '回到工作区分区：内容区照样贴边');
     } finally {
       await p.close();
     }
   }
+}
+
+/**
+ * 8.6 page flush on ordinary pages (test/page-flush-checks.mjs): 页面贴边 = the owner's case (a TabbedPage whose 「角色」
+ * section is a workspace and 「部门」 is a ResourcePanel + DataTable; both flush, the lone 「部门」 title not repeated),
+ * 成员 = two stacked blocks (titles kept, one line between), 审计 = filters + grouped log, 审批 = list | detail down to the
+ * bottom; 租户成员 = single-section TabbedPage (no tab row); 工作区贴边 · 卡片流, T01 (split), T06 (audit page, title not
+ * repeated), T08 (side nav). Screenshots → test/artifacts/page-flush/.
+ */
+async function pageFlush(browser, url) {
+  const out = resolve(root, 'test/artifacts/page-flush');
+  mkdirSync(out, { recursive: true });
+  await checkPageFlush(browser, url, '页面贴边', '角色', out, 'roles');
+  await checkPageFlush(browser, url, '页面贴边', '部门', out, 'depts', { title: '部门' }, async (p, page, facts, { label }) => {
+    // Count, 「?」 and actions moved into one compact row; the page's own 「?」 lands in the same row.
+    const bar = page.locator('.aui-tabbed-panel:not([hidden]) .aui-resource[data-lead] > .aui-panel-header[data-bar]');
+    // The table footer already says 「共 4 条」: the toolbar row does not repeat the count; one 「?」 in the row.
+    assert.doesNotMatch(await bar.innerText(), /共 4/, `${label}：表格页脚已有总数，工具行不再重复数量`);
+    assert.equal(await bar.locator('.aui-help-tip').filter({ visible: true }).count(), 1, `${label}：工具行只有一个「?」`);
+    const helpBox = await bar.locator('.aui-help-tip').filter({ visible: true }).first().boundingBox();
+    const addBox = await bar.getByRole('button', { name: '新建部门' }).boundingBox();
+    assert.ok(helpBox.x > addBox.x, `${label}：「?」靠右，在按钮后面`);
+    assert.equal(await bar.getByRole('button', { name: '新建部门' }).count(), 1, `${label}：按钮在工具行`);
+    assert.equal(await page.getByRole('heading', { name: /^部门/ }).count(), 1, `${label}：读屏仍有「部门」标题`);
+  });
+  await checkPageFlush(browser, url, '页面贴边', '成员', out, 'members', { titles: ['当前租户', '成员'] }, async (p, page, facts, { label }) => {
+    const count = page.locator('.aui-tabbed-panel:not([hidden]) .aui-resource > .aui-panel-header h2 > .aui-resource-count');
+    assert.equal(await count.evaluate((el) => el.getBoundingClientRect().width <= 1), true, `${label}：标题后的「(4)」不和页脚「共 4 条」重复（只留给读屏）`);
+  });
+  await checkPageFlush(browser, url, '页面贴边', '审计', out, 'audit', { title: '审计' }, async (p, page, facts, { label }) => {
+    const filters = page.locator('.aui-tabbed-panel:not([hidden]) .aui-resource[data-lead] > .aui-resource-filters[data-bar]');
+    assert.equal(await filters.locator('.aui-query').count(), 1, `${label}：筛选是第一行`);
+    assert.equal(facts.blocks[0].top, facts.startBottom, `${label}：筛选行紧贴标签行`);
+  });
+  await checkPageFlush(browser, url, '页面贴边', '审批', out, 'approval', { columns: true });
+  await checkPageFlush(browser, url, '租户成员', null, out, 'tenant', { noTabs: true, titles: ['当前租户', '成员'] }, async (p, page, facts, { label }) => {
+    assert.equal(await page.getByRole('region', { name: '租户成员' }).count(), 1, `${label}：唯一的分区是一个有名字的 region`);
+    assert.equal(await page.getByRole('tab').count(), 0, `${label}：没有孤零零的分区标签`);
+  });
+  // 8.6.1: a host wrapper with its own class (own gap) + data-aui-flow="stack", one more nested inside: both transparent.
+  await checkPageFlush(browser, url, '页面贴边', '包装层', out, 'wrapper', { titles: ['包装层概况', '包装层成员'] }, async (p, page, facts, { label }) => {
+    assert.deepEqual(facts.blocks.map((b) => b.name), ['aui-panel', 'aui-resource'], `${label}：块穿过两层包装层（${facts.blocks.map((b) => b.name)}）`);
+    const wraps = await page.locator('.aui-tabbed-panel:not([hidden]) :is(.pf-host-stack, .pf-host-inner)').evaluateAll((els) => els.map((el) => {
+      const s = getComputedStyle(el), r = el.getBoundingClientRect();
+      return { cls: el.className, margin: s.margin, gap: s.rowGap, left: Math.round(r.left), right: Math.round(r.right) };
+    }));
+    assert.equal(wraps.length, 2, `${label}：两层包装层`);
+    for (const w of wraps) {
+      assert.ok(w.margin === '0px' && (w.gap === '0px' || w.gap === 'normal'), `${label}：${w.cls} 不离边、自己的 gap 清零（${JSON.stringify(w)}）`);
+      assert.ok(w.left === facts.content.left && w.right === facts.content.right, `${label}：${w.cls} 横向贴满内容区（${w.left}–${w.right}）`);
+    }
+  });
+  // 8.6.1: a lone list whose count the table footer already gives: nothing left = no toolbar row (and its variants).
+  const leadBar = (page) => page.locator('.aui-tabbed-panel:not([hidden]) :is(.aui-resource, .aui-panel)[data-lead] > .aui-panel-header[data-bar]');
+  await checkPageFlush(browser, url, '单块数量', '仅数量', out, 'lead-count', { title: '部门' }, async (p, page, facts, { label }) => {
+    assert.equal(await leadBar(page).filter({ visible: true }).count(), 0, `${label}：只剩被页脚代替的数量时不出工具行`);
+    assert.equal(facts.blocks[0].name, 'aui-resource', `${label}：第一块是列表`);
+    const first = await page.locator('.aui-tabbed-panel:not([hidden]) .aui-resource > .aui-table-panel').boundingBox();
+    assert.equal(Math.round(first.y), facts.startBottom, `${label}：表头紧贴标签行`);
+    assert.deepEqual(await bareRows(p), { help: [], empty: [] }, `${label}：没有空行`);
+  });
+  for (const [section, slug, expect] of [['数量和说明', 'lead-help', 'help'], ['数量和按钮', 'lead-actions', 'button'], ['游标分页', 'lead-cursor', 'count'], ['Panel 数量', 'lead-panel', 'count']]) {
+    await checkPageFlush(browser, url, '单块数量', section, out, slug, { title: '部门' }, async (p, page, facts, { label }) => {
+      const bar = leadBar(page);
+      assert.ok(await bar.isVisible(), `${label}：工具行还在（有${expect === 'help' ? '「?」' : expect === 'button' ? '按钮' : '数量'}）`);
+      const text = (await bar.innerText()).trim();
+      if (expect === 'count') assert.match(text, /共 4 条|4 个/, `${label}：页脚没有总数时数量照写`);
+      else assert.doesNotMatch(text, /共 4/, `${label}：页脚已有总数，工具行不重复数量`);
+      if (expect === 'help') assert.equal(await bar.locator('.aui-help-tip').filter({ visible: true }).count(), 1, `${label}：一个「?」`);
+      if (expect === 'button') assert.equal(await bar.getByRole('button', { name: '新建部门' }).count(), 1, `${label}：按钮在工具行`);
+      assert.deepEqual((await bareRows(p)).empty, [], `${label}：没有空行`);
+    });
+  }
+  await checkPageFlush(browser, url, '工作区贴边', '卡片流', out, 'cards', { titles: ['本周概况', '客户'] });
+  await checkPageFlush(browser, url, 'T01 工作台首页', null, out, 't01', { columns: true });
+  await checkPageFlush(browser, url, 'T06 日志 / 时间线', null, out, 't06', { title: '审计日志' }, async (p, page, facts, { width, label }) => {
+    if (width < 1100) return;
+    // Filters stay on one line (the search shrinks first); the count and buttons sit at the first line's right end.
+    const bar = page.locator('.aui-resource[data-lead] > .aui-resource-filters[data-bar]');
+    const tops = await bar.locator('.aui-query > *').evaluateAll((els) => els.filter((e) => e.getClientRects().length).map((e) => Math.round(e.getBoundingClientRect().top)));
+    assert.equal(new Set(tops).size, 1, `${label}：筛选控件在一行（${tops}）`);
+    const first = await bar.locator('.aui-query > *').first().boundingBox();
+    const act = await bar.getByRole('button', { name: /导出 CSV/ }).boundingBox();
+    assert.ok(Math.abs((act.y + act.height / 2) - (first.y + first.height / 2)) <= 2, `${label}：按钮和第一行对齐`);
+  });
+  await checkPageFlush(browser, url, 'T08 设置 / 表单', null, out, 't08', { columns: true });
+  // 8.6.1: a lone block whose title row would hold only the page's 「?」 (T05 「角色」 = a Panel with a notice): the 「?」
+  // goes to the section tab row and the empty row disappears.
+  await checkPageFlush(browser, url, 'T05 分区合并页', null, out, 't05', {}, async (p, page, facts, { label }) => {
+    await page.locator('.aui-tabbed-tabs-row [role=tab]', { hasText: '角色' }).click();
+    await p.waitForTimeout(300);
+    assert.deepEqual(await bareRows(p), { help: [], empty: [] }, `${label} · 角色：没有只放「?」的行`);
+    assert.equal(await page.locator('.aui-tabbed-tabs-row > .aui-page-actions-slot .aui-help-tip').filter({ visible: true }).count(), 1, `${label} · 角色：页面的「?」在分区标签行右端`);
+  });
+  // 8.6.1: the wizard is page flow — flat, edge to edge, the aside a column after one vertical line, down to the bottom.
+  await checkPageFlush(browser, url, 'T12 向导页', null, out, 't12', {}, async (p, page, facts, { width, label }) => {
+    const card = await page.locator('.aui-wizard-card').evaluate((el) => { const s = getComputedStyle(el); return { radius: parseFloat(s.borderTopLeftRadius), bl: parseFloat(s.borderLeftWidth), shadow: s.boxShadow }; });
+    assert.ok(card.radius === 0 && card.bl === 0 && card.shadow === 'none', `${label}：向导不是卡片（${JSON.stringify(card)}）`);
+    if (width > 1100) {
+      const [c, a] = await Promise.all([page.locator('.aui-wizard-card').boundingBox(), page.locator('.aui-wizard-aside').boundingBox()]);
+      assert.equal(Math.round(c.x + c.width), Math.round(a.x), `${label}：向导 | 右栏之间没有缝`);
+      assert.equal(await page.locator('.aui-wizard-aside').evaluate((el) => getComputedStyle(el).borderLeftWidth), '1px', `${label}：向导 | 右栏一条竖线`);
+      assert.ok(a.y + a.height >= facts.viewport.h - 1, `${label}：右栏撑到窗口底`);
+    }
+  });
 }
 
 const browser = await chromium.launch({ headless: true, executablePath: executablePath(), args: ['--no-sandbox'] });
@@ -488,11 +594,12 @@ try {
   }
 
   await flushPage(browser, url);
+  await pageFlush(browser, url);
   await checkNarrowModes(browser, url, output);
   await standalone(p, url, menu);
 
   assert.deepEqual(errors, [], '页面不能有脚本错误');
-  console.log(`page-templates ok: ${TEMPLATES.length} templates × light/dark + T15–T17 (${STANDALONE.length} pages) light/dark/390 + 工作区贴边 (TabbedPage + workspace / card flow, Pane fill / notice / padding, QueryBar flush, ResourcePanel column, RecordHeader, Tabs in a Pane fill + Pane ref / data-* / events, no grey strip under a fill card at 390; narrow card / flush at 390 / 900 light + dark, Breadcrumbs gaps, neutral text) → ${output}`);
+  console.log(`page-templates ok: ${TEMPLATES.length} templates × light/dark + T15–T17 (${STANDALONE.length} pages) light/dark/390 + 工作区贴边 (TabbedPage + workspace / card flow, Pane fill / notice / padding, QueryBar flush, ResourcePanel column, RecordHeader, Tabs in a Pane fill + Pane ref / data-* / events, no grey strip under a fill card at 390; narrow stacked flush at 390 / 900 light + dark, Breadcrumbs gaps, neutral text; 8.6 page flush on 页面贴边 / 租户成员 / 卡片流 / T01 / T06 / T08 light, dark, 390; 8.6.1 包装层 / 单块数量 × 5 / T05 / T12) → ${output}`);
 } finally {
   await server?.close();
   await browser.close();

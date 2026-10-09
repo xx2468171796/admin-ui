@@ -329,6 +329,17 @@ try {
   assert.equal(await status.innerText(), '预览中');
   assert.equal(await builder.locator('.aui-dbb-grip').count(), 0, '预览没有拖动手柄');
   assert.equal(await page.getByRole('complementary', { name: '添加卡片' }).count(), 0);
+  // 8.6: number cards hug their content in the view (no empty space under the number); cards of one row are equally tall
+  await page.waitForTimeout(400);
+  const kpis = await builder.locator('.aui-dbb-grid .aui-dbb-widget:is([data-kind=kpi], [data-kind=group])').evaluateAll((els) => els.map((el) => {
+    const r = el.getBoundingClientRect();
+    const kids = [...el.querySelectorAll('.aui-dbb-body *')].filter((k) => k.getClientRects().length && !k.closest('[aria-hidden=true]'));
+    const content = Math.max(...kids.map((k) => k.getBoundingClientRect().bottom));
+    return { top: Math.round(r.top), height: Math.round(r.height), spare: Math.round(r.bottom - content) };
+  }));
+  assert.ok(kpis.length >= 1, '预览里有数字卡');
+  for (const k of kpis) assert.ok(k.height <= 140 && k.spare <= 24, `数字卡贴着内容，不再留一大块空白（${JSON.stringify(k)}）`);
+  for (const row of Object.values(Object.groupBy(kpis, (k) => k.top))) assert.equal(new Set(row.map((k) => k.height)).size, 1, `同一行的数字卡一样高（${JSON.stringify(row)}）`);
   await builder.getByRole('button', { name: '继续编辑' }).click();
   await builder.getByRole('button', { name: '保存', exact: true }).click();
   await page.getByText('看板已保存', { exact: true }).waitFor();

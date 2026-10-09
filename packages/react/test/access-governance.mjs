@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import { chromium } from 'playwright';
+import { bareRows, checkPageFlush } from './page-flush-checks.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const output = resolve(root, 'test/artifacts/access-governance');
@@ -344,8 +345,29 @@ try {
   await shot(page, 'd-m-emergency-390-dark', true);
   await page.getByRole('button', { name: '切换到浅色模式', exact: true }).click().catch(() => undefined);
 
+  // 8.6.1 page flush: 权限申请 — the SDK's own sub-tabs (我的申请 / 待我审批 / 全部) sit flush under the section tabs with one
+  // bottom line, the list below is flat edge to edge (no framed card) and, as the only list, shows no title row of its own
+  // (the sub-tab names it): filters, count, 刷新 / 申请权限 and the 「?」 share one row.
+  const flushOut = resolve(root, 'test/artifacts/page-flush');
+  mkdirSync(flushOut, { recursive: true });
+  await checkPageFlush(browser, server.resolvedUrls.local[0], '权限治理', '权限申请', flushOut, 'gov-requests', {}, async (p, area, facts, { width, label }) => {
+    const sub = area.locator('.aui-tabbed-panel:not([hidden]) .aui-section-tabs-wrap[data-aui-flow=tabs]');
+    assert.equal(await sub.count(), 1, `${label}：子标签是页面流`);
+    const bar = await sub.locator(':scope > .aui-section-tabs-bar').evaluate((el) => { const s = getComputedStyle(el); return { pl: parseFloat(s.paddingLeft), mb: parseFloat(s.marginBottom), bb: parseFloat(s.borderBottomWidth) }; });
+    assert.deepEqual(bar, { pl: width > 760 ? 16 : 12, mb: 0, bb: 1 }, `${label}：子标签行贴边、文字离边 ${width > 760 ? 16 : 12}px、一条底线`);
+    const list = sub.locator(':scope > .aui-section-panel > .aui-resource');
+    const box = await list.evaluate((el) => { const r = el.getBoundingClientRect(), s = getComputedStyle(el); return { left: Math.round(r.left), right: Math.round(r.right), radius: parseFloat(s.borderTopLeftRadius), bl: parseFloat(s.borderLeftWidth), bt: parseFloat(s.borderTopWidth) }; });
+    assert.ok(box.left === facts.content.left && box.right === facts.content.right && box.radius === 0 && box.bl === 0 && box.bt === 0, `${label}：申请列表是平的、横向贴满（${JSON.stringify(box)}）`);
+    const subBottom = await sub.locator(':scope > .aui-section-tabs-bar').evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+    assert.equal(Math.round((await list.boundingBox()).y), subBottom, `${label}：列表紧贴子标签行`);
+    assert.equal(await list.getAttribute('data-lead'), 'true', `${label}：唯一的列表不重复标题（子标签已写「待我审批」）`);
+    const filters = list.locator(':scope > .aui-resource-filters');
+    for (const name of ['刷新', '申请权限']) assert.equal(await filters.getByRole('button', { name }).count(), 1, `${label}：「${name}」在筛选行`);
+    assert.deepEqual(await bareRows(p), { help: [], empty: [] }, `${label}：没有只放「?」的行或空行`);
+  });
+
   assert.deepEqual(errors, []);
-  console.log(`PASS access-governance: members quota/remove reason, share rule preview→stale→re-preview→save, discard prompt, builtin read-only, SoD violations, request reject note/approve next step/chain detail/new request, emergency validation/start/countdown/end/post review with log, review keep/revoke reason, health + RLS, tenant typed delete, read-only perspective, 12 sections × 360/390/1440, dark contrast (${output})`);
+  console.log(`PASS access-governance: members quota/remove reason, share rule preview→stale→re-preview→save, discard prompt, builtin read-only, SoD violations, request reject note/approve next step/chain detail/new request, emergency validation/start/countdown/end/post review with log, review keep/revoke reason, health + RLS, tenant typed delete, read-only perspective, 12 sections × 360/390/1440, dark contrast, 权限申请 page flush (${output})`);
 } finally {
   await browser.close();
   await server.close();

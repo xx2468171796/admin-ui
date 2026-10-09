@@ -102,7 +102,7 @@ const fields: GridField<Contract>[] = [
 
 // 模拟的服务端：10 万条记录，按 GridQuery 筛选排序后分块返回（真实项目在后端用 @adminui/react/grid-query 的
 // parseGridQuery + buildGridSql / applyGridQuery 实现同一个接口）
-const BIG = generate(100_000);
+let BIG = generate(100_000);
 const serverSource: GridDataSource<Contract> = {
   capabilities: { search: true, filter: true, sort: true, summaries: ["sum", "avg", "min", "max", "filled", "empty"] },
   load: ({ query, offset, limit, summaries, signal }) =>
@@ -119,6 +119,19 @@ const serverSource: GridDataSource<Contract> = {
 };
 const PANEL_NOTE = "只改你的个人设置，自动保存";
 
+/** 8.7 新增记录（服务端）：「服务端」在最后加一条空合同、返回 id，表格自己重取、滚到最后、打开第一格 */
+function addServerRow(): string {
+  const id = `HT-${BIG.length + 1}`;
+  // 新数组：applyGridQuery 按数组缓存查询结果
+  BIG = [...BIG, { ...BIG[0]!, id, name: "", tags: [], owners: [], note: "", amount: 0, signed: null, followUp: null }];
+  return id;
+}
+function saveServerCells(changes: GridCellChange<Contract>[]) {
+  for (const change of changes) {
+    BIG = BIG.map((item) => (item.id === change.rowId ? { ...item, [change.field]: change.value } : item));
+  }
+}
+
 export function BitableShowcase() {
   const [mode, setMode] = useState<"client" | "server">("client");
   return mode === "server" ? <ServerGrid onMode={setMode} /> : <ClientGrid onMode={setMode} />;
@@ -134,7 +147,8 @@ function ServerGrid({ onMode }: { onMode: (mode: "client" | "server") => void })
     <>
       <PageHeader title="多维表格" description="服务端模式：10 万条合同，滚到哪儿加载到哪儿（每块 100 条，模拟 250ms 网络延迟）；搜索、筛选、排序、底部统计都交给服务端算。" actions={<ModeSwitch mode="server" onMode={onMode} />} />
       <PageBody>
-        <BitableGrid caption="合同台账（服务端）" dataSource={serverSource} getRowId={(row) => row.id} fields={fields} view={view} onViewChange={onViewChange} emptyLabel="没有合同" conditionContext={CONDITIONS} panelNote={PANEL_NOTE} />
+        <BitableGrid caption="合同台账（服务端）" dataSource={serverSource} getRowId={(row) => row.id} fields={fields} view={view} onViewChange={onViewChange} emptyLabel="没有合同" conditionContext={CONDITIONS} panelNote={PANEL_NOTE}
+          onAddRow={() => new Promise<string>((resolve) => setTimeout(() => resolve(addServerRow()), 150))} onCellsChange={saveServerCells} />
       </PageBody>
     </>
   );

@@ -81,6 +81,10 @@ function Shell() {
                 >
                   <p className="aui-note">演示内容。</p>
                 </Panel>
+                {/* 8.6: a second titled block keeps the crowded header a title row (a lone block would fold its title away). */}
+                <Panel title="说明">
+                  <p className="aui-note">两块叠放时都保留标题。</p>
+                </Panel>
               </>
             ),
           },

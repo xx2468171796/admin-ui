@@ -18,6 +18,20 @@
 
 **每个后台页面动手前先说清用 T01–T17 哪一个模板**（[PAGE-TEMPLATES.md](PAGE-TEMPLATES.md)）：工作台首页、资源列表、指标 + 列表、统计看板、分区合并、日志 / 时间线、关系图 / 监控、设置 / 表单、权限配置、工具 / 工作区、进度 / 工作项、向导、个人页、记录详情，以及自带外壳的表格工作区（T15，图标栏 + 目录）、公开页（T16，没有后台外壳）、看板搭建器（T17）。**布局定死，只按业务换内容**；照 starter 菜单「页面模板」里对应的一页改，代码注释或交付说明里写「本页用 Txx」。套不上或要改布局，先问产品负责人，偏离要产品负责人点头。
 
+## 页面贴边：栏与栏用一条线分开（8.6）
+
+**相邻的栏和区块之间只用一条 1px 分隔线（`--aui-line`），不用灰色画布的空隙来分。** 以前块与块之间露出灰色画布（内容区内边距、卡片之间的间距），8.6 起所有普通页面和工作区一样：白底、贴边、没有圆角卡片框，块与块之间一条线。由 SDK 默认做到，**没有开关、项目里也不要写覆盖**（不要给 `.aui-content` 加回内边距，不要给 `Panel` / `ResourcePanel` 加回边框和圆角，不要在块之间加 `marginTop`）。
+
+- **上下叠的区块**（`PageBody` 里的 `Panel` / `ResourcePanel` / 表格、`TabbedPage` 分区内容、`SplitLayout` 一栏里的几块）：贴着内容区左右边，块与块之间一条横线，不留缝、不叠两条线。
+- **左右分栏**（列表 | 详情、目录树 | 内容、`SplitLayout` / `ListDetailLayout` / `SideNavLayout` / `DetailLayout`）：栏与栏之间一条竖线，最后一块撑到页面底，不在下面露出灰色空白。
+- **标签行**（工作标签、`TabbedPage` 分区标签）：白底、一条底线，下面紧贴内容，不留缝；只有一个分区的 `TabbedPage` 不出分区标签行。
+- **表格上面的工具行 / 筛选行**：贴边、一条底线；表头和每一行碰到左右两边，文字离边 16px（手机 12px）。
+- **只有一块时不重复标题**：页面（或 `TabbedPage` 分区）里只有一个带标题的 `Panel` / `ResourcePanel` 时，它的标题不再单独占一行（工作标签、面包屑、分区标签已经写了页名）——标题只留给读屏，数量、「?」和按钮并进第一行（有筛选就在筛选行右端，没有就是一条紧凑的工具行，什么都没有就不出这一行）。**不浪费行（8.6.1）**：数量被表格页脚「共 N 条」代替、又没有按钮和「?」时整行不出；这一行除了页面的「?」什么都没有时（页面也没有按钮），「?」放到分区标签行右端、这一行不出；列表带筛选时用 `ResourcePanel` 的 `filters`（「?」在筛选行末尾），不要把筛选写进 `Panel` 主体再让标题行只剩一个「?」。自动判断，不用属性；**几块叠在一起时每块都保留标题**（用来区分）。不要为了「好看」再自己写一个和页名一样的标题。
+- **留缝的只有真正独立的对象**：看板卡片 / KPI 卡（`KpiGrid`、`MetricGrid`、`DashboardSection`、`DashboardView`，放在只属于看板区域的浅色画布带上）、画册 / 看板 / 记录卡片、`WorkItemCard`、`ChoiceTiles`，以及弹框、侧边弹层、气泡、菜单、提示。
+- 自己的内容直接放进页面流时（没有 SDK 类名的块）会自动离边 16px（手机 12px）；包一层不带 class 的 `<div>` 对贴边透明；项目自己带 class 的包装层（`.tc-stack`、`.kn-root` 这类）里面放 SDK 区块时要加 `data-aui-flow="stack"` 才透明（不离边、自己的 gap 清零、块照样贴边；8.6.1 起任何元素、任何一层嵌套都生效），不加就会被当成「自己的内容」离边 16px。页面里直接放一个 `Pane`（不在工作区里）也是平的。页面流里直接放 `Tabs`（页内子视图，如「我的申请 / 待我审批 / 全部」）时（8.6.1）标签行贴边、一条底线，标签页里的块和页面流一样是平的（单块同样不重复标题）。`WizardLayout`、`ShareManager`、权限控制台 `AccessConsole` 也按这些规则贴边（8.6.1）。
+- **数量和「?」只出现一次**：单块收起标题后，表格页脚已经写了「共 N 条」就不在工具行再写；分区里叠放的列表标题后的「(N)」也只留给读屏。工具行只留一个「?」（块自己的说明，靠右在按钮后面）。筛选行先缩搜索框（最窄 200px）再折行，按钮和数量对齐第一行。
+- **看板数字卡贴内容**：`KpiCard` 不再有最小高度；`DashboardView`（看板查看 / 预览）里同一排的数字卡（`kind: "kpi"`、数字组 `"group"`）折成一行自动高度——卡片高度 = 标签 + 数字 + 可选的变化值 / 说明行，同排一样高（按最高的），下面的组件跟着上移；和图表共用同几行的数字卡保持原布局。
+
 ## 界面改动先出演示、产品负责人确认再写代码
 
 新页面套不上模板、要改布局、要新组件时，**先做演示**（静态 HTML 页或 starter 里的一页，真实内容，只用色卡变量），做成审阅页给产品负责人逐项点「通过 / 要改」；全部通过后才写 React 代码，交付时把截图和通过的演示截图逐张对照。
@@ -289,7 +303,7 @@ BitableGrid 自带这些，项目里**不要另写**右键菜单、表头菜单�
 | 末尾「+」列 | `onAddField` | |
 | 行的右键菜单 | `onRowsInsert` / `onRowsDuplicate` / `onRowsDelete` / `cellMenuItems(ctx)` | 作用的记录 = 勾选的行或选区里的行（`ctx.rowIds`）；删除先确认 |
 | 冻结列 | `GridView.frozen`（用户拖冻结线、菜单「冻结至此列」） | `frozenColumns` 只是默认 |
-| 新增记录 | `onAddRow(group)` | 每个最底层组底部「新增一行」，`group` 是该组每一级的分组值（多级分组时多个键） |
+| 新增记录 | `onAddRow(group)` | 每个最底层组底部「新增一行」，`group` 是该组每一级的分组值（多级分组时多个键）；底栏最左边「+」（`addRowButton`，默认开，`{}`）。**返回新记录 id**（或 Promise）：表格滚到那一行并打开第一个能改的格子，用户直接打字（8.7；服务端模式表格自己重取，宿主把新行留在结果里，如钉在最后） |
 | 拖动排序 | `onRowMove({ rowId, afterId, beforeId, group })` | 只在没排序时可用；键盘 Alt+Shift+↑↓ |
 | 评论角标 / 逾期标红 | `cellBadge(row, field)` / `GridField.tone(row)` | 角标 `label` 给读屏 |
 | 评分、进度、电话、自动编号、系统字段、公式、附件、关联、查找引用 | `type: "rating" / "progress" / "phone" / "autoNumber" / "createdBy" / "createdAt" / "modifiedBy" / "modifiedAt" / "formula" / "attachment" / "link" / "lookup"` | 电话 `mask` + `onReveal`（真脱敏在服务端）；公式 `resultType`；附件第一个是音频就用迷你播放器；关联 `openRef` / `openEditor` |
@@ -450,7 +464,7 @@ starter「系统 → 表单」（D08），公开页 `#form-public=fill`（加 `&
 
 | 要做的 | 用 | 要点 |
 |---|---|---|
-| 一个菜单项里几个分区，其中有整屏工作区 | `TabbedPage` + 分区里 `WorkspaceLayout` | 当前分区是工作区时标签条贴边、下面不留缝；同一页的卡片流分区照常有内边距（隐藏着的工作区分区不算） |
+| 一个菜单项里几个分区，其中有整屏工作区 | `TabbedPage` + 分区里 `WorkspaceLayout` | 标签条贴边、下面不留缝；8.6 起同一页的普通分区（`ResourcePanel` + 表格等）也一样贴边，两种分区看起来一样 |
 | 栏里放松散内容（表单、说明、字段块） | `Pane padding="sm" \| "md"` | 默认 `none` 贴边（列表、表格、视图）；`md` = 12px 16px |
 | 栏里上下几块、最后一块撑满（工具栏 → 视图、筛选 → 表格） | `Pane fill` | 主体不滚，最后一块自己滚（同 RailShell 主区）；画册当最后一块时自动在块里滚；窄屏（≤ 1100px）上下排时卡片到外壳内容区底、撑满的栏长到卡片底（最多 80dvh），手机上不留灰条 |
 | 栏头下面的提示（要确认、只读、7 天没跟进） | `Pane notice={<InlineAlert …/>}` | 离栏边 16px，不贴边；不要把提示条直接塞进贴边的主体 |
@@ -460,11 +474,11 @@ starter「系统 → 表单」（D08），公开页 `#form-public=fill`（加 `&
 | 栏头放记录头部 | `Pane header={<RecordHeader …/>}` | 栏头里是平的（不再是浅色渐变块、不多一条线），`actions` 仍放 Pane |
 | 栏里再分几个页签（画册 / 表格、资料 / 跟进） | 栏主体里直接放 `Tabs`（`children` 交给 Tabs 自己的 tabpanel） | 标签条贴边、下面不留缝；面板对贴边规则透明：里面的工具栏、表格、画册照样贴边，`Pane fill` 时面板吃掉剩下的高度、最后一块自己滚；不要再把标签条单独拿出来、丢掉 `aria-controls` / `role="tabpanel"` |
 | 栏要 ref、右键菜单、埋点属性 | `Pane ref={…} onContextMenuCapture={…} data-*={…}` | 根元素 `<section>` 收 ref（React 19 ref 当 prop）和标准 DOM 属性 / 事件；`className` 和 `aui-pane` 合并；不要再包一层 div 去挂事件（会挡住贴边） |
-| 文档阅读 / 编辑器页在窄屏（≤ 1100px）也贴边 | `WorkspaceLayout narrow="flush"` | 默认 `"card"` = 上下排成一张带框圆角卡片；`"flush"` = 外壳内容区不留内边距、没有外框圆角，栏贴左右边、上下一条横线，`TabbedPage` 分区标签条照样贴边；列表 / 工具页保持默认 |
+| 窄屏（≤ 1100px）上下排 | `WorkspaceLayout`（8.6 起默认就贴边，`narrow="card"` 已删除） | 外壳内容区不留内边距、没有外框圆角，栏贴左右边、上下一条横线，`TabbedPage` 分区标签条照样贴边；手机上列表 → 详情两步走用 `narrow="steps"` |
 | 文档正文 / 编辑器正文的文字颜色 | 正文容器加 `className="aui-neutral-text"`（`Pane className` 也行） | 子树里 `--aui-text` / `--aui-secondary` / `--aui-note` 换成纯中性灰 `--aui-neutral-1` / `-2` / `-2`（飞书 #1F2329 / #646A73），不带主色调；只用在读写大段文字的区域，列表、表单、导航照常用带主色调的文字色；`--aui-neutral-3`（占位、大字、图标，≥ 3:1）/ `-4`（禁用）不要拿来写小字正文 |
 | 判断手机布局（目录进抽屉、两步走） | `useIsMobile()`（≤ 760px，同 SDK 断点）/ `useMediaQuery(query)` | 不要再在项目里复制 matchMedia hook；服务端渲染安全（先按不匹配渲染） |
 
-贴边位置 = 没设 `padding` 的 `Pane` 主体、`RailShell` 主区、`WorkspaceLayout` 的栏，以及直接放在这些位置上的 `Tabs` 的标签页面板（`styles/flush.css`）；设了 `padding` 的 Pane 里组件保持原样。starter「系统 → 工作区贴边」（TabbedPage：客户表 / 画册 / 表单 / 表格权限 / 有效权限 / 记录 / 页签 / 文档 / 卡片流）；浏览器验收 `test:page-templates`、`test:views`、`test:access`、`test:records`、`test:form-builder`（共用 `test/flush-checks.mjs`：栏之间没缝、只有一条线、工作区里没有圆角 / 阴影卡片、没有叠在一起的两条线，1440 浅 / 深色 + 390；截图 `test/artifacts/*/flush-*.png`）；窄屏两种模式 390 / 900 浅 / 深色见 `test/narrow-checks.mjs`（截图 `test/artifacts/page-templates/narrow-*.png`）。
+贴边位置 = 没设 `padding` 的 `Pane` 主体、`RailShell` 主区、`WorkspaceLayout` 的栏，以及直接放在这些位置上的 `Tabs` 的标签页面板（各区域样式文件里的「flush」一节）；8.6 起普通页面流（工作页、`PageBody`、`TabbedPage` 分区、`SplitLayout` / `SideNavLayout` 的栏）也贴边，见上文「页面贴边」；设了 `padding` 的 Pane 里组件保持原样。starter「系统 → 工作区贴边」（TabbedPage：客户表 / 画册 / 表单 / 表格权限 / 有效权限 / 记录 / 页签 / 文档 / 卡片流）；浏览器验收 `test:page-templates`、`test:views`、`test:access`、`test:records`、`test:form-builder`（共用 `test/flush-checks.mjs`：栏之间没缝、只有一条线、工作区里没有圆角 / 阴影卡片、没有叠在一起的两条线，1440 浅 / 深色 + 390；截图 `test/artifacts/*/flush-*.png`）；窄屏上下排 390 / 900 浅 / 深色见 `test/narrow-checks.mjs`（截图 `test/artifacts/page-templates/narrow-*.png`）；普通页面贴边见 `test/page-flush-checks.mjs`（starter「系统 → 页面贴边 / 租户成员」，截图像素检查块之间不露灰色画布，截图 `test/artifacts/page-flush/`）。
 
 ## 附录 S：反馈与弹层
 

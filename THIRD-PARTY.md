@@ -27,3 +27,7 @@ Radix UI、class-variance-authority、clsx、Lucide、React、ECharts、react-ma
 # 可选 Excel 解析
 
 `read-excel-file`（MIT）用于 `@adminui/react/excel` 子路径读取 XLSX。动态导入，不进入根入口；官方来源 https://github.com/catamphetamine/read-excel-file 。
+
+# 可选繁体转换
+
+`opencc-js`（MIT；内含的 OpenCC 词典数据来自 opencc-data，Apache-2.0，许可证文本随 opencc-js 包分发）用于 `@adminui/react/vite` 子路径的 `adminUiLocale({ locale: "zh-Hant" })`：构建时把组件库自带文字转成繁体中文（台湾用语）。optional peer，只在 Node 构建过程里加载，不进入任何浏览器入口；官方来源 https://github.com/nk2028/opencc-js 。
