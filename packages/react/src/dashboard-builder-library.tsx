@@ -6,7 +6,7 @@
  * Collapses to a 56px icon rail (`collapsed`): the chart tiles stay as icon buttons, templates hide.
  */
 import { useMemo, useState, type PointerEvent, type ReactNode } from "react";
-import { BarChart3, ChartBarBig, ChartBarStacked, ChartColumnBig, ChartPie, Filter, GripVertical, Hash, LayoutGrid, LineChart, PanelLeftClose, PanelLeftOpen, Rows3, Search, SquarePlus, Table2, Target, Type, Users } from "lucide-react";
+import { BarChart3, ChartBarBig, ChartBarStacked, ChartColumnBig, ChartPie, Filter, Goal, GripVertical, Hash, LayoutGrid, LineChart, PanelLeftClose, PanelLeftOpen, Rows3, Search, SquarePlus, Table2, Target, Type, Users } from "lucide-react";
 import { Input } from "./primitives.tsx";
 import { WIDGET_KIND_LABELS, type DashboardWidget, type WidgetKind } from "./dashboard-builder-core.ts";
 import { IconButton } from "./buttons.tsx";
@@ -39,6 +39,7 @@ export const WIDGET_KIND_ICONS: Readonly<Record<WidgetKind, ReactNode>> = {
   donut: <ChartPie />,
   stacked: <ChartBarStacked />,
   targetBar: <ChartColumnBig />,
+  targetProgress: <Goal />,
   funnel: <Filter />,
   cohort: <LayoutGrid />,
   table: <Table2 />,

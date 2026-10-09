@@ -49,26 +49,26 @@ try {
   await fieldsPanel.waitFor();
   // 8.3: panel bodies are lazy chunks (a skeleton first) — wait for the body before reading it
   await fieldsPanel.locator('.aui-grid-fields-panel').waitFor();
-  assert.match(await fieldsPanel.innerText(), /显示 14 \/ 14/);
+  assert.match(await fieldsPanel.innerText(), /显示 15 \/ 15/);
   assert.equal(await fieldsPanel.getByRole('img', { name: /邮箱只有客户成功能看全/ }).count(), 1, '受限字段带锁');
   assert.equal(await fieldsPanel.getByText('联系方式', { exact: true }).count(), 1, '字段编组');
   assert.match(await fieldsPanel.innerText(), /2 个字段/);
   await fieldsPanel.getByRole('button', { name: '隐藏「联系方式」' }).click();
   assert.equal(await grid.getByRole('columnheader', { name: /^联系邮箱/ }).count(), 0, '编组眼睛一次隐藏两列');
   assert.equal(await grid.getByRole('columnheader', { name: /^客户档案/ }).count(), 0);
-  assert.match(await fieldsPanel.innerText(), /显示 12 \/ 14/);
+  assert.match(await fieldsPanel.innerText(), /显示 13 \/ 15/);
   await fieldsPanel.getByRole('searchbox', { name: '搜索字段' }).fill('金额');
   assert.equal(await fieldsPanel.getByRole('button', { name: /^隐藏「/ }).count(), 1, '搜索只剩「合同金额」');
   await fieldsPanel.getByRole('searchbox', { name: '搜索字段' }).fill('');
   await fieldsPanel.getByRole('button', { name: '全部隐藏' }).click();
   assert.equal(await grid.locator('[role=columnheader][data-field-key]').count(), 1, '全部隐藏后只剩主字段');
   await fieldsPanel.getByRole('button', { name: '全部显示' }).click();
-  assert.equal(await grid.locator('[role=columnheader][data-field-key]').count(), 14);
-  // Keyboard: Alt+↓ on 「阶段」 moves it after 「标签」.
+  assert.equal(await grid.locator('[role=columnheader][data-field-key]').count(), 15);
+  // Keyboard: Alt+↓ on 「阶段」 moves it after the next field 「下次跟进」.
   await fieldsPanel.getByRole('button', { name: '移动「阶段」' }).focus();
   await page.keyboard.press('Alt+ArrowDown');
   const order = await grid.locator('[role=columnheader][data-field-key]').evaluateAll((cells) => cells.map((c) => c.dataset.fieldKey));
-  assert.deepEqual(order.slice(0, 3), ['name', 'tags', 'stage'], `键盘拖动改列顺序 ${order}`);
+  assert.deepEqual(order.slice(0, 3), ['name', 'followUp', 'stage'], `键盘拖动改列顺序 ${order}`);
   assert.equal(await fieldsPanel.getByRole('img', { name: /客户名称」主字段固定在第一列/ }).count(), 1, '主字段锁定');
   await shot('fields-1440-light');
   await page.keyboard.press('Escape');

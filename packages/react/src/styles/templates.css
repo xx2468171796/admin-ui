@@ -186,7 +186,9 @@
   .adminui .aui-slist-item[data-two] { min-height:56px; }
 }
 .adminui .aui-pane { display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--aui-surface); border:1px solid var(--aui-line); border-radius:var(--aui-radius-lg); box-shadow:var(--aui-shadow-sm); overflow:hidden; }
-.adminui .aui-pane[data-bare] { border:0; border-radius:0; box-shadow:none; background:transparent; }
+.adminui .aui-pane[data-bare] { border-radius:0; box-shadow:none; background:transparent; }
+/* 工作区（WorkspaceLayout）的栏自己去掉外框、栏间画分割线；bare 在那里不能再清边框，否则吃掉分割线 */
+.adminui .aui-pane[data-bare]:not(.aui-workspace > *) { border:0; }
 .adminui .aui-pane-head { flex:none; display:flex; align-items:center; gap:10px; min-height:50px; padding:10px 16px; border-bottom:1px solid var(--aui-line); }
 .adminui .aui-pane-head > .aui-search-field { flex:1 1 auto; }
 .adminui .aui-pane-title { display:grid; min-width:0; flex:0 1 auto; }

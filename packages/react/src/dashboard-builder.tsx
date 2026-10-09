@@ -23,7 +23,7 @@ import { useElementWidth } from "./media-audio.tsx";
 import { DEFAULT_COMPARE_OPTIONS, type DashboardFilterValue, type FilterOption } from "./dashboard-filters-core.ts";
 import { DashboardCanvas, DashboardView, type DashboardCanvasHandle, type WidgetDecor } from "./dashboard-builder-canvas.tsx";
 import { WidgetLibrary, type LibraryPick, type WidgetTemplate } from "./dashboard-builder-library.tsx";
-import { WidgetConfig, type DashboardDataSource, type DashboardMetricDef } from "./dashboard-builder-config.tsx";
+import { WidgetConfig, type DashboardDataSource, type DashboardMetricDef, type DashboardTargetDef } from "./dashboard-builder-config.tsx";
 import type { LoadWidgetData } from "./dashboard-builder-widget.tsx";
 import { addWidget, countSchemaChanges, historyPush, historyRedo, historyStart, historyUndo, nextWidgetId, WIDGET_KINDS, WIDGET_KIND_LABELS, WIDGET_SIZES, type DashboardSchema, type DashboardWidget, type WidgetKind } from "./dashboard-builder-core.ts";
 import { IconButton } from "./buttons.tsx";
@@ -48,6 +48,11 @@ export type DashboardBuilderProps = {
   sources?: readonly DashboardDataSource[];
   /** The host's metric dictionary (standard metrics). */
   metrics?: readonly DashboardMetricDef[];
+  /**
+   * Targets the host keeps (a table's monthly goal …): target widgets (目标进度, 子弹图, 汇总卡, 实际 vs 目标) can pick one
+   * instead of a fixed number. The widget stores only `targetRef`; `loadWidgetData` resolves the value and period.
+   */
+  targets?: readonly DashboardTargetDef[];
   compareOptions?: readonly FilterOption[];
   /** Ready-made widgets in the library (standard metric widgets, bitable views …). */
   templates?: readonly WidgetTemplate[];
@@ -116,7 +121,7 @@ export function DashboardBuilder(props: DashboardBuilderProps) {
   const widget = schema.widgets.find((w) => w.id === selected) ?? null;
   // Narrow builders (inside a table page): while the config pane is open the library becomes the icon rail.
   const rail = libraryCollapsed || (widget !== null && width > 0 && width < 1100);
-  const decor: WidgetDecor = useMemo(() => ({ metrics, dimensions, sourceLabel: (id: string) => { const s = sources.find((x) => x.id === id); return s ? `${s.group ? `${s.group} · ` : ""}${s.label}` : undefined; } }), [metrics, dimensions, sources]);
+  const decor: WidgetDecor = useMemo(() => ({ metrics, dimensions, sourceLabel: (id: string) => { const s = sources.find((x) => x.id === id); return s ? `${s.group ? `${s.group} · ` : ""}${s.label}` : undefined; }, onSetTarget: (w: DashboardWidget) => setSelected(w.id) }), [metrics, dimensions, sources]);
 
   const announce = (text: string) => setAnnouncement((old) => (old === text ? `${text} ` : text));
   const lastMerge = useRef<string | null>(null);
@@ -305,6 +310,7 @@ export function DashboardBuilder(props: DashboardBuilderProps) {
               context={filterContext}
               dimensions={dimensions}
               kinds={kinds}
+              targets={props.targets}
               footer={configFooter}
             />
           )}
@@ -321,7 +327,10 @@ export function DashboardBuilder(props: DashboardBuilderProps) {
 // Subpath exports: the builder, its read-only view, the parts and the pure rules.
 export { DashboardView, DashboardCanvas, WidgetFrame, DASHBOARD_ROW_HEIGHT, DASHBOARD_GAP, type DashboardViewProps, type DashboardCanvasProps, type DashboardCanvasHandle, type WidgetDecor } from "./dashboard-builder-canvas.tsx";
 export { WidgetLibrary, WIDGET_KIND_ICONS, type WidgetTemplate, type LibraryPick } from "./dashboard-builder-library.tsx";
-export { WidgetConfig, type WidgetConfigProps, type DashboardDataSource, type DashboardMetricDef } from "./dashboard-builder-config.tsx";
+export { WidgetConfig, type WidgetConfigProps, type DashboardDataSource, type DashboardMetricDef, type DashboardTargetDef } from "./dashboard-builder-config.tsx";
+export { TargetProgressCard, type TargetProgressData } from "./dashboard-target-card.tsx";
+export { targetProgress, type TargetProgress, type TargetProgressInput, type TargetPeriod } from "./dashboard-target-core.ts";
+export { formatDuration, DURATION_UNIT } from "./duration-format.ts";
 export { WidgetBody, WidgetContent, useWidgetData, skeletonShape, type DashboardWidgetData, type DashboardTableRow, type LoadWidgetData } from "./dashboard-builder-widget.tsx";
 export {
   DASHBOARD_COLUMNS,

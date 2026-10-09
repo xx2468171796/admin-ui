@@ -22,7 +22,7 @@ import { softTone } from "./view-color-core.ts";
 import { ContextMenu } from "../menu.tsx";
 import { PopoverPanel } from "../popover-panel.tsx";
 import { addDays, addMonths, clockText, dayLabelOf, diffDays, isWorkday, monthTitle, todayKey, zonedInstant, type DayKey } from "./date-core.ts";
-import { eventsOnDay, isBarEvent, layoutMonth, monthMatrix, resolveEvent, type MonthSegment, type ResolvedEvent } from "./calendar-core.ts";
+import { deadlineEvents, eventsOnDay, isBarEvent, layoutMonth, monthMatrix, resolveEvent, type MonthSegment, type ResolvedEvent } from "./calendar-core.ts";
 import { CalendarToolbar, DayBadge, eventMenuSections, whenText, type CalendarBaseProps } from "./calendar-parts.tsx";
 import { AgendaRow, CalendarPhoneMonth, UndatedDrawer, type CalendarUndatedItem } from "./calendar-side.tsx";
 import { EventCard, useEventCard } from "./calendar-card.tsx";
@@ -56,10 +56,11 @@ type Drag = { id: string; source: "event" | "undated"; title: string; tone: Opti
 
 /** See the module comment. */
 export function CalendarMonth(props: CalendarMonthProps) {
-  const { events, date, onNavigate, label, weekStart = 1, workCalendar, mode, onModeChange, onDateChange, onOpen, onClearDate, eventMenu, legend, toolbarExtra, undated, fixedWeeks, agendaBelow = 560, onCreate } = props;
+  const { events: input, date, onNavigate, label, weekStart = 1, workCalendar, mode, onModeChange, onDateChange, onOpen, onClearDate, eventMenu, legend, toolbarExtra, undated, fixedWeeks, agendaBelow = 560, onCreate } = props;
   const defaults = useAdminDefaults();
   const tz = props.timeZone ?? defaults.timeZone;
   const today = props.today ?? todayKey(Date.now(), tz);
+  const events = useMemo(() => deadlineEvents(input, today, tz), [input, today, tz]);
   const { portal } = useAdminTheme();
   const [pending, setPending] = useState<Record<string, { start: string; end: string | null }>>({});
   useEffect(() => setPending({}), [events]);

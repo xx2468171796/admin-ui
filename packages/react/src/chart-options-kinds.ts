@@ -9,6 +9,7 @@ import type { EChartsOption } from "echarts";
 import { formatNumber } from "./dashboard-core.ts";
 import { VIZ_BRAND, VIZ_CATEGORY_HUES, VIZ_NOTE, VIZ_OTHER, VIZ_SECONDARY, VIZ_SURFACE, VIZ_TEXT, vizCategory } from "./viz-palette.ts";
 import { escapeHtml } from "./chart-options.ts";
+import { formatDuration, isDurationUnit } from "./duration-format.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
@@ -32,7 +33,7 @@ export type TooltipRow = { color?: string; name: string; value: number | null | 
 export function tooltipHtml(input: { head?: string; chip?: string; rows: readonly TooltipRow[]; total?: { label: string; text: string }; note?: string }): string {
   const rows = input.rows.map((r) => {
     const swatch = r.color ? `<i${r.line ? ' data-line=""' : ""} style="background:${escapeHtml(r.color)}"></i>` : "";
-    const value = `${chartValueText(r.value, r.digits)}${finite(r.value) && r.unit ? ` ${escapeHtml(r.unit)}` : ""}`;
+    const value = isDurationUnit(r.unit) ? formatDuration(r.value) : `${chartValueText(r.value, r.digits)}${finite(r.value) && r.unit ? ` ${escapeHtml(r.unit)}` : ""}`;
     return `<div class="aui-vz-tt-row">${swatch}<span>${escapeHtml(r.name)}</span><b>${escapeHtml(value)}${r.note ? ` <small>${escapeHtml(r.note)}</small>` : ""}</b></div>`;
   });
   const head = input.head ? `<div class="aui-vz-tt-head">${escapeHtml(input.head)}${input.chip ? ` <span class="aui-vz-tt-chip">${escapeHtml(input.chip)}</span>` : ""}</div>` : "";
@@ -76,7 +77,7 @@ export function barOption(input: BarInput): EChartsOption {
     return finite(v) ? { value: v, itemStyle: { color: colorAt(i) } } : "-";
   });
   const category = { type: "category" as const, data: [...categories], axisTick: { show: false }, axisLabel: { interval: 0, hideOverlap: true } };
-  const value = { type: "value" as const, min: 0, axisLabel: { formatter: (v: number) => chartValueText(v) } };
+  const value = { type: "value" as const, min: 0, axisLabel: { formatter: (v: number) => (isDurationUnit(unit) ? formatDuration(v) : chartValueText(v)) } };
   return {
     animation: false,
     grid: { left: 4, right: horizontal ? 48 : 12, top: labels && !horizontal ? 20 : 8, bottom: 4, containLabel: true },
@@ -101,7 +102,7 @@ export function barOption(input: BarInput): EChartsOption {
         barMaxWidth: horizontal ? 20 : 32,
         barCategoryGap: "42%",
         itemStyle: { color: VIZ_BRAND, borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0] },
-        label: { show: labels, position: horizontal ? "right" : "top", distance: 6, ...VALUE_LABEL, formatter: ((p: { value: number }) => chartValueText(p.value, digits)) as never },
+        label: { show: labels, position: horizontal ? "right" : "top", distance: 6, ...VALUE_LABEL, formatter: ((p: { value: number }) => (isDurationUnit(unit) ? formatDuration(p.value) : chartValueText(p.value, digits))) as never },
         emphasis: { disabled: true },
       },
     ],
@@ -156,11 +157,11 @@ export function donutOption(input: DonutInput): EChartsOption {
       formatter: ((name: string) => {
         const s = slices.find((x) => x.name === name);
         if (!s) return name;
-        return stacked ? `${name} ${pct(s.share)}` : `${name}  ${chartValueText(s.value, digits)}${unit}  ${pct(s.share)}`;
+        return stacked ? `${name} ${pct(s.share)}` : `${name}  ${isDurationUnit(unit) ? formatDuration(s.value) : `${chartValueText(s.value, digits)}${unit}`}  ${pct(s.share)}`;
       }) as never,
     },
     title: {
-      text: chartValueText(total, digits),
+      text: isDurationUnit(unit) ? formatDuration(total) : chartValueText(total, digits),
       subtext: centerLabel,
       left: center[0],
       top: stacked ? "28%" : "center",
@@ -213,7 +214,7 @@ export function stackedBarOption(input: StackedBarInput): EChartsOption {
   const { categories, unit = "", digits = 0, horizontal = false } = input;
   const list = stackSeries(input.series, categories.length);
   const category = { type: "category" as const, data: [...categories], axisTick: { show: false }, axisLabel: { interval: 0, hideOverlap: true } };
-  const value = { type: "value" as const, min: 0, axisLabel: { formatter: (v: number) => chartValueText(v) } };
+  const value = { type: "value" as const, min: 0, axisLabel: { formatter: (v: number) => (isDurationUnit(unit) ? formatDuration(v) : chartValueText(v)) } };
   // The outermost non-empty segment of each category gets the rounded end.
   const topOf = categories.map((_, i) => {
     for (let s = list.length - 1; s >= 0; s--) if (finite(list[s]!.values[i]) && (list[s]!.values[i] as number) > 0) return s;
@@ -234,7 +235,7 @@ export function stackedBarOption(input: StackedBarInput): EChartsOption {
           .map((p) => ({ color: p.color, name: list[p.seriesIndex]?.name ?? "", value: list[p.seriesIndex]?.values[i] ?? null, unit, digits }))
           .filter((r) => finite(r.value));
         const sum = rows.reduce((n, r) => n + (r.value as number), 0);
-        return tooltipHtml({ head: categories[i], rows, ...(rows.length > 1 ? { total: { label: "合计", text: `${chartValueText(sum, digits)}${unit ? ` ${unit}` : ""}` } } : {}) });
+        return tooltipHtml({ head: categories[i], rows, ...(rows.length > 1 ? { total: { label: "合计", text: isDurationUnit(unit) ? formatDuration(sum) : `${chartValueText(sum, digits)}${unit ? ` ${unit}` : ""}` } } : {}) });
       }) as never,
     },
     xAxis: horizontal ? value : category,

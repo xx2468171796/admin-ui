@@ -13,6 +13,7 @@ import {
   type BandVerdict,
 } from "./dashboard-core.ts";
 import { resolveVizToken, VIZ_BRAND, vizBrandStep, vizCategory, vizColors, VIZ_CATEGORY_HUES, VIZ_SURFACE, VIZ_TEXT, type ChartColors, type VizMode } from "./viz-palette.ts";
+import { formatDuration, isDurationUnit } from "./duration-format.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
@@ -59,7 +60,7 @@ export type Annotation =
   | { from: number; to: number; label: string };
 
 const fmt = (v: unknown, digits: number, unit: string) =>
-  typeof v === "number" && Number.isFinite(v) ? `${formatNumber(v, { digits })}${unit}` : "—";
+  typeof v === "number" && Number.isFinite(v) ? (isDurationUnit(unit) ? formatDuration(v) : `${formatNumber(v, { digits })}${unit}`) : "—";
 
 /** Insert explicit nulls where consecutive timestamps are further apart than 1.5× the expected step,
  *  so the line breaks at missing data instead of drawing a straight bridge (ECharts only breaks on null). */
@@ -233,8 +234,8 @@ export function timeSeriesOption(input: {
       type: "value",
       min: input.yMin,
       scale: input.scale,
-      axisLabel: { formatter: (v: number) => formatNumber(v, { compact: true }) },
-      name: unit || undefined,
+      axisLabel: { formatter: (v: number) => (isDurationUnit(unit) ? formatDuration(v) : formatNumber(v, { compact: true })) },
+      name: (!isDurationUnit(unit) && unit) || undefined,
     },
     series,
   };

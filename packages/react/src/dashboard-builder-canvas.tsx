@@ -49,6 +49,8 @@ export type WidgetDecor = {
   dimensions?: readonly { key: string; label: string }[];
   /** 「清空筛选」 on a widget whose filters left nothing (no-match state). */
   onClearFilters?: () => void;
+  /** 「设目标」 on a 「目标进度」 card without a target (the builder opens the widget's settings). */
+  onSetTarget?: (widget: DashboardWidget) => void;
 };
 
 type FrameProps = {
@@ -117,7 +119,7 @@ export function WidgetFrame({ widget, context, load, decor, edit, style }: Frame
         {edit && edit.toolbar}
       </header>
       <div className="aui-dbb-body">
-        <WidgetBody widget={widget} context={context} load={load} onClearFilters={decor.onClearFilters} />
+        <WidgetBody widget={widget} context={context} load={load} onClearFilters={decor.onClearFilters} onSetTarget={decor.onSetTarget ? () => decor.onSetTarget?.(widget) : undefined} />
         {widget.caption && <p className="aui-dbb-caption">{widget.caption}</p>}
       </div>
       {edit?.selected && (

@@ -15,3 +15,4 @@ export * from "./grid-group-core.ts";
 export * from "./grid-sql-groups.ts";
 export * from "./grid-field-types.ts"; // bt/grid-b: coreType / maskPhone / extra-type rules for servers
 export { runtimeTimeZone, utcOffsetOf } from "./admin-defaults.ts";
+export { deadlineState, deadlineTone, deadlineText, DEADLINE_SOON_DAYS, type DeadlineState, type DeadlineKind, type DeadlineOptions } from "./deadline-core.ts";

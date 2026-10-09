@@ -46,6 +46,9 @@ export type DashboardDataSource = {
 };
 /** A standard metric from the host's metric dictionary (DASHBOARDS.md §4 MetricDef subset). */
 export type DashboardMetricDef = { key: string; name: string; version?: number; unit?: string; formula?: string };
+/** A target the host keeps (e.g. a table's 「每月成交额」 goal): widgets store only its id (`targetRef`). */
+export type DashboardTargetDef = { id: string; name: string; period: "week" | "month" | "quarter" | "year"; unit?: string };
+const PERIOD_LABELS: Readonly<Record<DashboardTargetDef["period"], string>> = { week: "每周", month: "每月", quarter: "每季度", year: "每年" };
 
 export type WidgetConfigProps = {
   widget: DashboardWidget;
@@ -59,13 +62,15 @@ export type WidgetConfigProps = {
   dimensions: readonly { key: string; label: string }[];
   /** Chart types offered in the tiles (default: all data kinds). */
   kinds: readonly WidgetKind[];
+  /** Targets the host keeps: target widgets can use one of them instead of a fixed number. */
+  targets?: readonly DashboardTargetDef[];
   footer?: ReactNode;
 };
 
 const FOLLOW = "__follow__";
 const NONE = "__none__";
 
-export function WidgetConfig({ widget, onChange, onClose, sources, metrics, compareOptions, context, dimensions, kinds, footer }: WidgetConfigProps) {
+export function WidgetConfig({ widget, onChange, onClose, sources, metrics, compareOptions, context, dimensions, kinds, targets = [], footer }: WidgetConfigProps) {
   const id = useId();
   const [tab, setTab] = useState(widget.kind === "text" ? "style" : "data");
   const q: WidgetQuery = widget.query ?? {};
@@ -150,11 +155,7 @@ export function WidgetConfig({ widget, onChange, onClose, sources, metrics, comp
                 <Choice label="堆叠按" value={q.stackBy ?? NONE} options={[{ value: NONE, label: "不堆叠" }, ...(source?.groupBy ?? []).filter((o) => o.value !== q.groupBy)]} onChange={(v) => setQuery({ stackBy: v === NONE ? null : v })} />
               </FormField>
             )}
-            {TARGET_WIDGET_KINDS.includes(widget.kind) && (
-              <FormField label="目标值" htmlFor={`${id}-target`} optional hint="每期的目标（和指标同一单位）；不填 = 卡上显示「设目标」">
-                <NumberInput id={`${id}-target`} value={widget.target ?? null} min={0} thousands onChange={(v) => onChange({ ...widget, target: v }, "target")} />
-              </FormField>
-            )}
+            {TARGET_WIDGET_KINDS.includes(widget.kind) && <TargetSetting id={id} widget={widget} targets={targets} onChange={onChange} />}
             {widget.kind === "group" && <GroupItems widget={widget} metrics={usable} onChange={onChange} />}
             <section className="aui-dbb-sec" aria-label="时间粒度">
               <div className="aui-dbb-lb">时间粒度</div>
@@ -214,6 +215,32 @@ export function WidgetConfig({ widget, onChange, onClose, sources, metrics, comp
       </Tabs>
       {footer && <div className="aui-dbb-cfg-foot"><ShieldCheck aria-hidden="true" />{footer}</div>}
     </aside>
+  );
+}
+
+const FIXED = "__fixed__";
+/** 目标: a fixed number, or (when the host keeps targets) one of them by id — the host resolves its value and period. */
+function TargetSetting({ id, widget, targets, onChange }: { id: string; widget: DashboardWidget; targets: readonly DashboardTargetDef[]; onChange: WidgetConfigProps["onChange"] }) {
+  const ref = widget.targetRef;
+  const known = targets.some((t) => t.id === ref);
+  const number = (
+    <FormField label="目标值" htmlFor={`${id}-target`} optional hint="每期的目标（和指标同一单位）；不填 = 卡上显示「设目标」">
+      <NumberInput id={`${id}-target`} value={widget.target ?? null} min={0} thousands onChange={(v) => onChange({ ...widget, target: v }, "target")} />
+    </FormField>
+  );
+  if (!targets.length && !ref) return number;
+  const options = [{ value: FIXED, label: "固定数值" }, ...targets.map((t) => ({ value: t.id, label: `${t.name}（${PERIOD_LABELS[t.period]}${t.unit ? ` · ${t.unit}` : ""}）` })), ...(ref && !known ? [{ value: ref, label: "目标已删除" }] : [])];
+  return (
+    <>
+      <FormField label="目标" htmlFor={`${id}-target-ref`} hint="选一个已设好的目标，或写固定数值">
+        <Choice id={`${id}-target-ref`} label="目标" value={ref ?? FIXED} options={options}
+          onChange={(v) => {
+            const { targetRef: _ref, target: _target, ...rest } = widget;
+            onChange(v === FIXED ? { ...rest, ...(widget.target != null ? { target: widget.target } : {}) } : { ...rest, targetRef: v });
+          }} />
+      </FormField>
+      {!ref && number}
+    </>
   );
 }
 

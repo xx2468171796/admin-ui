@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button, InlineAlert, PageBody, PageHeader, RecordPage, useNotify } from "@adminui/react";
 import { contractLayout, ContractOverview, type ContractRow } from "./contract-record";
-import { BitableGrid, ViewOverrideBar, gridViewReducer, normalizeGridView, useGridView, type GridCellChange, type GridDataSource, type GridField, type GridView } from "@adminui/react/grid";
+import { BitableGrid, ViewOverrideBar, gridViewReducer, normalizeGridView, useGridView, type GridCellChange, type GridDataSource, type GridField, type GridSelectOption, type GridView } from "@adminui/react/grid";
 import { applyGridGroups, applyGridQuery, type ConditionContext } from "@adminui/react/grid-query";
 import { SegmentedControl } from "@adminui/react";
 
@@ -37,6 +37,11 @@ const NOTES = [
   "二期扩容，涉及三个子公司，合同主体待确认。",
 ];
 
+// 下次跟进：相对今天的天数（按编号算，不占随机数序列）——有逾期、今天、快到、以后的
+const dayFromToday = (days: number) => {
+  const d = new Date(Date.now() + days * 86_400_000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 // Deterministic demo data: the same 2000 records on every load.
 function generate(count: number): Contract[] {
   let seed = 20260930;
@@ -54,6 +59,7 @@ function generate(count: number): Contract[] {
       amount: Math.round(rand() * 2_000_000) * 100 + (i % 3) * 50,
       seats: rand() < 0.1 ? null : 5 + Math.floor(rand() * 500),
       signed,
+      followUp: i % 5 === 4 ? null : dayFromToday(((i * 7) % 23) - 8),
       updated: new Date(Date.UTC(2026, 8, 1 + Math.floor(rand() * 29), Math.floor(rand() * 24), Math.floor(rand() * 60))).toISOString(),
       paid: stage === "won" && rand() < 0.7,
       site: `https://www.example.com/customers/${i + 1}`,
@@ -78,6 +84,8 @@ const CONDITIONS: ConditionContext = { resolve: (token) => (token === "me" ? ["�
 const fields: GridField<Contract>[] = [
   { key: "name", title: "客户名称", type: "text", primary: true, width: 220, editable: true, required: true },
   { key: "stage", title: "阶段", type: "singleSelect", options: STAGES, editable: true },
+  // 截止日期：逾期红字 +「逾期 N 天」，今天 / 2 天内橙字；赢单 / 输单的合同办完了，不再提醒
+  { key: "followUp", title: "下次跟进", type: "date", editable: true, deadline: { closed: (row) => row.stage === "won" || row.stage === "lost" } },
   { key: "tags", title: "标签", type: "multiSelect", options: TAGS, width: 200, editable: true },
   { key: "owners", title: "负责人", type: "user", width: 170, editable: true },
   { key: "amount", title: "合同金额", type: "money", summary: "sum", editable: true },
@@ -136,6 +144,19 @@ function ClientGrid({ onMode }: { onMode: (mode: "client" | "server") => void })
   const notify = useNotify();
   const [rows, setRows] = useState(() => generate(2000));
   const [selection, setSelection] = useState<string[]>([]);
+  // 标签格子里搜不到时「+ 新建选项」：演示里 400ms 后加到选项末尾；名称含「失败」时模拟服务端拒绝
+  const [tags, setTags] = useState<GridSelectOption[]>(TAGS);
+  const gridFields = useMemo(() => fields.map((field) => (field.key !== "tags" ? field : {
+    ...field,
+    options: tags,
+    onCreateOption: async (label: string) => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      if (label.includes("失败")) throw new Error("演示：选项名不能含「失败」");
+      const option = { value: `tag-${Date.now()}`, label, tone: "gray" as const };
+      setTags((list) => [...list, option]);
+      return option;
+    },
+  })), [tags]);
   // 共享视图（所有人看到的）：真实项目从服务端取；个人调整存在本浏览器，和它比出「你的个人设置」
   const shared = useMemo(() => normalizeGridView({ groupBy: "stage", rowHeight: "short" }, fields), []);
   const { view, onViewChange, reset } = useGridView(fields, {
@@ -190,7 +211,7 @@ function ClientGrid({ onMode }: { onMode: (mode: "client" | "server") => void })
           caption="合同台账"
           rows={rows}
           getRowId={(row) => row.id}
-          fields={fields}
+          fields={gridFields}
           view={view}
           onViewChange={onViewChange}
           frozenColumns={1}

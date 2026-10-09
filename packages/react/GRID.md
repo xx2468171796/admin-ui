@@ -86,13 +86,15 @@ export function Machines({ rows, reload, userId }: Props) {
 | `value(row)` / `text(row)` | 值不在 `row[key]` 时用 `value` 读；`custom` 类型要搜 / 筛 / 排 / 分组时给 `text` |
 | `render(row)` / `detail(row)` | 覆盖格子 / 详情里的显示（尽量不用：类型自带的显示就是 SDK 标准样子） |
 | `options` | 单选 / 多选的选项，顺序 = 排序和分组顺序；`tone` 或 `color` 定颜色 |
+| `onCreateOption(label)` | 单选 / 多选：编辑器（格子、记录详情里的 `GridCellEditor variant="field"`）里搜索词去掉首尾空格后和所有选项名都不完全相同（区分大小写）时，列表最后一行「+ 新建选项「…」」；回车（它是当前行时）或点它 → 显示「正在新建」，等宿主返回 `Promise<GridSelectOption \| null>`：返回选项就选上（多选是加上），`null` = 取消，reject = 编辑器不关、用通知说原因（没有 NotificationProvider 时写在编辑器下面）。宿主负责加进字段配置并判断权限；不给就没有这一行 |
 | `summary` | 默认统计（用户可改） |
 | `currency / precision / timeZone` | 金额符号（值是「分」）/ 显示几位小数（数字默认最多 2 位；金额 0–2 位、默认 2 位，例：237900000 分 + `precision: 0` → `¥2,379,000`；不写 `currency` 时用 `AdminProvider defaults.currency`；格子、底部统计、输入都按它四舍五入（远离零），值仍存分，统计值本身精确）/ 日期时区（默认 Asia/Shanghai） |
 | `editable` | `true` 或 `(row) => boolean`；需要表格给 `onCellsChange` |
 | `write(row, value)` | 用了 `value` 读取函数的字段，编辑时必须给（告诉表格新值写在哪） |
 | `parse(text, row)` / `validate(value, row)` / `required` / `placeholder` | 自定义解析、校验、必填、编辑框提示 |
 | `locked` / `description` | 表头的锁（有权限限制，字符串 = 悬停说明）和 ⓘ（字段说明，读屏也念） |
-| `tone(row)` | 按行给格子文字着色：`danger / warning / info / success / brand / note`（例：逾期日期 `danger`） |
+| `tone(row)` | 按行给格子文字着色：`danger / warning / info / success / brand / note` |
+| `deadline` | 日期 / 日期时间是截止日期：`true` 或 `{ closed: (row) => 已办完 }`。按字段时区（默认 `AdminProvider defaults.timeZone`）的日历天比今天（`deadlineState`）：逾期 → 文字 `danger` + 格内小字「逾期 N 天」（窄列截断，悬停「已逾期 N 天」）；今天、1–2 天后 → `warning`；更远 / 空 → 不着色；带时间的按当天算（今天下午到期 = 今天到期）。`closed(row)` 为真不着色。`tone(row)` 返回了颜色时以它为准。默认列宽加宽到放得下小字（日期 184、日期时间 232）。看板 / 画册卡片上的这个字段同样着色；卡片底部的 `due` 胶囊也按它（2 天内注意色、办完的不着色）；日历事件给 `deadline: true` 按它变红 / 黄 |
 | `max` / `mask` / `onReveal` / `resultType` / `openRef` / `openEditor` / `openAttachment` | 新类型用：评分星数；掩码与留痕查看；公式结果类型；打开关联记录；用宿主自己的界面编辑（记录选择器、上传抽屉）；打开附件 |
 
 值的形状：money 是分（bigint / 整数 / 整数字符串）；user 是名字、`{ name, hint?, key? }` 或它们的数组；singleSelect 是选项 value；multiSelect 是 value 数组；date / datetime 是 ISO 字符串 / 毫秒 / Date。
@@ -363,7 +365,7 @@ TanStack Table 是本包的 optional peer：运行时用的是**宿主自己装�
 - `onRowMove({ rowId, afterId, beforeId, group })`：拖手柄或 Alt + Shift + ↑ / ↓；拖到别的组时 `group` 是目标组每一级的分组值（`{ stage: "quote", owner: "小王", region: "tp" }`），宿主据此改这些字段、存顺序；只在同一个最底层组里排序。
 - `onAddRow(group)`：每个展开的最底层组底部一行「+ 新增一行 自动带上 首通 · 小王 · 杭州」（参数是这一组每一级的分组值），不分组时在最底下（`{}`）；分组标题右键「在本组新增记录」给的是到那一级为止的分组值；空表时空状态上也有「新增一行」按钮。
 - `cellBadge(row, field)` → `{ label, tone? }`：格子右上角小三角（默认注意色），`label` 给读屏和悬停。
-- `GridField.tone(row)`：格子文字着色，例如逾期的「下次跟进」标红。
+- `GridField.tone(row)`：格子文字着色；截止日期（「下次跟进」）用 `GridField.deadline`，不用自己写 `tone`。
 
 ### 12.6 更多字段类型
 

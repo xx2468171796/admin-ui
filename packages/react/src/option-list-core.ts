@@ -115,11 +115,14 @@ export function initialActive(options: readonly SelectOption[], selected: readon
   return first < 0 ? 0 : first;
 }
 
-/** The label 「＋ 新建选项」 would create, or null (blank query, or an option already has that label). */
-export function createCandidate(options: readonly SelectOption[], query: string): string | null {
+/**
+ * The label 「＋ 新建选项」 would create, or null (blank query, or an option already has that label). Labels compare
+ * ignoring case unless `exact` (trimmed, case-sensitive — the rule of field options, optionProblems).
+ */
+export function createCandidate(options: readonly SelectOption[], query: string, exact = false): string | null {
   const label = query.trim();
   if (!label) return null;
-  return options.some((o) => norm(o.label) === norm(label)) ? null : label;
+  return options.some((o) => (exact ? o.label.trim() === label : norm(o.label) === norm(label))) ? null : label;
 }
 
 /** Typeahead on a closed / search-less list: the next pickable option whose label starts with `text`. */

@@ -6,6 +6,8 @@
  */
 import { toTime, type DateInput } from "../format.ts";
 import { addDays, diffDays, isDayKey, maxDay, minDay, startOfMonth, startOfWeek, endOfMonth, toDay, zonedInstant, zonedParts, type DayKey, type Weekday } from "./date-core.ts";
+import { deadlineState } from "../deadline-core.ts";
+import type { OptionTone } from "../option-tone.ts";
 
 /** What a calendar needs of a record. All-day: `start` / `end` are days (end inclusive); timed: instants. */
 export type CalendarEventInput = {
@@ -47,6 +49,22 @@ export function resolveEvent(event: CalendarEventInput, timeZone: string, defaul
   const endDay = b.minutes === 0 && b.day > a.day ? addDays(b.day, -1) : b.day;
   const endMin = b.minutes === 0 && b.day > a.day ? 1440 : b.minutes;
   return { id: event.id, allDay: false, startDay: a.day, endDay, startMin: a.minutes, endMin };
+}
+/**
+ * Events whose date is a deadline (`deadline: true`) take their colour from it: overdue = red, due today or in
+ * the next 2 days = yellow (the danger / warning hues); other events and deadlines further ahead keep their `tone`.
+ * The due day is the event's last day (`end`, else `start`), counted in `timeZone` against `today`.
+ */
+export function deadlineEvents<E extends CalendarEventInput & { tone?: OptionTone; deadline?: boolean }>(events: readonly E[], today: DayKey, timeZone: string): readonly E[] {
+  if (!events.some((e) => e.deadline)) return events;
+  const now = new Date(zonedInstant(today, 720, timeZone));
+  return events.map((event) => {
+    if (!event.deadline) return event;
+    const due = event.end ?? event.start;
+    const state = deadlineState(typeof due === "number" ? new Date(due) : due, { now, timeZone });
+    if (state.kind === "none") return event;
+    return { ...event, tone: state.kind === "overdue" ? "red" : "yellow" };
+  });
 }
 export const spanDays = (event: Pick<ResolvedEvent, "startDay" | "endDay">) => diffDays(event.startDay, event.endDay) + 1;
 /** Shown as a bar in month view / the all-day row: all-day events and timed events crossing midnight. */

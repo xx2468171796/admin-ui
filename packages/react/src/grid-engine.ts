@@ -81,9 +81,11 @@ const DEFAULT_WIDTHS: Partial<Record<GridFieldType, number>> = {
   email: 200,
   ...GRID_EXTRA_WIDTHS, // bt/grid-b
 };
+/** Deadline dates (GridField.deadline) leave room for 「逾期 N 天」 after the date. */
+const DEADLINE_WIDTHS: Partial<Record<GridFieldType, number>> = { date: 184, datetime: 232 };
 /** Width of a field before the user drags it: `field.width`, else a default for its type. */
-export const defaultFieldWidth = (field: Pick<GridField<unknown>, "width" | "type" | "primary">) =>
-  Math.min(GRID_MAX_WIDTH, Math.max(GRID_MIN_WIDTH, field.width ?? DEFAULT_WIDTHS[field.type] ?? (field.primary ? 200 : GRID_DEFAULT_WIDTH)));
+export const defaultFieldWidth = (field: Pick<GridField<unknown>, "width" | "type" | "primary"> & { deadline?: unknown }) =>
+  Math.min(GRID_MAX_WIDTH, Math.max(GRID_MIN_WIDTH, field.width ?? (field.deadline ? DEADLINE_WIDTHS[field.type] : undefined) ?? DEFAULT_WIDTHS[field.type] ?? (field.primary ? 200 : GRID_DEFAULT_WIDTH)));
 
 const sortable = (field: GridField<unknown>) => field.sortable !== false && (field.type !== "custom" || Boolean(field.text));
 type Key = ReturnType<typeof sortKey>;

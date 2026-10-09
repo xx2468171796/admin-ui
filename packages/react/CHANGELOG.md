@@ -2,6 +2,27 @@
 
 记 3.2 起的版本，以及 3.0、2.0 两次大版本的升级说明；更早的版本看 Git 提交记录。
 
+## 8.4.0（2026-10-09）
+
+**多维表格的四件通用能力：截止日期着色、格子里新建选项、看板「目标进度」卡（可绑宿主的目标）、时长单位。** 只新增属性和导出，不删导出；默认行为只在用了新属性时变化（下面「同事会注意到」写明的除外）。
+
+- **截止日期**：纯函数 `deadlineState(value, { now?, timeZone? }) → { kind: "none" | "soon" | "today" | "overdue", days }`（根入口和无 React 的 `@adminui/react/grid-query` 都导出，服务端统计和前端着色用同一个），按时区的日历天比：早于今天 = 逾期（`days` = 逾期天数）、今天、1–2 天后 = 快到；带时间的按当天算（今天下午到期 = 今天到期，不按小时变红）。配套 `deadlineTone`（danger / warning）、`deadlineText`（「已逾期 3 天」「今天到期」「明天到期」「2 天后到期」）。`GridField.deadline` 从 `boolean` 扩成 `boolean | { closed?: (row) => boolean }`：日期 / 日期时间格子逾期红字 + 格内小字「逾期 N 天」（窄列截断，悬停「已逾期 N 天」），今天 / 2 天内橙字，`closed(row)` 为真不着色，字段自己的 `tone(row)` 返回了颜色时以它为准；截止日期列默认宽度 184 / 232px（放得下小字）。看板 / 画册卡片上的这个字段同样着色，卡片 `due` 胶囊在字段是截止日期时 2 天内也用注意色、办完的不着色；`CalendarEvent.deadline: true` 的事件逾期红、快到黄。`RecordKeyNumber.tone` 加 `"warning"`（和 `attention` 同色），关键数副行可以直接用 `deadlineText` / `deadlineTone`。表单题（PublicForm）照旧只看 `deadline` 真假。
+- **格子里新建选项**：`GridField.onCreateOption(label) => Promise<GridSelectOption | null | undefined>`（单选 / 多选）。编辑器里搜索词去掉首尾空格后和所有选项名都不完全相同（区分大小写，和字段弹窗的重名规则一致）时，列表最后一行「+ 新建选项「…」」（`role="option"`、读屏名「新建选项「…」」）；没有匹配时它就是当前行，回车或点它 → 「正在新建」→ 宿主返回选项就选上（多选是加上），`null` = 取消，reject = 编辑器不关、通知里写原因（没有 NotificationProvider 时写在编辑器下面）。记录详情里的选项编辑器（`GridCellEditor variant="field"`）是同一个，自动有。不给属性就没有这一行。底层：`createCandidate(options, query, exact?)`、`useOptionNav({ createExact })`、`OptionList creating`（新建中的那一行）。
+- **看板「目标进度」卡**（`@adminui/react/dashboard-builder`）：新组件类型 `targetProgress`（组件库「目标进度」），`loadWidgetData` 返回 `{ kind: "targetProgress", value, target, period?: { start, end, label? }, targetNote?, unit?, currency?, digits? }`；卡上 实际 / 目标、完成率、子弹条 +「按时间应完成 N%」刻度（本期已过天数 ÷ 本期天数，今天算已过）、「还差 X · 剩 N 天」或「已超额 X」、灰字「本月 · 全公司目标」；没有目标 →「还没有目标」+「设目标」（搭建器里打开这张卡的设置，`WidgetDecor.onSetTarget`）。导出 `TargetProgressCard`、纯规则 `targetProgress`。组件规格加 `targetRef?: string`（优先于常数 `target`，`normalizeDashboard` 读、`widgetDataKey` 算进去）；`DashboardBuilder targets={[{ id, name, period: "week" | "month" | "quarter" | "year", unit? }]}` 后，子弹图 / 汇总卡 / 实际 vs 目标 / 目标进度的设置里「目标」可选「固定数值」或其中一个目标；搭建器只存 id，值由宿主算。starter 看板搭建页加了「本月成交金额 · 目标进度」和「首次响应时长（中位）」两个模板。
+- **时长单位**：指标 `unit: "duration"`（值是秒）写成「25 分钟」（< 1 小时，不足 1 分钟写「不到 1 分钟」）/「3.2 小时」（< 48 小时）/「1.5 天」（一位小数，去掉 .0）：`KpiCard`（数字组同）、`barOption` / `donutOption` / `stackedBarOption` / `targetBarOption` / `timeSeriesOption` 的坐标轴、柱顶数字、提示、环图合计，看板表格（`{ kind: "table", units: { 列: "duration" } }`），目标进度卡。导出 `formatDuration`、`DURATION_UNIT`（dashboard-builder 子路径）。
+- **示例**：starter 多维表格加「下次跟进」截止日期列（赢单 / 输单不提醒），「标签」可以在格子里新建（名称含「失败」演示被拒）。
+
+**同事会注意到**：用了 `deadline: true` 的日期列默认变宽；以前在宿主里用 `tone` 自己算逾期的，可以换成 `deadline`（两者都给时 `tone` 优先）；看板组件库多一个「目标进度」。
+
+**风险**：① `GridField.deadline` 的类型变宽（`boolean` → `boolean | { closed }`），宿主代码里把它当 `boolean` 直接传给 `DatePicker deadline` 的要改成 `Boolean(field.deadline)`。② 「今天」取浏览器当前时间，表格不会在过零点时自己重画（翻页、编辑、刷新时才更新）。③ 体积：根入口探针 328.1 / 330 KB，余量很小；`grid:read-only` 首屏 114.4 KB（+1 KB，截止日期的显示在首屏）。
+## 8.3.1（2026-10-09）
+
+**修：工作区里无边框面板把栏间分割线吃掉了。** `WorkspaceLayout` 中间栏用 `Pane bare` 时，`bare` 的 `border:0` 优先级更高，盖掉了工作区「相邻两栏之间 1px 分割线」，两栏白底贴在一起没有线（例如左边分区列表和中间列表之间）。现在 `bare` 只在工作区外清外框；工作区里各栏的外框本来就由工作区去掉，只留栏间分割线（宽屏竖线、窄屏横线）。新增样式门禁一条（`test/style-rules.test.ts`）。
+
+**同事会注意到**：工作区里用了 `Pane bare` 的页面，那一栏左边（窄屏是上边）多了一条分割线，和其他栏一致。
+
+**风险**：低。只改了 `.aui-pane[data-bare]` 在 `.aui-workspace` 直接子元素上的边框；工作区外的 bare 面板不变。
+
 ## 8.3.0（2026-10-08）
 
 **多维表格首屏变轻；命令面板在刚打开的页面也认 Ctrl / ⌘ K；组织选人补三个时序问题；成员「添加成员」接组织选人。** 只新增属性和导出，不删导出、不改默认行为（除下面写明的两处文案）。

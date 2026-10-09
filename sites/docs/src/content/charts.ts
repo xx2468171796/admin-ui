@@ -412,6 +412,7 @@ const dashboardBuilder: ComponentDoc = {
     },
     { id: "charts/builder-empty", title: "从空白开始", description: "只开放 5 种图；第一次保存会失败，看错误怎么显示。", height: 600, bleed: true },
     { id: "charts/dashboard-view", title: "只读看板 DashboardView", description: "切到「按阅读顺序」看手机上的排法。", height: 760 },
+    { id: "charts/target-progress", title: "目标进度卡与时长单位", description: "「目标进度」组件（kind: targetProgress）：落后、超额、还没设目标；右边是 unit: \"duration\" 的数字卡。", height: 320 },
   ],
   props: [
     {
@@ -425,7 +426,8 @@ const dashboardBuilder: ComponentDoc = {
         { name: "onSaveAsMine", type: "(schema) => void | Promise<void>", description: "「另存为我的」（编辑不能覆盖的公司看板时）" },
         { name: "onChange", type: "(schema: DashboardSchema) => void", description: "每次完成的改动（草稿 / 自动保存）" },
         { name: "sources", type: "readonly DashboardDataSource[]", default: "[]", description: "数据源（可分组、带记录数、未接入时写 disabledReason）" },
-        { name: "metrics", type: "readonly DashboardMetricDef[]", default: "[]", description: "宿主的指标字典（标准指标：名称、版本、单位、公式）" },
+        { name: "metrics", type: "readonly DashboardMetricDef[]", default: "[]", description: "宿主的指标字典（标准指标：名称、版本、单位、公式）；单位 \"duration\" = 值是秒，卡片、图表、表格写「3.2 小时」/「1.5 天」（formatDuration）" },
+        { name: "targets", type: 'readonly { id; name; period: "week" | "month" | "quarter" | "year"; unit? }[]', default: "[]", description: "宿主保存的目标（表上的每月目标…）：子弹图 / 汇总卡 / 实际 vs 目标 / 目标进度的「目标」可选其中一个，卡片只存 targetRef，取数时宿主按本期算值" },
         { name: "templates", type: "readonly WidgetTemplate[]", default: "[]", description: "组件库里的现成组件（标准指标组件、表格视图…）" },
         { name: "kinds", type: "readonly WidgetKind[]", default: "WIDGET_KINDS", description: "组件库和「样式」里可选的图表类型" },
         { name: "scope / scopeLabel", type: '"company" | "personal" / string', description: "名字旁的范围标签：公司 = 楼图标，我的 = 人图标" },
@@ -436,12 +438,21 @@ const dashboardBuilder: ComponentDoc = {
       ],
     },
     {
+      component: "TargetProgressCard（loadWidgetData 返回 kind: \"targetProgress\"）",
+      rows: [
+        { name: "value / target", type: "number | null", description: "本期实际值 / 目标值；target 为 null = 没设目标，卡上「还没有目标」+「设目标」" },
+        { name: "period", type: "{ start; end; label? }", description: "目标的期（两头都算，本月 = 1 日到月底）：「按时间应完成」= 已过天数 ÷ 本期天数（今天算已过），「剩 N 天」" },
+        { name: "targetNote", type: "string", description: "灰字说明是谁的目标（「全公司目标」），跟在期的名字后面" },
+        { name: "unit / currency / digits", type: "string / string / number", description: "和其他卡一样的数值格式：单位、币种（CNY 或符号）、1 万以下的小数位；unit \"duration\" = 秒" },
+      ],
+    },
+    {
       component: "DashboardView",
       rows: [
         { name: "widgets", type: "readonly DashboardWidget[]", description: "看板 JSON 里的组件（schema.widgets）" },
         { name: "context", type: "DashboardFilterValue", description: "当前筛选；每个组件实际用的筛选由 widgetFilterContext 算出" },
         { name: "load", type: "LoadWidgetData", description: "和搭建器同一个取数函数" },
-        { name: "decor", type: "WidgetDecor", default: "{}", description: "卡头用的指标字典、来源名称、维度名称和「清空筛选」回调" },
+        { name: "decor", type: "WidgetDecor", default: "{}", description: "卡头用的指标字典、来源名称、维度名称、「清空筛选」回调和「设目标」回调（onSetTarget）" },
         { name: "stacked", type: "boolean", default: "false", description: "按阅读顺序排成一列（手机）：数字卡两列，单数时最后一张占满" },
         { name: "label", type: "string", default: '"看板"', description: "整块区域的读屏名称" },
       ],

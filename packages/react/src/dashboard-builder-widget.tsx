@@ -21,6 +21,8 @@ import { timeSeriesOption, type SeriesInput, type Annotation } from "./chart-opt
 import { targetBarOption, type TargetBarInput } from "./chart-options-targets.ts";
 import { barOption, donutOption, stackedBarOption, type DonutItem, type StackedSeries } from "./chart-options-kinds.ts";
 import type { GridField } from "./grid-core.ts";
+import { TargetProgressCard, type TargetProgressData } from "./dashboard-target-card.tsx";
+import { durationColumns, isDurationUnit } from "./duration-format.ts";
 import type { DashboardFilterValue } from "./dashboard-filters-core.ts";
 import { compactNumberText, kpiFitScale, widgetDataKey, widgetFilterContext, type DashboardWidget, type WidgetKind } from "./dashboard-builder-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
@@ -49,7 +51,10 @@ export type DashboardWidgetData =
   | { kind: "stacked"; categories: readonly string[]; series: readonly StackedSeries[]; unit?: string; digits?: number; horizontal?: boolean }
   | { kind: "funnel"; funnel: Omit<StepFunnelProps, "label"> }
   | { kind: "cohort"; cohort: Omit<CohortTableProps, "label"> }
-  | { kind: "table"; fields: readonly GridField<DashboardTableRow>[]; rows: readonly DashboardTableRow[]; rowKey?: string; viewAll?: { label: string; onClick?: () => void; href?: string } }
+  /** `units`: field key → unit; "duration" shows that column's seconds as 「3.2 小时」 / 「1.5 天」. */
+  | { kind: "table"; fields: readonly GridField<DashboardTableRow>[]; rows: readonly DashboardTableRow[]; rowKey?: string; viewAll?: { label: string; onClick?: () => void; href?: string }; units?: Readonly<Record<string, string>> }
+  /** 「目标进度」 (targetProgress): actual / target in the target's period; `target: null` = none set. */
+  | ({ kind: "targetProgress" } & TargetProgressData)
   | { kind: "rollup"; card: RollupCardProps }
   /** No data (「这个时间段没有记录」); `filtered` = the dashboard / widget filters left nothing → 「筛选后没有数据」 + 「清空筛选」. */
   | { kind: "empty"; message?: string; filtered?: boolean }
@@ -68,6 +73,7 @@ const FITS: Record<WidgetKind, DashboardWidgetData["kind"][]> = {
   donut: ["donut", "bar"],
   stacked: ["stacked", "bar"],
   targetBar: ["bar"],
+  targetProgress: ["targetProgress"],
   funnel: ["funnel"],
   cohort: ["cohort"],
   table: ["table"],
@@ -77,7 +83,7 @@ const FITS: Record<WidgetKind, DashboardWidgetData["kind"][]> = {
 
 /** Skeleton shape while a widget loads. */
 export function skeletonShape(kind: WidgetKind): "bars" | "kpi" | "rows" {
-  if (kind === "kpi" || kind === "group" || kind === "bullet" || kind === "rollup") return "kpi";
+  if (kind === "kpi" || kind === "group" || kind === "bullet" || kind === "rollup" || kind === "targetProgress") return "kpi";
   if (kind === "funnel" || kind === "table" || kind === "cohort" || kind === "hbar") return "rows";
   return "bars";
 }
@@ -160,7 +166,8 @@ function FittedKpi({ title, card, size }: { title: string; card: KpiData; size?:
   // Measures the widget body (the sentinel's parent) — KpiCard stays a direct child of it for the body styles.
   const sentinel = useRef<HTMLSpanElement>(null);
   const [compactAt, setCompactAt] = useState<number | null>(null);
-  const raw = typeof card.value === "string" || typeof card.value === "number" ? String(card.value) : null;
+  // Durations (unit "duration", seconds) format themselves in KpiCard and are never shortened to 万.
+  const raw = !isDurationUnit(card.unit) && (typeof card.value === "string" || typeof card.value === "number") ? String(card.value) : null;
   const short = raw === null ? null : compactNumberText(raw);
   const compact = compactAt !== null && short !== null;
   useLayoutEffect(() => {
@@ -231,7 +238,7 @@ function DonutBox({ label, data }: { label: string; data: Extract<DashboardWidge
 }
 
 /** The content of a widget for its data (no frame). */
-export function WidgetContent({ widget, data, onClearFilters }: { widget: DashboardWidget; data: DashboardWidgetData; onClearFilters?: () => void }) {
+export function WidgetContent({ widget, data, onClearFilters, onSetTarget }: { widget: DashboardWidget; data: DashboardWidgetData; onClearFilters?: () => void; /** 「设目标」 on a target card without a target. */ onSetTarget?: () => void }) {
   const { mode } = useAdminTheme();
   if (data.kind === "empty") return <ChartState kind={data.filtered ? "no-match" : "empty"} message={data.message} onClearFilters={onClearFilters} />;
   if (data.kind === "forbidden") return <ChartState kind="forbidden" message={data.message} />;
@@ -267,15 +274,17 @@ export function WidgetContent({ widget, data, onClearFilters }: { widget: Dashbo
       return <StepFunnel {...data.funnel} label={widget.title} />;
     case "cohort":
       return <CohortTable {...data.cohort} label={widget.title} />;
+    case "targetProgress":
+      return <TargetProgressCard title={widget.title} data={data} onSetTarget={onSetTarget} />;
     case "table":
-      return <CompactTable caption={widget.title} fields={data.fields} rows={data.rows} getRowId={(row) => String(row[data.rowKey ?? "id"] ?? "")} viewAll={data.viewAll} expandRecord={false} />;
+      return <CompactTable caption={widget.title} fields={durationColumns(data.fields, data.units)} rows={data.rows} getRowId={(row) => String(row[data.rowKey ?? "id"] ?? "")} viewAll={data.viewAll} expandRecord={false} />;
     case "rollup":
       return <RollupCard {...data.card} />;
   }
 }
 
-/** Widget body: text note, or load + states + content. `onClearFilters` = 「清空筛选」 on a no-match state. */
-export function WidgetBody({ widget, context, load, onClearFilters }: { widget: DashboardWidget; context: DashboardFilterValue; load?: LoadWidgetData; onClearFilters?: () => void }) {
+/** Widget body: text note, or load + states + content. `onClearFilters` = 「清空筛选」 on a no-match state; `onSetTarget` = 「设目标」. */
+export function WidgetBody({ widget, context, load, onClearFilters, onSetTarget }: { widget: DashboardWidget; context: DashboardFilterValue; load?: LoadWidgetData; onClearFilters?: () => void; onSetTarget?: () => void }) {
   const { state, reload } = useWidgetData(widget, context, load);
   if (widget.kind === "text") return <div className="aui-dbb-note">{widget.text?.trim() ? widget.text : <span className="aui-dbb-placeholder">在右边「样式」里写说明</span>}</div>;
   if (!load) return <ChartState kind="empty" message="没有数据接口" />;
@@ -284,8 +293,8 @@ export function WidgetBody({ widget, context, load, onClearFilters }: { widget: 
   if (state.status === "stale")
     return (
       <ChartState kind="stale" message={`刷新失败，显示的是 ${clock(state.at)} 的数据`} onRetry={reload}>
-        <WidgetContent widget={widget} data={state.data} onClearFilters={onClearFilters} />
+        <WidgetContent widget={widget} data={state.data} onClearFilters={onClearFilters} onSetTarget={onSetTarget} />
       </ChartState>
     );
-  return <WidgetContent widget={widget} data={state.data} onClearFilters={onClearFilters} />;
+  return <WidgetContent widget={widget} data={state.data} onClearFilters={onClearFilters} onSetTarget={onSetTarget} />;
 }

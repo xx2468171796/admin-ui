@@ -6,6 +6,7 @@ import { CellLink, CellLongText, CellPeople, CellTags } from "./cells.tsx";
 import { CellDate } from "./displays.tsx";
 import { fieldText, readField, toMinor, toPeople, valueText, type GridField, type GridFieldType } from "./grid-core.ts";
 import { resolveOptionTone } from "./option-tone.ts";
+import { DeadlineDate } from "./grid-cells-due.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grid.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
@@ -50,8 +51,8 @@ export const GRID_CELL_RENDERERS: { readonly [K in GridFieldType]: (value: unkno
   longText: (value) => <CellLongText text={typeof value === "string" ? value : null} />,
   number: (value, field) => valueText(field, value) || <span className="aui-cell-empty">—</span>,
   money: (value, field) => (toMinor(value) === null ? <span className="aui-cell-empty">—</span> : valueText(field, value)),
-  date: (value, field) => <CellDate value={value as string | null} timeZone={field.timeZone} />,
-  datetime: (value, field) => <CellDate value={value as string | null} time timeZone={field.timeZone} />,
+  date: (value, field, row) => (field.deadline ? <DeadlineDate value={value} field={field} row={row} /> : <CellDate value={value as string | null} timeZone={field.timeZone} />),
+  datetime: (value, field, row) => (field.deadline ? <DeadlineDate value={value} field={field} row={row} time /> : <CellDate value={value as string | null} time timeZone={field.timeZone} />),
   singleSelect: (value, field) => <CellTags label={field.title} items={chipsOf(field, value).slice(0, 1)} />,
   multiSelect: (value, field) => <CellTags label={field.title} items={chipsOf(field, value)} />,
   user: (value, field) => <CellPeople label={field.title} people={toPeople(value)} />,
@@ -72,4 +73,5 @@ export function renderGridCell<T>(field: GridField<T>, row: T, context: { select
   if (field.type === "custom" && field.text) return fieldText(field, row) || <span className="aui-cell-empty">—</span>;
   return GRID_CELL_RENDERERS[field.type](value, field as unknown as GridField<never>, row);
 }
+
 

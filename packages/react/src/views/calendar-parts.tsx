@@ -23,6 +23,8 @@ export type CalendarEvent = CalendarEventInput & {
   title: string;
   /** Colour (one of the option tones, 10 hues), e.g. from the 「阶段」 option. Default brand. */
   tone?: OptionTone;
+  /** The date is a deadline: overdue = red, due today / in the next 2 days = yellow, whatever `tone` says (deadlineEvents). Leave it off for closed records. */
+  deadline?: boolean;
   /** The option name shown as a chip in the event card (「安装」). */
   badge?: string;
   /** Rows of the event card. */

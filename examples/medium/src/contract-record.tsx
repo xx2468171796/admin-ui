@@ -14,6 +14,8 @@ export type ContractRow = {
   amount: number;
   seats: number | null;
   signed: string | null;
+  /** 下次跟进（截止日期，YYYY-MM-DD）。 */
+  followUp: string | null;
   updated: string;
   paid: boolean;
   site: string;

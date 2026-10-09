@@ -127,6 +127,17 @@
 .adminui .aui-dbb-big strong { color: var(--aui-text); font-size: calc(28px * var(--aui-font-scale)); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .adminui .aui-dbb-big small { color: var(--aui-secondary); font-size: calc(13px * var(--aui-font-scale)); }
 .adminui .aui-dbb-detail { margin: 0; color: var(--aui-note); font-size: calc(12px * var(--aui-font-scale)); }
+.adminui .aui-dbb-target { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.adminui .aui-dbb-target-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; min-width: 0; }
+.adminui .aui-dbb-target-head .aui-dbb-big { min-width: 0; flex-wrap: wrap; }
+.adminui .aui-dbb-target-head .aui-dbb-big strong { font-size: calc(24px * var(--aui-font-scale)); white-space: nowrap; }
+.adminui .aui-dbb-target-rate { color: var(--aui-secondary); font-size: calc(13px * var(--aui-font-scale)); white-space: nowrap; }
+.adminui .aui-dbb-target-rate b { color: var(--aui-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.adminui .aui-dbb-target[data-state=done] .aui-dbb-target-rate b { color: var(--aui-primary); }
+.adminui .aui-dbb-target-status { margin: 0; color: var(--aui-secondary); font-size: calc(13px * var(--aui-font-scale)); font-variant-numeric: tabular-nums; }
+.adminui .aui-dbb-target-empty { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--aui-note); font-size: calc(13px * var(--aui-font-scale)); }
+.adminui .aui-dbb-target-empty > svg { width: 15px; height: 15px; flex: none; }
+.adminui .aui-dbb-target-empty > .aui-button { margin-left: 4px; }
 .adminui .aui-dbb-body > :is(.aui-compact, .aui-funnel, .aui-cohort) { min-height: 0; overflow: auto; }
 .adminui .aui-dbb-handle { position: absolute; z-index: 2; width: 10px; height: 10px; border: 2px solid var(--aui-primary); border-radius: 3px; background: var(--aui-surface); touch-action: none; }
 .adminui .aui-dbb-handle[data-axis=x] { top: 50%; right: -6px; margin-top: -5px; cursor: ew-resize; }

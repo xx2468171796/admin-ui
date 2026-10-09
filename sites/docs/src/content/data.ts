@@ -163,7 +163,7 @@ const grid: ComponentDoc = {
     "onCellsChange 收到的是一整批改动；rows 带上新值后再 resolve，拒绝的格子返回 { rejected }。",
     "视图用 useGridView 按人保存（键里带项目、用户、表名）；改了共享视图用 ViewOverrideBar 提示。",
     "少用的表级操作进 toolbarMore；actions 只放一个主按钮。",
-    "逾期日期用 GridField.tone 标红，评论用 cellBadge 角标，不在格子里自己画带样式的 span。",
+    "截止日期用 GridField.deadline（逾期标红 +「逾期 N 天」），评论用 cellBadge 角标，不在格子里自己画带样式的 span。",
     "服务端模式下「我」「我的下属」从登录会话解析，不信前端传来的身份。",
   ],
   donts: [
@@ -196,6 +196,7 @@ const grid: ComponentDoc = {
     },
     { id: "data/grid-grouping", title: "分组、统计与填色", description: "视图里带分组、组内统计、筛选和整行填色；每组底部「+ 新增一行」自动带上分组值。", height: 540 },
     { id: "data/grid-editing", title: "卡片里的小表：校验与回滚", description: "数量超过 500 在格子里报错；单价改成 0 被「服务端」拒绝并回滚。", height: 300 },
+    { id: "data/grid-deadline", title: "截止日期与格子里新建选项", description: "「截止」逾期标红并写「逾期 N 天」，今天 / 2 天内橙色，已完成的不提醒；在「状态」里输入没有的名字，回车新建并选上。", height: 300 },
   ],
   props: [
     {
@@ -226,7 +227,9 @@ const grid: ComponentDoc = {
         { name: "required / validate / parse", type: "boolean / (value, row) => string | null / (text, row) => …", description: "必填、校验（返回原因）、自定义输入解析" },
         { name: "summary", type: '"count" | "filled" | "empty" | "unique" | "sum" | "avg" | "min" | "max"', description: "默认统计（用户可改）" },
         { name: "currency / precision / timeZone", type: "string / number / string", description: "金额符号（值是分）、小数位、日期时区" },
-        { name: "tone / locked / description", type: "(row) => tone | null / boolean | string / string", description: "按行给文字着色（逾期标红）；表头的锁；表头 ⓘ 字段说明" },
+        { name: "tone / locked / description", type: "(row) => tone | null / boolean | string / string", description: "按行给文字着色；表头的锁；表头 ⓘ 字段说明" },
+        { name: "deadline", type: "boolean | { closed?: (row) => boolean }", description: "日期 / 日期时间是截止日期：按时区的日历天比今天（deadlineState），逾期红字 +「逾期 N 天」，今天 / 2 天内橙字；closed 为真不提醒；tone 返回颜色时以 tone 为准" },
+        { name: "onCreateOption", type: "(label) => Promise<GridSelectOption | null | undefined>", description: "单选 / 多选：搜不到同名选项时编辑器最后一行「+ 新建选项「…」」，回车或点它等宿主建好再选上；null = 取消，reject = 编辑器不关并提示原因" },
         { name: "value / text / render", type: "(row) => unknown / (row) => string / (row) => ReactNode", description: "值不在 row[key] 时读取；custom 字段的搜索文字；覆盖格子显示（尽量不用）" },
       ],
     },

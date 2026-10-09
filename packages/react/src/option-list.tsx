@@ -95,6 +95,8 @@ export type OptionListProps = {
   /** The label 「新建」 would create (null = no create row). */
   create?: string | null;
   onCreate?: (label: string) => void;
+  /** A create is under way for this label: the row stays, says 「正在新建」 and can't be picked again. */
+  creating?: string | null;
   /** Text when nothing matches (「没有匹配「花莲」的选项」). */
   emptyText?: string;
   /** Tag size of coloured options. */
@@ -107,7 +109,7 @@ export type OptionListProps = {
 };
 
 /** The listbox of a select popover; see the module comment. */
-export function OptionList({ id, label, options, selected, multiple, active, onActive, onPick, create, onCreate, emptyText = "没有匹配的选项", size = "md", focusable, onKeyDown, pickOnPointerDown }: OptionListProps) {
+export function OptionList({ id, label, options, selected, multiple, active, onActive, onPick, create, onCreate, creating, emptyText = "没有匹配的选项", size = "md", focusable, onKeyDown, pickOnPointerDown }: OptionListProps) {
   const sections = groupOptions(options);
   const pick = (option: SelectItem) => {
     if (option.disabled || option.disabledReason) return;
@@ -175,21 +177,27 @@ export function OptionList({ id, label, options, selected, multiple, active, onA
           {emptyText}
         </div>
       )}
-      {create && onCreate && (
+      {((create && onCreate) || creating) && (
         <button
           type="button"
           id={optionId(id, options.length)}
           tabIndex={-1}
+          role="option"
+          aria-selected={false}
+          aria-label={creating ? `正在新建选项「${creating}」` : `新建选项「${create}」`}
+          aria-busy={creating ? true : undefined}
+          aria-disabled={creating ? true : undefined}
           className="aui-opt aui-opt-create"
           data-active={active === options.length || undefined}
+          data-pending={creating ? "" : undefined}
           onMouseDown={(event) => event.preventDefault()}
           onPointerEnter={() => onActive(options.length)}
-          onClick={() => onCreate(create)}
+          onClick={() => !creating && create && onCreate?.(create)}
         >
-          <Plus aria-hidden="true" />
-          新建选项
-          <span className="aui-chip" data-tone="gray" data-size="md"><span className="aui-chip-label">{create}</span></span>
-          <kbd className="aui-opt-kbd">Enter</kbd>
+          {creating ? <span className="aui-spinner" data-tone="brand" aria-hidden="true" /> : <Plus aria-hidden="true" />}
+          {creating ? "正在新建" : "新建选项"}
+          <span className="aui-chip" data-tone="gray" data-size="md"><span className="aui-chip-label">{creating ?? create}</span></span>
+          {!creating && <kbd className="aui-opt-kbd">Enter</kbd>}
         </button>
       )}
     </>

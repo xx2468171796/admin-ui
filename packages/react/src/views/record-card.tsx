@@ -26,6 +26,8 @@ import { MediaLightbox, type MediaLightboxProps } from "../media-lightbox.tsx";
 import { cn } from "../primitives.tsx";
 import { CellBudgetContext, type TableCellBudget } from "../cell-budget.ts";
 import { renderGridCell } from "../grid-cells.tsx";
+import { gridCellTone } from "../grid-cells-due.tsx";
+import { useAdminDefaults } from "../admin-defaults-context.tsx";
 import { fileTypeLabel } from "../media-core.ts";
 import { itemKind, MediaThumb, type MediaItem } from "../media-parts.tsx";
 import { SkeletonBlock } from "../loading.tsx";
@@ -162,6 +164,8 @@ function CardSkeleton({ density, className, style }: { density: RecordCardDensit
 /** See the module comment. */
 export function RecordCard<T>(props: RecordCardProps<T>) {
   const { record, title, fields = [], tags = [], keyline = [], owner, due, comments, locked, onExpand, loading, attachments, showCover, coverBadge = "dots", coverHeight, density = "normal", showLabels = false, selected, dragging, ghost, onOpen, onOpenCover, titleAdornment, footer, className, style, rootProps } = props;
+  const defaultZone = useAdminDefaults().timeZone;
+  const zone = props.timeZone ?? defaultZone;
   if (loading) return <CardSkeleton density={density} className={className} style={style} />;
   const items = attachments ?? [];
   const withCover = showCover ?? items.length > 0;
@@ -245,7 +249,7 @@ export function RecordCard<T>(props: RecordCardProps<T>) {
               {rows.map((field) => (
                 <div key={field.key} className="aui-rcard-field">
                   {showLabels ? <dt>{field.title}</dt> : <dt className="aui-sr-only">{field.title}</dt>}
-                  <dd data-tone={field.tone?.(record) ?? undefined}>{renderGridCell(field, record)}</dd>
+                  <dd data-tone={gridCellTone(field, record, zone)}>{renderGridCell(field, record)}</dd>
                 </div>
               ))}
             </dl>

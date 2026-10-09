@@ -31,10 +31,11 @@ const MAX_LAYOUT_ROW = 10_000;
  * Widget kinds; each renders with an existing dashboard component (KpiCard, BulletBar, RollupCard,
  * StepFunnel, CohortTable, CompactTable, AdminChart + the option builders).
  * bar = vertical bars, hbar = ranking bars, donut = shares (≤ 5 + 其他), stacked = bars split by a second
- * dimension, targetBar = actual vs target per period, group = 「数字组」 2–6 equal-width numbers.
+ * dimension, targetBar = actual vs target per period, group = 「数字组」 2–6 equal-width numbers, targetProgress =
+ * 「目标进度」 (actual / target, 完成率, 「按时间应完成」 marker, 「还差 X · 剩 N 天」).
  */
-export type WidgetKind = "group" | "kpi" | "bullet" | "line" | "bar" | "hbar" | "donut" | "stacked" | "targetBar" | "funnel" | "cohort" | "table" | "rollup" | "text";
-export const WIDGET_KINDS: readonly WidgetKind[] = ["group", "kpi", "bar", "hbar", "line", "donut", "stacked", "targetBar", "funnel", "table", "bullet", "rollup", "cohort", "text"];
+export type WidgetKind = "group" | "kpi" | "bullet" | "line" | "bar" | "hbar" | "donut" | "stacked" | "targetBar" | "targetProgress" | "funnel" | "cohort" | "table" | "rollup" | "text";
+export const WIDGET_KINDS: readonly WidgetKind[] = ["group", "kpi", "bar", "hbar", "line", "donut", "stacked", "targetBar", "targetProgress", "funnel", "table", "bullet", "rollup", "cohort", "text"];
 export const WIDGET_KIND_LABELS: Readonly<Record<WidgetKind, string>> = {
   group: "数字组",
   kpi: "数字卡",
@@ -45,14 +46,15 @@ export const WIDGET_KIND_LABELS: Readonly<Record<WidgetKind, string>> = {
   donut: "环图",
   stacked: "堆叠柱",
   targetBar: "实际 vs 目标",
+  targetProgress: "目标进度",
   funnel: "漏斗",
   cohort: "批次留存表",
   table: "表格",
   rollup: "汇总卡",
   text: "文字",
 };
-/** Kinds that compare against `widget.target` (目标值). */
-export const TARGET_WIDGET_KINDS: readonly WidgetKind[] = ["bullet", "targetBar", "rollup"];
+/** Kinds that compare against a target: `widget.target` (a number) or `widget.targetRef` (a host target). */
+export const TARGET_WIDGET_KINDS: readonly WidgetKind[] = ["bullet", "targetBar", "targetProgress", "rollup"];
 /** Numbers in a 「数字组」. */
 export const WIDGET_GROUP_LIMITS = { min: 2, max: 6 } as const;
 /**
@@ -71,6 +73,7 @@ export const WIDGET_SIZES: Readonly<Record<WidgetKind, { w: number; h: number; m
   donut: { w: 2, h: 8, minW: 2, minH: 6 },
   stacked: { w: 3, h: 8, minW: 2, minH: 5 },
   targetBar: { w: 3, h: 8, minW: 2, minH: 5 },
+  targetProgress: { w: 2, h: 7, minW: 2, minH: 6 },
   funnel: { w: 3, h: 8, minW: 2, minH: 6 },
   cohort: { w: 6, h: 8, minW: 3, minH: 6 },
   table: { w: 3, h: 8, minW: 2, minH: 5 },
@@ -123,8 +126,13 @@ export type DashboardWidget = {
   caption?: string;
   /** Library template it came from (standard widgets). */
   template?: string;
-  /** 目标值 per period in the metric's unit (bullet, actual vs target, rollup); null / absent = no target set. */
+  /** 目标值 per period in the metric's unit (bullet, actual vs target, 目标进度, rollup); null / absent = no target set. */
   target?: number | null;
+  /**
+   * Instead of `target`: the id of a target the host keeps (DashboardBuilder `targets`, e.g. a table's monthly goal).
+   * The builder only stores the id; `loadWidgetData` resolves the value and the period. Wins over `target`.
+   */
+  targetRef?: string;
   /** 「数字组」: 2–6 numbers side by side, each with its own title and metric (the group's query is their default source). */
   items?: WidgetGroupItem[];
   /** Number size of KPI-like widgets: lg 28 · md 24 · sm 20. */
@@ -364,8 +372,8 @@ export function metricBadge(metric: WidgetMetric | undefined, dictionary: readon
 }
 
 /** A stable key of what a widget's data depends on (not its title / layout): reload only when it changes. */
-export function widgetDataKey(widget: Pick<DashboardWidget, "kind" | "query"> & Partial<Pick<DashboardWidget, "items" | "target">>, context: DashboardFilterValue): string {
-  return JSON.stringify([widget.kind, widget.query ?? null, widget.items ?? null, widget.target ?? null, widgetFilterContext(widget, context)]);
+export function widgetDataKey(widget: Pick<DashboardWidget, "kind" | "query"> & Partial<Pick<DashboardWidget, "items" | "target" | "targetRef">>, context: DashboardFilterValue): string {
+  return JSON.stringify([widget.kind, widget.query ?? null, widget.items ?? null, widget.target ?? null, widget.targetRef ?? null, widgetFilterContext(widget, context)]);
 }
 
 // ---------------------------------------------------------------- reading a stored schema
@@ -492,6 +500,7 @@ export function normalizeDashboard(input: unknown, options: { kindOf?: (field: s
     if (str(raw.caption, 500)) widget.caption = str(raw.caption, 500);
     if (str(raw.template, 64)) widget.template = str(raw.template, 64);
     if (typeof raw.target === "number" && Number.isFinite(raw.target)) widget.target = raw.target;
+    if (str(raw.targetRef, 64)) widget.targetRef = str(raw.targetRef, 64);
     if (raw.size === "lg" || raw.size === "md" || raw.size === "sm") widget.size = raw.size;
     const items = kind === "group" ? readItems(raw.items, kindOf) : undefined;
     if (items) widget.items = items;

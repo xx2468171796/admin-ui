@@ -284,6 +284,40 @@ try {
   for (let i = 0; i < 6; i++) await undo.click();
   await cfg.getByRole('button', { name: '关闭组件设置' }).click().catch(() => undefined);
 
+  // ---- 8.4 目标进度（targetProgress）：用表上的目标（targetRef）——实际 / 目标、完成率、「按时间应完成」刻度、「还差 X · 剩 N 天」；
+  // 换成固定数值但不填 →「还没有目标」+「设目标」（点了打开组件设置）；填了超过实际 →「已超额」。时长单位：秒写成「5.1 小时」
+  await lib.getByRole('button', { name: /^添加本月成交金额 · 目标进度/ }).click();
+  const goal = widget('本月成交金额');
+  await goal.locator('.aui-dbb-target').waitFor();
+  const goalText = await goal.innerText();
+  assert.match(goalText, /CN¥255\.1万\s*\/ 目标 CN¥300万/);
+  assert.match(goalText, /完成率\s*85%/);
+  assert.match(goalText, /按时间应完成 \d+%/);
+  assert.match(goalText, /还差 CN¥44\.9万 · 剩 \d+ 天/);
+  assert.match(goalText, /本月 · 全公司目标/);
+  assert.equal(await goal.getByRole('meter', { name: '本月成交金额目标进度' }).count(), 1);
+  assert.match(await cfg.getByRole('combobox', { name: '目标' }).innerText(), /每月成交金额（每月 · 元）/, '组件设置里选的是表上的目标');
+  assert.equal(await cfg.getByRole('spinbutton', { name: '目标值' }).count(), 0, '用表上的目标时不填数');
+  await cfg.getByRole('button', { name: '关闭组件设置' }).click();
+  await page.waitForTimeout(300);
+  await goal.screenshot({ path: resolve(output, 'target-progress-1440.png') });
+  await page.getByRole('button', { name: '切换到深色模式', exact: true }).click();
+  await page.waitForTimeout(400);
+  await goal.screenshot({ path: resolve(output, 'target-progress-dark.png') });
+  await page.getByRole('button', { name: '切换到浅色模式', exact: true }).click();
+  await goal.click({ position: { x: 100, y: 12 } });
+  await cfg.getByRole('combobox', { name: '目标' }).click();
+  await page.getByRole('option', { name: '固定数值' }).click();
+  await goal.getByText('还没有目标').waitFor();
+  await cfg.getByRole('button', { name: '关闭组件设置' }).click();
+  await goal.getByRole('button', { name: '设目标' }).click();
+  await cfg.getByRole('spinbutton', { name: '目标值' }).fill('2000000');
+  await goal.getByText(/已超额 CN¥55\.1万/).waitFor();
+  await lib.getByRole('button', { name: /^添加首次响应时长（中位）/ }).click();
+  await widget('首次响应时长（中位）').getByText('5.1 小时').waitFor();
+  while ((await widgets.count()) > 6) await undo.click();
+  await cfg.getByRole('button', { name: '关闭组件设置' }).click().catch(() => undefined);
+
   // ---- 看板筛选变化：组件按新的筛选重新取数
   await page.getByRole('group', { name: '看板筛选' }).getByRole('button', { name: '今天', exact: true }).click().catch(async () => {
     await builder.locator('.aui-dbb-filters').getByRole('button', { name: '今天', exact: true }).click();
@@ -356,7 +390,7 @@ try {
   await page.screenshot({ path: resolve(output, 'dashboard-builder-390.png'), fullPage: true });
 
   assert.deepEqual(errors, [], errors.join('; '));
-  console.log('PASS dashboard-builder: version-1 spec migrated to 28px rows, toolbar 「N 处修改未保存」, no 「标准」 tag, card tools in the header, config only on selection, new kinds (数字组 / donut / hbar / stacked / actual vs target + 目标值 / bullet), library icon rail, library (search, click to add, pointer drag onto a cell), canvas (grip move, edge / corner resize with minimum, selection toolbar copy / up / down / delete, keyboard move / resize / Delete / Ctrl+D), undo / redo (buttons, Ctrl+Z, Ctrl+Shift+Z), config (source, standard vs custom metric badge, chart-type tiles + arrows, group-by, comparison override, dimension follow, granularity, own conditions, title), text note, dashboard filter reload, preview, save, 1440 light / dark, 390 read-only');
+  console.log('PASS dashboard-builder: version-1 spec migrated to 28px rows, toolbar 「N 处修改未保存」, no 「标准」 tag, card tools in the header, config only on selection, new kinds (数字组 / donut / hbar / stacked / actual vs target + 目标值 / bullet / 目标进度 + targetRef + 设目标 / duration unit), library icon rail, library (search, click to add, pointer drag onto a cell), canvas (grip move, edge / corner resize with minimum, selection toolbar copy / up / down / delete, keyboard move / resize / Delete / Ctrl+D), undo / redo (buttons, Ctrl+Z, Ctrl+Shift+Z), config (source, standard vs custom metric badge, chart-type tiles + arrows, group-by, comparison override, dimension follow, granularity, own conditions, title), text note, dashboard filter reload, preview, save, 1440 light / dark, 390 read-only');
 } finally {
   await browser.close();
   await server.close();

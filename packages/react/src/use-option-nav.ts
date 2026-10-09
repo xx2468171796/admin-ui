@@ -15,17 +15,19 @@ export type OptionNavInput<O extends SelectItem> = {
   onPick: (value: string) => void;
   /** Offer 「＋ 新建选项」 for a query no option has. */
   onCreate?: (label: string) => void;
+  /** Compare the query with option labels case-sensitively for 「新建」 (createCandidate `exact`). */
+  createExact?: boolean;
   /** Starting query (type-to-edit in a grid cell). */
   initialQuery?: string;
   /** Enter with nothing to pick (multi: finish). */
   onEnterEmpty?: () => void;
 };
 
-export function useOptionNav<O extends SelectItem>({ options, selected, onPick, onCreate, initialQuery = "", onEnterEmpty }: OptionNavInput<O>) {
+export function useOptionNav<O extends SelectItem>({ options, selected, onPick, onCreate, createExact = false, initialQuery = "", onEnterEmpty }: OptionNavInput<O>) {
   const listId = useId();
   const [query, setQueryState] = useState(initialQuery);
   const shown = useMemo(() => keyboardOrder(filterOptions(options, query)), [options, query]);
-  const create = onCreate ? createCandidate(options, query) : null;
+  const create = onCreate ? createCandidate(options, query, createExact) : null;
   const [active, setActive] = useState(() => initialActive(shown, selected));
   const typed = useRef({ text: "", at: 0 });
   const setQuery = (text: string) => {

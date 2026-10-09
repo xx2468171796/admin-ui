@@ -12,6 +12,7 @@ import { Panel } from "./layout.tsx";
 import { HelpTip } from "./help-tip.tsx";
 import { DeltaBadge } from "./delta-badge.tsx";
 import { BulletBar, type BulletBarProps } from "./bullet-bar.tsx";
+import { formatDuration, isDurationUnit } from "./duration-format.ts";
 import {
   freshnessOf,
   pollDelayMs,
@@ -93,6 +94,7 @@ export type KpiCardProps = {
   value: ReactNode | null;
   /** Exact value shown on hover / read by screen readers when `value` is abbreviated (万/亿). */
   fullValue?: string;
+  /** Unit after the value (「单」「%」); `"duration"` = `value` is a number of seconds, shown as 「3.2 小时」 / 「1.5 天」 (formatDuration). */
   unit?: string;
   /** From computeDelta(). null renders "—" (comparison defined but data missing); omit for cards without a comparison. */
   delta?: Delta | null;
@@ -170,7 +172,9 @@ export function KpiCard({
   const [showDefinition, setShowDefinition] = useState(false);
   const pending = placeholder !== undefined && placeholder !== null;
   const muted = Boolean(insufficient || stale || pending);
-  const shown = pending ? null : value;
+  const duration = isDurationUnit(unit);
+  const shown = pending ? null : duration && typeof value === "number" ? formatDuration(value) : value;
+  const unitText = duration ? undefined : unit;
   const trendValues = !pending && size !== "sm" && trend && trend.length > 1 ? trend : null;
   const inlineTrend = trendValues && trendPlacement === "inline" && !target;
   return (
@@ -211,8 +215,8 @@ export function KpiCard({
           <>
             <div className="aui-kpi-main">
               <p className="aui-kpi-value" aria-labelledby={`${id}-title`} data-tone={valueTone === "bad" && !muted ? "bad" : undefined}>
-                <strong data-tip={fullValue} aria-label={fullValue && !pending ? `${fullValue}${unit ?? ""}` : undefined}>{shown ?? "—"}</strong>
-                {unit && shown != null && <small>{unit}</small>}
+                <strong data-tip={fullValue} aria-label={fullValue && !pending ? `${fullValue}${unitText ?? ""}` : undefined}>{shown ?? "—"}</strong>
+                {unitText && shown != null && <small>{unitText}</small>}
                 {stale && <span className="aui-kpi-flag">已过期</span>}
               </p>
               {target && !pending && <BulletBar {...target} label={title} timeProgress={timeProgress} size="sm" />}

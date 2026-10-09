@@ -51,6 +51,8 @@ export { useRecordLayoutEditor, RecordLayoutBar, RecordLayoutButton, type Record
 export { StagePath, stageDaysText, type StagePathProps } from "./stage-path.tsx";
 export { ActivityComposer, ActivityComposerTool, type ActivityComposerProps, type ActivityComposerDue, type ActivityKind } from "./activity-composer.tsx";
 export * from "./record-detail-spec.ts";
+// 截止日期：按时区的日历天算逾期 / 今天 / 快到（也在 @adminui/react/grid-query，服务端可用）
+export { deadlineState, deadlineTone, deadlineText, DEADLINE_SOON_DAYS, type DeadlineState, type DeadlineKind, type DeadlineOptions } from "./deadline-core.ts";
 export type * from "./collections-core.ts";
 export { suggestCollection, summarizeChecks, groupByDay } from "./collections-core.ts";
 export * from "./collections.tsx";

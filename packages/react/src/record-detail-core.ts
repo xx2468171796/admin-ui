@@ -260,8 +260,11 @@ export type RecordStage = {
   onMarkLost?: () => void;
   labels?: { advance?: string; markLost?: string; /** Name of the path for assistive tech (default 「阶段」). */ path?: string; /** The overflow menu of exits (default 「更多」). */ more?: string };
 };
-/** One of up to 4 key figures (RecordDetail key numbers). */
-export type RecordKeyNumber = { key: string; label: string; value: ReactNode; hint?: ReactNode; tone?: "attention" | "danger" };
+/**
+ * One of up to 4 key figures (RecordDetail key numbers). `tone` colours the `hint` line: danger (「已逾期 3 天」) or
+ * warning / attention (same colour; 「今天到期」 — deadlineText / deadlineTone give both for a deadline date).
+ */
+export type RecordKeyNumber = { key: string; label: string; value: ReactNode; hint?: ReactNode; tone?: "attention" | "warning" | "danger" };
 /** A block the host draws (activity feed, comments, subtable, attachments), placed by id. */
 export type RecordDetailSlot = {
   /** Card heading (the user may rename it in the spec); plain text also names it in 「编辑布局」. */

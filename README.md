@@ -25,7 +25,7 @@ npm install @adminui/react react@^19 react-dom@^19
 **Until the package is available on npm**, install the tarball attached to the GitHub Release (same content as the npm package):
 
 ```sh
-npm install https://github.com/xx2468171796/admin-ui/releases/download/v8.3.0/adminui-react-8.3.0.tgz react@^19 react-dom@^19
+npm install https://github.com/xx2468171796/admin-ui/releases/download/v8.4.0/adminui-react-8.4.0.tgz react@^19 react-dom@^19
 ```
 
 Projects that import the package under another name can use an npm alias (`"my-ui": "npm:@adminui/react@^8"`); `admin-ui-audit` recognises such aliases from your `package.json`.

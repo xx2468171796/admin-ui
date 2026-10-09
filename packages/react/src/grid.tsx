@@ -112,6 +112,7 @@ import {
   type GridFeatures,
 } from "./grid-engine.ts";
 import { FIELD_ICONS, renderGridCell } from "./grid-cells.tsx";
+import { gridCellTone } from "./grid-cells-due.tsx";
 import type { GridCommitMove, GridEditorCommit, GridEditorProps } from "./grid-editors.tsx";
 import { GridPopover } from "./grid-popover.tsx";
 import { GridToolbar, type GridToolbarFeatures } from "./grid-toolbar.tsx";
@@ -1560,7 +1561,7 @@ export function BitableGrid<T extends RowData>(props: BitableGridProps<T>) {
               data-numeric={field.type === "number" || field.type === "money" || undefined} data-primary={field === primary || undefined}
               data-in-range={range && rangeContains(range, here) ? true : undefined}
               data-edge={edgesOf(virtual.index, col)} data-fill-preview={fillBox && edgesOf(virtual.index, col) ? true : undefined}
-              data-tone={field.tone?.(row) ?? undefined} data-col-menu={headerMenu?.key === field.key || undefined} data-fill-corner={corner || undefined}
+              data-tone={gridCellTone(field, row)} data-col-menu={headerMenu?.key === field.key || undefined} data-fill-corner={corner || undefined}
               data-editable={editable || undefined} data-editing={isEditing || undefined}
               data-saving={editing.cellState(id, field.key) ?? undefined} data-fill={rowFill?.cells[field.key]}
               aria-readonly={editing.enabled && !editable ? true : undefined}

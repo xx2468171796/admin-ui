@@ -81,9 +81,9 @@ export function FormQuestionInput({ question, field, value, onChange, labelledBy
     case "multiSelect":
       return <TickChips labelledBy={labelledBy} describedBy={describedBy} field={field} value={Array.isArray(value) ? value.map(String) : []} disabled={disabled} onChange={onChange} />;
     case "date":
-      return <DatePicker {...aria} value={text.slice(0, 10)} disabled={disabled} placeholder={placeholder} clearable deadline={field.deadline} onChange={onChange} />;
+      return <DatePicker {...aria} value={text.slice(0, 10)} disabled={disabled} placeholder={placeholder} clearable deadline={Boolean(field.deadline)} onChange={onChange} />;
     case "datetime":
-      return <DateTimePicker {...aria} value={text.slice(0, 16)} disabled={disabled} placeholder={placeholder} clearable deadline={field.deadline} onChange={onChange} />;
+      return <DateTimePicker {...aria} value={text.slice(0, 16)} disabled={disabled} placeholder={placeholder} clearable deadline={Boolean(field.deadline)} onChange={onChange} />;
     case "checkbox":
       return (
         <label className="aui-pform-check">

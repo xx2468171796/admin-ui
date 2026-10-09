@@ -92,6 +92,12 @@ export type GridField<T> = {
   width?: number;
   /** Choices of singleSelect / multiSelect (order = sort and group order). */
   options?: readonly GridSelectOption[];
+  /**
+   * singleSelect / multiSelect: the cell editors offer 「+ 新建选项「…」」 when the typed text (trimmed) matches no option
+   * label exactly (case-sensitive). The host adds the option (e.g. saves the field) and resolves with it — it is then
+   * picked (multi: added); null / undefined = cancelled; a rejection keeps the editor open with the message.
+   */
+  onCreateOption?: (label: string) => Promise<GridSelectOption | null | undefined>;
   /** Read the raw value (default `row[key]`). */
   value?: (row: T) => unknown;
   /** Plain text for search / filter / sort / grouping of custom fields (and an override for others). */
@@ -115,10 +121,13 @@ export type GridField<T> = {
   /** date / datetime: time zone for display, day filters and grouping (default: AdminProvider `defaults.timeZone`, else the runtime's). */
   timeZone?: string;
   /**
-   * date / datetime: a due date (下次跟进, 到期). Form pickers (PublicForm / FormQuestionInput) then show 「周四 · 明天」 with
+   * date / datetime: a due date (下次跟进, 到期), counted by calendar day in `timeZone` (deadlineState). Cells, card
+   * fields and record-detail rows get the text tone danger when overdue and warning for today / the next 2 days (an
+   * explicit `tone` that returns a tone wins); overdue cells add a compact 「逾期 N 天」 (tooltip 「已逾期 N 天」).
+   * `closed(row)` true = done, no colour. Form pickers (PublicForm / FormQuestionInput) show 「周四 · 明天」 with
    * today / tomorrow in the attention colour and past days in the danger colour (DatePicker `deadline`).
    */
-  deadline?: boolean;
+  deadline?: boolean | { closed?: (row: T) => boolean };
   sortable?: boolean;
   filterable?: boolean;
   groupable?: boolean;

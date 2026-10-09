@@ -8,6 +8,7 @@ import type { EChartsOption } from "echarts";
 import { formatNumber } from "./dashboard-core.ts";
 import { VIZ_BRAND, VIZ_NOTE, VIZ_TEXT, type VizMode } from "./viz-palette.ts";
 import { CHART_VALUE_LABEL, tooltipHtml } from "./chart-options-kinds.ts";
+import { formatDuration, isDurationUnit } from "./duration-format.ts";
 
 const finite = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
@@ -42,7 +43,7 @@ export function targetBarOption(input: TargetBarInput): EChartsOption {
   let current = -1;
   if (input.inProgress === true) for (let i = values.length - 1; i >= 0; i--) if (finite(values[i])) { current = i; break; }
   if (typeof input.inProgress === "number") current = input.inProgress;
-  const fmt = (v: number) => `${formatNumber(v, { digits, compact: Math.abs(v) >= 1e4 })}`;
+  const fmt = (v: number) => (isDurationUnit(unit) ? formatDuration(v) : `${formatNumber(v, { digits, compact: Math.abs(v) >= 1e4 })}`);
   const hasTarget = Boolean(targets?.some(finite));
   // A value label under a higher target tick would be crossed by it: such labels sit above the tick.
   const labelOnTick = (i: number) => {
@@ -129,7 +130,7 @@ export function targetBarOption(input: TargetBarInput): EChartsOption {
     },
     xAxis: { type: "category", data: [...categories], axisTick: { show: false } },
     // The unit belongs in the panel subtitle (「万 US$ · 横线 = 当月目标」); an axis name crowds the top-left tick.
-    yAxis: { type: "value", min: 0, axisLabel: { formatter: (v: number) => formatNumber(v, { compact: true }) } },
+    yAxis: { type: "value", min: 0, axisLabel: { formatter: (v: number) => (isDurationUnit(unit) ? formatDuration(v) : formatNumber(v, { compact: true })) } },
     series,
   };
 }

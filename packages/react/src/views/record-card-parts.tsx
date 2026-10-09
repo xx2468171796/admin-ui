@@ -5,7 +5,8 @@ import { Avatar } from "../avatar.tsx";
 import { useAdminDefaults } from "../admin-defaults-context.tsx";
 import { readField, type GridField } from "../grid-core.ts";
 import { cardOwner, dueState } from "./record-card-core.ts";
-import { todayKey } from "./date-core.ts";
+import { todayKey, zonedInstant } from "./date-core.ts";
+import { fieldDeadline } from "../deadline-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
@@ -23,7 +24,11 @@ export function CardFooter<T>({ record, owner, due, comments, today, timeZone }:
   const count = typeof comments === "function" ? comments(record) : comments;
   const fallbackZone = useAdminDefaults().timeZone;
   const zone = due?.timeZone ?? timeZone ?? fallbackZone;
-  const state = due ? dueState(readField(due, record), today ?? todayKey(Date.now(), timeZone ?? fallbackZone), zone) : null;
+  const day = today ?? todayKey(Date.now(), timeZone ?? fallbackZone);
+  const base = due ? dueState(readField(due, record), day, zone) : null;
+  // A deadline field (GridField.deadline): the next 2 days are attention too, a closed record is not coloured.
+  const deadline = base && due?.deadline ? fieldDeadline(due, record, { now: new Date(zonedInstant(day, 720, zone)), timeZone: zone }) : undefined;
+  const state = base && deadline !== undefined ? { ...base, tone: deadline === null || deadline.kind === "none" ? null : deadline.kind === "overdue" ? ("danger" as const) : ("attention" as const) } : base;
   if (!person && !count && !state) return null;
   return (
     <div className="aui-rcard-foot">

@@ -1,6 +1,6 @@
 {
   "name": "@adminui/react",
-  "version": "8.3.0",
+  "version": "8.4.0",
   "description": "React 19 component library for data-dense admin backends: page templates, data tables, a multi-view grid, access management, dashboards, forms, themes and AI-ready usage rules.",
   "keywords": [
     "react",

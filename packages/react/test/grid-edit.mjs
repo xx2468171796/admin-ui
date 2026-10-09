@@ -186,6 +186,85 @@ try {
   await page.waitForFunction(() => !location.search.includes('contract='));
   await page.waitForTimeout(200);
 
+  // ---- 8.4 截止日期（GridField.deadline）：「下次跟进」按今天比——逾期 danger + 格内「逾期 N 天」（悬停「已逾期 N 天」），
+  // 今天 / 2 天内 warning，更远不着色；赢单 / 输单是 closed，不提醒
+  const today = await page.evaluate(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
+  const dayNum = (key) => Date.UTC(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, Number(key.slice(8, 10))) / 86_400_000;
+  const seen = { danger: 0, other: 0 };
+  for (let i = 0; i < 18; i++) {
+    const due = await cell(i, '下次跟进');
+    const time = due.locator('time');
+    if (!(await time.count())) { assert.equal(await due.getAttribute('data-tone'), null, `第 ${i} 行没有日期不着色`); continue; }
+    const day = (await time.getAttribute('datetime')).slice(0, 10);
+    const stage = await text(i, '阶段');
+    const diff = dayNum(day) - dayNum(today);
+    const closed = stage === '赢单' || stage === '输单';
+    const want = closed ? null : diff < 0 ? 'danger' : diff <= 2 ? 'warning' : null;
+    assert.equal(await due.getAttribute('data-tone'), want, `第 ${i} 行 ${day}（${stage}）`);
+    const tag = due.locator('.aui-grid-due-tag');
+    if (want === 'danger') {
+      assert.equal((await tag.innerText()).trim(), `逾期 ${-diff} 天`);
+      assert.equal(await tag.getAttribute('data-tip'), `已逾期 ${-diff} 天`);
+    } else assert.equal(await tag.count(), 0, `第 ${i} 行没有逾期小字`);
+    seen[want === 'danger' ? 'danger' : 'other'] += 1;
+  }
+  assert.ok(seen.danger > 0 && seen.other > 0, `前 18 行里有逾期和不逾期的 ${JSON.stringify(seen)}`);
+  // 窄列：小字截断，日期本身不被挤掉
+  const dueCol = grid.getByRole('columnheader', { name: /^下次跟进/ });
+  const overdueCell = grid.locator('[role=gridcell][data-tone=danger] .aui-grid-due').first();
+  await overdueCell.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: resolve(output, 'deadline-1440.png'), animations: 'disabled' });
+  const dueHandle = await dueCol.locator('.aui-grid-resizer').boundingBox();
+  await page.mouse.move(dueHandle.x + dueHandle.width / 2, dueHandle.y + dueHandle.height / 2);
+  await page.mouse.down();
+  const wide = await overdueCell.evaluate((el) => { const tag = el.querySelector('.aui-grid-due-tag'); return tag.scrollWidth <= tag.clientWidth; });
+  assert.ok(wide, '默认列宽（截止日期 184px）放得下「逾期 N 天」');
+  await page.mouse.move(dueHandle.x - 50, dueHandle.y + dueHandle.height / 2, { steps: 4 });
+  await page.mouse.up();
+  const narrow = await overdueCell.evaluate((el) => {
+    const tag = el.querySelector('.aui-grid-due-tag');
+    const date = el.querySelector('time');
+    const box = el.closest('.aui-cell').getBoundingClientRect();
+    return { tagRight: tag.getBoundingClientRect().right, cellRight: box.right, truncated: tag.scrollWidth > tag.clientWidth, dateRight: date.getBoundingClientRect().right };
+  });
+  assert.ok(narrow.tagRight <= narrow.cellRight + 0.5 && narrow.truncated, `窄列里小字截断、不出格 ${JSON.stringify(narrow)}`);
+  assert.ok(narrow.dateRight <= narrow.cellRight + 0.5, '日期完整显示');
+
+  // ---- 8.4 格子里新建选项（GridField.onCreateOption）：搜不到时最后一行「+ 新建选项「…」」，回车 = 等宿主建好再选上；
+  // 和已有选项只差大小写也算新的；宿主拒绝 → 编辑器不关、通知里说原因
+  const tags0 = await cell(0, '标签');
+  await tags0.click();
+  await page.keyboard.press('Enter');
+  const tagList = page.getByRole('listbox', { name: '标签' });
+  await tagList.waitFor();
+  const search = grid.locator('.aui-grid-option-search');
+  await search.fill('战略伙伴');
+  const createRow = page.getByRole('option', { name: '新建选项「战略伙伴」' });
+  await createRow.waitFor();
+  assert.equal(await search.getAttribute('aria-activedescendant'), await createRow.getAttribute('id'), '没有匹配的选项时新建行就是当前行');
+  await page.screenshot({ path: resolve(output, 'create-option-1440.png'), animations: 'disabled' });
+  await page.keyboard.press('Enter');
+  await page.getByRole('option', { name: '正在新建选项「战略伙伴」' }).waitFor();
+  await tagList.getByRole('option', { name: '战略伙伴' }).waitFor();
+  assert.equal(await tagList.getByRole('option', { name: '战略伙伴' }).getAttribute('aria-selected'), 'true', '多选：新建的选项加进已选');
+  await page.keyboard.press('Control+Enter');
+  await status.getByText('已保存 1 格').waitFor();
+  assert.match(await text(0, '标签'), /战略伙伴/);
+  // 宿主拒绝
+  await tags0.click();
+  await page.keyboard.press('Enter');
+  await tagList.waitFor();
+  await search.fill('失败的标签');
+  await page.getByRole('option', { name: '新建选项「失败的标签」' }).click();
+  await page.getByText('演示：选项名不能含「失败」').waitFor();
+  assert.equal(await search.inputValue(), '失败的标签', '失败后搜索词还在，编辑器不关');
+  await page.getByRole('option', { name: '新建选项「失败的标签」' }).waitFor();
+  // 输入已有的「续约」不给新建行（大小写规则见 option-list-core 单测）
+  await search.fill('续约');
+  assert.equal(await page.getByRole('option', { name: /^新建选项/ }).count(), 0, '同名选项不给新建');
+  await page.keyboard.press('Escape');
+  for (const close of await page.getByRole('button', { name: '关闭通知' }).all()) await close.click().catch(() => undefined);
+
   // ---- 服务端 10 万条
   await page.getByRole('button', { name: /服务端 10 万条/ }).click();
   // 弹框关闭动画结束前 Radix 仍把页面其余部分标为 aria-hidden
@@ -210,7 +289,7 @@ try {
   assert.ok(filtered > 0 && filtered < 100000, `服务端搜索后 ${filtered} 条`);
   await page.screenshot({ path: resolve(output, 'server.png') });
   assert.deepEqual(errors, [], errors.join('; '));
-  console.log('PASS grid-edit: edit / type-to-edit / validate / select / checkbox / range copy-paste / external paste skip / undo-redo / clear / reject rollback / fill height / server 100k infinite scroll + search');
+  console.log('PASS grid-edit: edit / type-to-edit / validate / select / checkbox / range copy-paste / external paste skip / undo-redo / clear / reject rollback / fill height / deadline tones + overdue suffix / create option (pending, pick, reject) / server 100k infinite scroll + search');
 } finally {
   await browser.close();
   await server.close();

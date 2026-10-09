@@ -257,7 +257,8 @@
 .adminui .aui-rkey dd { margin:0; min-width:0; }
 .adminui .aui-rkey b { display:block; margin-top:2px; overflow:hidden; font-size:calc(22px * var(--aui-font-scale)); font-weight:600; line-height:1.3; color:var(--aui-text); font-variant-numeric:tabular-nums; white-space:nowrap; text-overflow:ellipsis; }
 .adminui .aui-rkey small { display:block; margin-top:1px; font-size:calc(12px * var(--aui-font-scale)); color:var(--aui-note); }
-.adminui .aui-rkey small[data-tone=attention] { color:var(--aui-warning); }
+.adminui .aui-rkey small[data-tone=attention],
+.adminui .aui-rkey small[data-tone=warning] { color:var(--aui-warning); }
 .adminui .aui-rkey small[data-tone=danger] { color:var(--aui-danger); }
 .adminui .aui-rkeys-tools { position:absolute; top:6px; right:6px; z-index:1; border-radius:8px; background:var(--aui-surface); }
 .adminui .aui-acomposer { display:flex; flex-direction:column; gap:8px; min-width:0; }

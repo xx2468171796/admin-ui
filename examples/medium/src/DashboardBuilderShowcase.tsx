@@ -6,6 +6,7 @@ import {
   type DashboardDataSource,
   type DashboardMetricDef,
   type DashboardSchema,
+  type DashboardTargetDef,
   type DashboardTableRow,
   type DashboardWidget,
   type DashboardWidgetData,
@@ -66,7 +67,22 @@ const METRICS: DashboardMetricDef[] = [
   { key: "firstResp", name: "新客户首次响应（中位）", version: 2, unit: "分钟", formula: "分配到首次有效跟进的分钟数，中位数" },
   { key: "deals", name: "成交客户数", version: 1, unit: "位" },
   { key: "amount", name: "成交金额", version: 1, unit: "元", formula: "本期签约的合同金额合计（含税）" },
+  { key: "respMedian", name: "首次响应时长（中位）", version: 1, unit: "duration", formula: "分配时间到首次跟进时间的间隔，中位数（值是秒，卡上写小时 / 天）" },
 ];
+// 表上设的目标（宿主保存）：目标类组件可以选它们，搭建器只存 targetRef，取数时宿主按本期算实际值和目标值
+const TARGETS: DashboardTargetDef[] = [
+  { id: "monthly-amount", name: "每月成交金额", period: "month", unit: "元" },
+  { id: "weekly-valid", name: "每周有效跟进", period: "week", unit: "条" },
+];
+const TARGET_VALUES: Record<string, number> = { "monthly-amount": 3_000_000, "weekly-valid": 300 };
+/** The current calendar month as a target period (first and last day). */
+function thisMonth(): { start: string; end: string; label: string } {
+  const now = new Date();
+  const pad = (v: number) => String(v).padStart(2, "0");
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const ym = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+  return { start: `${ym}-01`, end: `${ym}-${pad(last)}`, label: "本月" };
+}
 const TEMPLATES: WidgetTemplate[] = [
   { id: "t-ontime", label: "按时有效跟进率", kind: "kpi", group: "标准组件 · 口径来自指标字典", widget: { title: "按时有效跟进率 · 今天", query: { source: "follow", metric: { kind: "standard", key: "ontime", version: 1 } } } },
   { id: "t-people", label: "每个人今天的情况", kind: "table", group: "标准组件 · 口径来自指标字典", widget: { query: { source: "follow", metric: { kind: "standard", key: "valid", version: 1 }, groupBy: "owner" } } },
@@ -81,6 +97,8 @@ const TEMPLATES: WidgetTemplate[] = [
   { id: "t-rank", label: "谁本周有效跟进最多", kind: "hbar", group: "标准组件 · 口径来自指标字典", widget: { query: { source: "follow", metric: { kind: "standard", key: "valid", version: 1 }, groupBy: "owner" } } },
   { id: "t-stack", label: "各阶段客户数（按负责人）", kind: "stacked", group: "标准组件 · 口径来自指标字典", widget: { query: { source: "customers", metric: { kind: "standard", key: "deals", version: 1 }, groupBy: "stage", stackBy: "owner" } } },
   { id: "t-target", label: "每周有效跟进 vs 目标", kind: "targetBar", group: "标准组件 · 口径来自指标字典", widget: { target: 300, query: { source: "follow", metric: { kind: "standard", key: "valid", version: 1 }, granularity: "week" } } },
+  { id: "t-goal", label: "本月成交金额 · 目标进度", kind: "targetProgress", group: "标准组件 · 口径来自指标字典", keywords: "目标 完成率", widget: { title: "本月成交金额", targetRef: "monthly-amount", query: { source: "deals", metric: { kind: "standard", key: "amount", version: 1 } } } },
+  { id: "t-resp", label: "首次响应时长（中位）", kind: "kpi", group: "标准组件 · 口径来自指标字典", keywords: "时长 duration", widget: { query: { source: "assign", metric: { kind: "standard", key: "respMedian", version: 1 } } } },
   { id: "t-bullet", label: "按时有效跟进率 vs 目标", kind: "bullet", group: "标准组件 · 口径来自指标字典", widget: { target: 80, query: { source: "follow", metric: { kind: "standard", key: "ontime", version: 1 } } } },
   { id: "v-all", label: "客户 · 全部客户", kind: "table", group: "多维表格视图", widget: { query: { source: "customers" } } },
   { id: "v-stage", label: "客户 · 阶段看板", kind: "table", group: "多维表格视图", widget: { query: { source: "customers", groupBy: "stage" } } },
@@ -119,6 +137,8 @@ function kpiCard(metric: WidgetMetric | undefined, n: (v: number) => number): Ex
   if (metric?.kind === "custom") return { value: String(n(14)), unit: "次", delta: computeDelta(n(14), n(11), { mode: "absolute" }), comparison: "近 10 个工作日 · 比前 10 个" };
   // 大数字（审阅 06：窄组件里只剩「1.」）：放不下先缩字号，再换成 万 / 亿
   if (metric?.kind === "standard" && metric.key === "amount") return { value: n(1_594_200).toLocaleString("en-US"), unit: "元", delta: computeDelta(n(1_594_200), n(1_402_000)), comparison: "比上月同期" };
+  // 时长指标：值是秒，unit "duration" → 「3.2 小时」/「1.5 天」
+  if (metric?.kind === "standard" && metric.key === "respMedian") return { value: n(11_520), unit: "duration", delta: computeDelta(n(11_520), n(14_400), { better: "down" }), comparison: "比上周" };
   if (metric?.kind === "standard" && metric.key === "firstResp") return { value: "18", unit: "分钟", delta: computeDelta(18, 22, { better: "down" }), comparison: "比上周" };
   return { value: String(n(40)), unit: "条", delta: computeDelta(n(40), n(36), { mode: "absolute" }), comparison: "比 9-21 同时段" };
 }
@@ -137,6 +157,11 @@ async function loadWidgetData(widget: DashboardWidget, ctx: DashboardFilterValue
   switch (widget.kind) {
     case "group":
       return { kind: "group", items: (widget.items ?? []).map((item) => ({ id: item.id, card: kpiCard(item.query?.metric ?? metric, n) })) };
+    case "targetProgress": {
+      // targetRef 优先（表上的目标，按本期算），否则用组件里写的常数目标
+      const target = widget.targetRef ? TARGET_VALUES[widget.targetRef] ?? null : widget.target ?? null;
+      return { kind: "targetProgress", value: n(1_594_200), target, period: thisMonth(), targetNote: widget.targetRef ? "全公司目标" : "组件里设的目标", currency: "CNY" };
+    }
     case "donut":
       return { kind: "bar", bars: { categories: WAYS, values: [14, 38, 22, 4].map(n), name: "有效跟进", unit: "条" }, colors: WAY_COLORS };
     case "hbar":
@@ -182,6 +207,7 @@ export function WeeklyDashboardBuilder({ height }: { height: number | string }) 
       loadWidgetData={loadWidgetData}
       sources={SOURCES}
       metrics={METRICS}
+      targets={TARGETS}
       compareOptions={COMPARES}
       templates={TEMPLATES}
       scopeLabel="我的看板"

@@ -42,6 +42,11 @@ test("新建：搜索词没有同名选项才给", () => {
   assert.equal(createCandidate(STAGES, "  漠河 "), "漠河");
   assert.equal(createCandidate(STAGES, "首通"), null);
   assert.equal(createCandidate(STAGES, " "), null);
+  // exact (field options, the grid's 「新建选项」): trimmed, case-sensitive — 「vip」 is new next to 「VIP」.
+  const tags = [{ value: "v", label: "VIP" }];
+  assert.equal(createCandidate(tags, "vip"), null);
+  assert.equal(createCandidate(tags, "vip", true), "vip");
+  assert.equal(createCandidate(tags, " VIP ", true), null);
 });
 
 test("多选：按选项顺序排、最多几个", () => {

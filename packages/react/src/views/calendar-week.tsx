@@ -21,7 +21,7 @@ import { useAdminDefaults } from "../admin-defaults-context.tsx";
 import { ContextMenu } from "../menu.tsx";
 import { softTone } from "./view-color-core.ts";
 import { addDays, clockText, dayLabelOf, diffDays, isoWeek, isWorkday, todayKey, weekday, WEEKDAY_SHORT, zonedInstant, zonedParts, type DayKey } from "./date-core.ts";
-import { createRange, isBarEvent, layoutMonth, layoutTimeGrid, minutesAt, moveTimed, resizeTimed, resolveEvent, timedRange, weekDays, type MonthSegment, type ResolvedEvent, type TimedPlacement } from "./calendar-core.ts";
+import { createRange, deadlineEvents, isBarEvent, layoutMonth, layoutTimeGrid, minutesAt, moveTimed, resizeTimed, resolveEvent, timedRange, weekDays, type MonthSegment, type ResolvedEvent, type TimedPlacement } from "./calendar-core.ts";
 import { CalendarToolbar, DayBadge, eventMenuSections, whenText, type CalendarBaseProps } from "./calendar-parts.tsx";
 import { EventCard, useEventCard } from "./calendar-card.tsx";
 import { CalendarMonth } from "./calendar-month.tsx";
@@ -65,7 +65,7 @@ function rangeTitle(days: readonly DayKey[]): { title: string; sub?: string } {
 
 /** See the module comment. */
 export function CalendarWeek(props: CalendarWeekProps) {
-  const { events, date, onNavigate, label, weekStart = 1, workCalendar, mode, onModeChange, onDateChange, onOpen, onClearDate, eventMenu, legend, toolbarExtra, hourHeight = 52, step = 30, startHour = 8, onCreate, agendaBelow = 560 } = props;
+  const { events: input, date, onNavigate, label, weekStart = 1, workCalendar, mode, onModeChange, onDateChange, onOpen, onClearDate, eventMenu, legend, toolbarExtra, hourHeight = 52, step = 30, startHour = 8, onCreate, agendaBelow = 560 } = props;
   const count = props.days ?? (mode === "day" ? 1 : 7);
   const defaults = useAdminDefaults();
   const tz = props.timeZone ?? defaults.timeZone;
@@ -76,6 +76,7 @@ export function CalendarWeek(props: CalendarWeekProps) {
     return () => clearInterval(timer);
   }, [props.now]);
   const today = props.today ?? todayKey(clock, tz);
+  const events = useMemo(() => deadlineEvents(input, today, tz), [input, today, tz]);
   const days = useMemo(() => weekDays(date, weekStart, count), [date, weekStart, count]);
   const [pending, setPending] = useState<Record<string, { start: string; end: string | null }>>({});
   useEffect(() => setPending({}), [events]);

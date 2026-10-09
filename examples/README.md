@@ -1,6 +1,6 @@
 # Examples / 示例
 
-Standalone consumer projects that install `@adminui/react` from npm (`^8.3.0`). Copy a folder out of this repository and run:
+Standalone consumer projects that install `@adminui/react` from npm (`^8.4.0`). Copy a folder out of this repository and run:
 
 ```sh
 npm install
@@ -20,4 +20,4 @@ npm run dev     # or: npm run build
 
 ---
 
-可以直接拷走的独立消费方项目，从 npm 安装 `@adminui/react`（`^8.3.0`）。拷出目录后 `npm install`、`npm run dev`。这些目录是生成的副本，正本在 `packages/react/examples/`（`starter` 即 medium），CI 在那里对本地库做类型检查、审计和体积预算——改示例请改那边。
+可以直接拷走的独立消费方项目，从 npm 安装 `@adminui/react`（`^8.4.0`）。拷出目录后 `npm install`、`npm run dev`。这些目录是生成的副本，正本在 `packages/react/examples/`（`starter` 即 medium），CI 在那里对本地库做类型检查、审计和体积预算——改示例请改那边。

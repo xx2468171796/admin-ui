@@ -2,7 +2,7 @@
 
 8.0 是干净的大版本：被新规范取代的旧写法全部删掉，**不留兼容层**；CSS 按组件拆开，页面只带用到的样式。
 
-**旧项目升级可选，不强制**：钉着旧标签（如 `#adminUI-v8.3.0`）照常能用，谁要升谁升；新项目默认用最新。要升就照下面的表改，再跑一遍审计，审计零错误就改完了：
+**旧项目升级可选，不强制**：钉着旧标签（如 `#adminUI-v8.4.0`）照常能用，谁要升谁升；新项目默认用最新。要升就照下面的表改，再跑一遍审计，审计零错误就改完了：
 
 ```bash
 npx @adminui/react audit src          # 或 npx admin-ui-audit src；每条问题写 文件:行号 和 换成什么
@@ -135,7 +135,7 @@ CSS 变量：8.0 没有删 `--aui-*` 变量（审计 `removed-css-var` 规则已
 
 ## 8. 跟最新版的项目要做的
 
-1. 依赖改到 `#adminUI-v8.3.0`，`npx @adminui/react audit apps modules platform packages` 清零（当前已知：`FieldTile/FieldTiles`（个人资料页）、`Button size="icon"`（多维表格仪表盘页）、`MenuButton size="icon"`（知识库标题栏）、bitable 原型里的旧色名）。
+1. 依赖改到 `#adminUI-v8.4.0`，`npx @adminui/react audit apps modules platform packages` 清零（当前已知：`FieldTile/FieldTiles`（个人资料页）、`Button size="icon"`（多维表格仪表盘页）、`MenuButton size="icon"`（知识库标题栏）、bitable 原型里的旧色名）。
 2. 入口里 `styles.css` 放第一行；模块前端按路由懒加载重子路径；删掉和 admin-ui 重复的手写样式。
 3. 存量看板存档：读的时候 `migrateDashboardSpec`；存的选项色旧名用 `legacyTone` 读（或一次性迁移成新名）。
 4. e2e 里按 `.aui-button-icon`、`.aui-menu-item`、`title` 属性找元素的改成按角色 / 名字找（IconButton 的名字就是 `label`）。

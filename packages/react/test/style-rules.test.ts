@@ -43,3 +43,13 @@ test("buttons, inputs and selects use the shared control height", () => {
       if (selector.split(",").some((s) => control.test(s.trim())) && /(^|;|\s)(min-)?height\s*:\s*\d+px/.test(body)) offenders.push(`${f}: ${selector}`);
   assert.deepEqual(offenders, [], "控件高度用 var(--aui-control-height) / var(--aui-control-height-sm)");
 });
+
+test("bare panes inside a workspace keep the divider between columns", () => {
+  // 8.3.1：`Pane bare` 放在 WorkspaceLayout 中间栏时，bare 的 border:0 盖掉了栏间分割线（两栏白底贴在一起没有线）
+  const css = rules(read("templates.css"));
+  const divider = css.find((r) => r.selector === ".adminui .aui-workspace > * + *");
+  assert.ok(divider && /border-left\s*:\s*1px solid var\(--aui-line\)/.test(divider.body), "工作区栏间要有 1px 分割线");
+  const clears = css.filter((r) => r.selector.startsWith(".adminui .aui-pane[data-bare]") && /(^|;)\s*border\s*:\s*0/.test(r.body));
+  assert.ok(clears.length > 0, "bare 面板在别处仍然去掉外框");
+  for (const r of clears) assert.match(r.selector, /:not\(\.aui-workspace > \*\)/, `${r.selector} 会吃掉工作区的分割线`);
+});
