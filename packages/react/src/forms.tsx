@@ -350,6 +350,7 @@ export function FormDialog({
       setThrown({});
     }
   }, [open]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `reveal` (bumped after a failed submit) is the trigger; keyed on `thrown` too, every later error change would move the focus again.
   useEffect(() => {
     const form = formRef.current;
     if (!reveal || !form) return;
@@ -360,7 +361,7 @@ export function FormDialog({
     });
     if (lost.length) setFailure(lost.join("；"));
     revealFirstProblem(form);
-  }, [reveal]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reveal]);
   const requestClose = () => {
     if (locked) return;
     if (discard) {
@@ -772,12 +773,10 @@ export function OneTimeSecretDialog({
   const [saved, setSaved] = useState(false);
   const [warn, setWarn] = useState(false);
   const secretRef = useRef<HTMLPreElement>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: opening or a new `secret` starts over (copied / saved / warning cleared).
   useEffect(() => {
     if (!open) return;
-    setCopied(false);
-    setCopyError("");
-    setSaved(false);
-    setWarn(false);
+    setCopied(false); setCopyError(""); setSaved(false); setWarn(false);
   }, [open, secret]);
   const selectSecret = () => {
     const node = secretRef.current;

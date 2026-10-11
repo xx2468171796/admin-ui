@@ -12,8 +12,6 @@ import { menuLabel } from "./menu-core.ts";
 import type { MenuItem, MenuSection } from "./menu.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/sheets.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/sheets.css";
 
 export type ActionSheetProps = {
   open: boolean;

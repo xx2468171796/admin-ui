@@ -18,8 +18,6 @@ import { govErrorMessage } from "./api.ts";
 import { GovLoad, feedbackOf, staleAlert, ReadOnlyNote, optionLabeler, toChoice, useGov, useNotice, type GovPageBaseProps } from "./shared.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export type SodRulesPageProps = GovPageBaseProps & {
   /** Permission codes / roles that can appear in a rule (code → label). Free text when omitted. */

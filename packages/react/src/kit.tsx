@@ -14,8 +14,7 @@ import { CopyButton } from "./copy-button.tsx";
 import { tipProps } from "./tooltip.tsx";
 import type { RecordBadge, RecordMetaPart } from "./record-detail-core.ts";
 import { avatarTone } from "./avatar-core.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/kit.css";
+import { errorText } from "./error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/kit.css";
 
@@ -337,7 +336,7 @@ export function AsyncSwitch({ id, checked, label, disabled, onChange }: { id?: s
       onCheckedChange={(next) => {
         setPending(true);
         onChange(next)
-          .catch((error: unknown) => notify(error instanceof Error ? error.message : String(error), "error"))
+          .catch((error: unknown) => notify(errorText(error), "error"))
           .finally(() => setPending(false));
       }}
     />

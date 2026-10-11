@@ -32,8 +32,6 @@ import { AccessProfileHeader } from "./access-profile.tsx";
 import { accessProfileStats } from "./profile-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 type Tab = "org" | "roles" | "overrides" | "effective";
 const LIMIT = 200;

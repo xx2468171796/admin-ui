@@ -88,6 +88,7 @@ export function useRecordExpand<T>({ options, rows, rowKey, enabled, fields, onR
   // Field definitions come from the first row's list (same columns for every row); values are read per row.
   const sample = first !== undefined ? fields(first) : [];
   const shape = sample.map((f) => `${f.key}:${f.full ? 1 : 0}:${f.copy ? 1 : 0}:${f.text !== undefined ? 1 : 0}`).join("|");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the field `shape` (sample / fields are new arrays / functions each render) and on `rows`, which re-reads every value; labelOf / fields of an unchanged shape and row list are assumed equal.
   const layout = useMemo((): RecordLayout<T> => {
     const cache = new WeakMap<object, Map<string, RecordExpandField>>();
     const read = (row: T, key: string) => {
@@ -108,7 +109,6 @@ export function useRecordExpand<T>({ options, rows, rowKey, enabled, fields, onR
       subtitle: custom.subtitle ?? options?.description,
       sections: custom.sections ?? [{ key: "fields", fields: defaults }],
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shape, options?.layout, options?.title, options?.description, rows]);
   const render = options?.render;
   const detail = useRecordDetail<T>({

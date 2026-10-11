@@ -8,6 +8,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Dialog } from "./forms.tsx";
 import { Kbd, useShortcutPlatform } from "./tooltip.tsx";
+// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
+import "#aui-css/divider.css";
 
 export type DividerProps = {
   /** Text in the middle of the line (timeline days: 「昨天」「更早」). */

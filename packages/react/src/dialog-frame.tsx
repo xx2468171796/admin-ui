@@ -159,6 +159,7 @@ export function DialogFrame({
     return document.activeElement === region;
   };
   const returnFocus = () => focusOpener() || focusRegion();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on the close edge only; returnFocus (new each render) reads refs.
   useEffect(() => {
     if (open || !opener.current) return;
     // Verify a frame later instead of trusting the synchronous result: on the overlay and
@@ -172,7 +173,6 @@ export function DialogFrame({
       anchors.current = [];
     });
     return () => cancelAnimationFrame(frame);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
   if (!portal) return null;
   const closeButton = (

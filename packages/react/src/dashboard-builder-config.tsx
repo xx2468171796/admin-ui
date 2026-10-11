@@ -24,8 +24,6 @@ import { filterInheritance, metricBadge, nextWidgetId, TARGET_WIDGET_KINDS, WIDG
 import { IconButton } from "./buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard-builder.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard-builder.css";
 
 /** A data source the host offers (a bitable table, platform data …). */
 export type DashboardDataSource = {

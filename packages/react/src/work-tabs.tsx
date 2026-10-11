@@ -14,8 +14,6 @@ import { ContextMenu, type MenuSection } from "./menu.tsx";
 import { searchTabs, tabsToClose } from "./shell-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/shell.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/shell.css";
 
 export type WorkTab = { id: string; title: string; icon: LucideIcon; dirty?: boolean; closable?: boolean; pinned?: boolean };
 type TabActions = {

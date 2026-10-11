@@ -9,8 +9,6 @@ import type { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/comments.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/comments.css";
 
 export type ChangeValueProps = {
   /** Old value as displayed (a string, a tag, an avatar chip). `null` / "" = empty before; `undefined` = no old value shown. */

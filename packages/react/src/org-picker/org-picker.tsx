@@ -83,6 +83,7 @@ export function OrgPicker(props: OrgPickerProps) {
     setDeep(unit ? unit.kind !== "dept" : false);
   };
   // Open: start from the value, fill in what the host only gave refs of, jump to defaultFocus (never ticked).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs on the open edge only (`opened` guard); value / source are read from that render, and a value change while open must not reset the draft.
   useEffect(() => {
     if (!open) {
       opened.current = false;
@@ -100,11 +101,11 @@ export function OrgPicker(props: OrgPickerProps) {
     }
     setFocusFailed(false);
     setCurrent(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
   // Jump to defaultFocus (never ticked) — also when the host only knows it after the dialog opened (its context
   // request was still on the way): a new value re-focuses instead of leaving the members pane on its skeleton.
   const focusedFor = useRef<string | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-runs on open / a new focus target only; tree.reveal reads the live tree store and openNode only calls setters.
   useEffect(() => {
     if (!open) {
       focusedFor.current = null;
@@ -126,7 +127,6 @@ export function OrgPicker(props: OrgPickerProps) {
     return () => {
       live = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, defaultFocus]);
   // 「/ 聚焦搜索」: on desktop the search box takes the focus when the dialog opens (DialogFrame honours data-autofocus);
   // phones don't pop the keyboard up.
@@ -134,14 +134,14 @@ export function OrgPicker(props: OrgPickerProps) {
     searchBox.current?.toggleAttribute("data-autofocus", !mobile);
   });
   // No defaultFocus (or it can't be found): open the first visible root once the tree is there.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: model.avail / tree.expand / openNode are new each render but read only live state; the effect is keyed on what decides whether to act.
   useEffect(() => {
     if (open && !current && (!defaultFocus || focusFailed) && tree.roots?.[0]) {
       const first = tree.roots.find((r) => model.avail({ kind: r.kind, id: r.id }, r.availability).state !== "hidden") ?? tree.roots[0];
       tree.expand(first.id);
       openNode(first.id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, current, tree.roots, focusFailed]);
+  }, [open, current, tree.roots, focusFailed, defaultFocus]);
 
   const locate = (hit: OrgSearchHit) => {
     setQuery("");
@@ -167,8 +167,9 @@ export function OrgPicker(props: OrgPickerProps) {
   const showTabs = tabs.length > 1 && !query.trim();
   const searching = Boolean(query.trim());
   const people = kinds.length === 1 && kinds[0] === "person";
-  // Shortcuts of kinds this picker can't return (「我的部门」 when only people are picked) are left out.
-  const usable = shortcuts.filter((s) => model.canSelect(s.subject.kind));
+  // Shortcuts of kinds this picker can't return (「我的部门」 when only people are picked) are left out (and, with
+  // hideUnselectable, the ones out of scope).
+  const usable = shortcuts.filter((s) => model.canSelect(s.subject.kind) && !model.omits(s.subject, undefined, s.subject.status));
   const body = searching ? (
     <SearchPane model={model} query={search.query} hits={search.hits} loading={search.loading} error={search.error} onLocate={locate} />
   ) : extra ? (

@@ -14,8 +14,6 @@ import { useAdminDefaults } from "./admin-defaults-context.tsx";
 import { defaultPhoneCountry, formatLocalPhone, parsePhone, PHONE_COUNTRIES, phoneDigits, toE164, validatePhone, type PhoneCountry } from "./number-input-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/numbers.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/numbers.css";
 
 export type PhoneInputChange = {
   /** Calling code of the box (「+86」). */

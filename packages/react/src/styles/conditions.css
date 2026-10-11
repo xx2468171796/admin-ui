@@ -13,7 +13,7 @@
 .adminui .aui-grid-cond-prefix { display:grid; place-items:center; height:var(--aui-control-height-sm); color:var(--aui-note); font-size:calc(12.5px * var(--aui-font-scale)); }
 .adminui .aui-cond-conj-btn { padding:2px 6px; border:0; border-radius:var(--aui-radius-sm); background:none; color:var(--aui-primary); font:inherit; font-size:calc(12.5px * var(--aui-font-scale)); cursor:pointer; }
 .adminui .aui-cond-conj-btn:hover { background:var(--aui-soft); color:var(--aui-ink); }
-.adminui .aui-cond-conj-btn:focus-visible { outline:none; box-shadow:var(--aui-focus-ring); }
+.adminui .aui-cond-conj-btn:focus-visible { outline: 2px solid transparent; box-shadow:var(--aui-focus-ring); }
 .adminui .aui-grid-cond-row { display:grid; grid-template-columns:minmax(0,150px) minmax(0,120px) minmax(0,1fr) 28px; align-items:start; gap:6px; min-width:0; }
 .adminui .aui-grid-cond-group .aui-grid-cond-row { grid-template-columns:minmax(0,140px) minmax(0,110px) minmax(0,1fr) 28px; }
 .adminui .aui-grid-cond-row > .aui-select,
@@ -83,7 +83,7 @@
 .adminui .aui-rule-main { display: grid; gap: 4px; flex: 1 1 auto; min-width: 0; padding: 4px 6px; margin: -4px 0; border: 0; border-radius: var(--aui-radius); background: none; color: var(--aui-text); font: inherit; text-align: left; cursor: pointer; }
 .adminui button.aui-rule-main:hover:not(:disabled) { background: var(--aui-hover); }
 .adminui button.aui-rule-main:disabled { cursor: default; }
-.adminui .aui-rule-main:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: -2px; }
+.adminui .aui-rule-main:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: -2px; }
 .adminui .aui-rule-name { color: var(--aui-text); font-size: calc(13px * var(--aui-font-scale)); font-weight: 600; }
 .adminui .aui-rule-if { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
 .adminui .aui-rule-kw { flex: none; color: var(--aui-note); font-size: calc(12.5px * var(--aui-font-scale)); line-height: 24px; }

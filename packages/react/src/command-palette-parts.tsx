@@ -8,8 +8,6 @@ import { SkeletonBlock } from "./loading.tsx";
 import { Kbd } from "./tooltip.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/command-palette.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/command-palette.css";
 
 /** Title with the query words bold + underlined (no background, ink colour). */
 export function HitText({ text, query }: { text: string; query: string }) {

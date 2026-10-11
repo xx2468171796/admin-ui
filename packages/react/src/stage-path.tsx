@@ -12,8 +12,6 @@ import { MenuButton } from "./menu.tsx";
 import { resolveStagePath, type ResolvedStageStep, type StagePathStep } from "./record-detail-spec.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/record.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/record.css";
 
 export type StagePathProps = {
   steps: readonly StagePathStep[];

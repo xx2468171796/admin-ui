@@ -8,7 +8,7 @@
  * text. States are ChartState, as tall as the widget body: loading skeleton, empty, no-match (「清空筛选」),
  * error (「重试」), stale (refresh failed: last data kept under a strip) and forbidden (lock, never 0).
  */
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useAdminTheme } from "./theme.tsx";
 import { useElementWidth } from "./media-audio.tsx";
 import { ChartState } from "./chart-state.tsx";
@@ -25,9 +25,9 @@ import { TargetProgressCard, type TargetProgressData } from "./dashboard-target-
 import { durationColumns, isDurationUnit } from "./duration-format.ts";
 import type { DashboardFilterValue } from "./dashboard-filters-core.ts";
 import { WidgetNoteTag, type DashboardWidgetNote } from "./dashboard-widget-note.tsx";
-import { compactNumberText, kpiFitScale, widgetDataKey, widgetFilterContext, type DashboardWidget, type WidgetKind } from "./dashboard-builder-core.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard-builder.css";
+import { useWidgetData } from "./dashboard-widget-data.ts";
+export { useWidgetData, type WidgetDataState } from "./dashboard-widget-data.ts";
+import { compactNumberText, kpiFitScale, type DashboardWidget, type WidgetKind } from "./dashboard-builder-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard-builder.css";
 
@@ -91,49 +91,7 @@ export function skeletonShape(kind: WidgetKind): "bars" | "kpi" | "rows" {
   return "bars";
 }
 
-type State =
-  | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "ready"; data: DashboardWidgetData }
-  /** A reload failed: the last data stays on screen under a strip. */
-  | { status: "stale"; data: DashboardWidgetData; message: string; at: number };
-
 const clock = (t: number) => new Date(t).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false });
-
-/**
- * Data of one widget; `reload()` for the retry button. A change of query / filters shows the skeleton
- * again; a failed retry of the same query keeps the last data (stale) instead of blanking the card.
- */
-export function useWidgetData(widget: DashboardWidget, context: DashboardFilterValue, load: LoadWidgetData | undefined) {
-  const key = widgetDataKey(widget, context);
-  const [state, setState] = useState<State>({ status: "loading" });
-  const [nonce, setNonce] = useState(0);
-  const latest = useRef(widget);
-  latest.current = widget;
-  const last = useRef<{ key: string; data: DashboardWidgetData; at: number } | null>(null);
-  useEffect(() => {
-    if (widget.kind === "text" || !load) return;
-    const controller = new AbortController();
-    const kept = last.current?.key === key ? last.current : null;
-    if (!kept) setState({ status: "loading" });
-    load(latest.current, widgetFilterContext(latest.current, context), controller.signal).then(
-      (data) => {
-        if (controller.signal.aborted) return;
-        last.current = { key, data, at: Date.now() };
-        setState({ status: "ready", data });
-      },
-      (caught: unknown) => {
-        if (controller.signal.aborted) return;
-        const message = caught instanceof Error && caught.message ? caught.message : "数据加载失败";
-        setState(kept ? { status: "stale", data: kept.data, message, at: kept.at } : { status: "error", message });
-      },
-    );
-    return () => controller.abort();
-    // `key` covers kind + query + items + target + the effective filter context; title / layout changes do not reload.
-  }, [key, nonce, load]);
-  const reload = useCallback(() => setNonce((n) => n + 1), []);
-  return { state, reload };
-}
 
 /** Element height kept current (charts need a pixel height). */
 function useElementHeight<T extends HTMLElement>() {
@@ -173,6 +131,7 @@ function FittedKpi({ title, card, size }: { title: string; card: KpiData; size?:
   const raw = !isDurationUnit(card.unit) && (typeof card.value === "string" || typeof card.value === "number") ? String(card.value) : null;
   const short = raw === null ? null : compactNumberText(raw);
   const compact = compactAt !== null && short !== null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `card.value` is a trigger — a new value text is fitted again.
   useLayoutEffect(() => {
     const body = sentinel.current?.parentElement;
     if (!body) return;

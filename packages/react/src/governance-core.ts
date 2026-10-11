@@ -21,7 +21,11 @@ export type AuditAdapter = {
 export function effectivePermissions(member: AdminMember, roles: readonly AdminRole[]): string[] {
   return [...new Set(roles.filter(role => member.roleIds.includes(role.id)).flatMap(role => role.permissions))].sort();
 }
-/** Exact matching only: no implicit wildcard or administrator bypass. */
+/**
+ * Exact matching only: no implicit wildcard or administrator bypass.
+ * For display only (hide / grey a button). Never use it to authorize anything: the browser can be changed at
+ * will — the server checks the permission on every request.
+ */
 export function hasAdminPermission(permissions: readonly string[], permission: string): boolean {
   return permissions.includes(permission);
 }

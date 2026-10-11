@@ -12,8 +12,6 @@ import { AlertTriangle, BarChart3, FilterX, Lock, RefreshCw } from "lucide-react
 import { Button } from "./primitives.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard.css";
 
 export type ChartStateKind = "loading" | "empty" | "no-match" | "error" | "stale" | "forbidden";
 

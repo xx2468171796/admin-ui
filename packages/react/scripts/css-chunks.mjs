@@ -85,7 +85,12 @@ const used = new Set();
 for (const path of modules) {
   const rel = relative(src, path).split("\\").join("/");
   const text = readFileSync(path, "utf8");
-  const body = text.replace(/^\/\/ aui-css:[^\r\n]*\r?\n(?:import "#aui-css\/[^"]+";\r?\n)+/m, "");
+  // `g`: strip EVERY generated block. Without it --fix removed only the first block and appended a new one,
+  // so 193 modules ended up with the same block twice — and check mode never noticed.
+  const blockRe = /^\/\/ aui-css:[^\r\n]*\r?\n(?:import "#aui-css\/[^"]+";\r?\n)+/gm;
+  const blocks = text.match(blockRe)?.length ?? 0;
+  const body = text.replace(blockRe, "");
+  if (blocks > 1 && !FIX) problems.push(`${rel}: ${blocks} generated "aui-css" import blocks (expected one)`);
   const mentioned = new Set();
   for (const m of body.matchAll(/(?<![a-z0-9-])(aui-[a-z0-9-]+)(?![a-z0-9-])/g)) mentioned.add(m[1].replace(/-$/, ""));
   // `aui-button-${variant}` is a class prefix; ids (`id={`aui-page-${id}`}`, aria-controls) are not classes
@@ -93,7 +98,9 @@ for (const path of modules) {
     .filter((m) => !/(\bid|aria-[a-z]+|htmlFor)=\{`$/.test(body.slice(Math.max(0, m.index - 24), m.index)))
     .map((m) => m[1]);
   for (const cls of definers.keys()) if (prefixes.some((p) => cls.startsWith(p))) mentioned.add(cls);
-  const imported = [...text.matchAll(/^import "#aui-css\/([\w-]+)\.css";/gm)].map((m) => m[1]);
+  const importedAll = [...text.matchAll(/^import "#aui-css\/([\w-]+)\.css";/gm)].map((m) => m[1]);
+  const imported = [...new Set(importedAll)];
+  if (importedAll.length > imported.length && blocks <= 1 && !FIX) problems.push(`${rel}: imports the same #aui-css chunk more than once`);
   const need = new Set();
   for (const cls of mentioned) {
     const by = definers.get(cls);

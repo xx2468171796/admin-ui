@@ -3,6 +3,7 @@
  * same checks the server runs, so most mistakes are caught in the dialog), display text (secrets never
  * shown), grouping and change rows. The server validates again. No React / DOM.
  */
+import { errorText } from "../error-text.ts";
 import { CONFIG_SECRET_MASK, PARAM_TYPE_LABEL, type DictItemDto, type ParamDto } from "./contracts.ts";
 
 /** Editor state of one parameter: text for string / number / json / enum, a boolean for switches. */
@@ -42,7 +43,7 @@ export function parseParamDraft(p: Pick<ParamDto, "type" | "label" | "secret" | 
       try {
         return JSON.parse(t) as unknown;
       } catch (e) {
-        throw new Error(`${p.label}：JSON 格式不对（${e instanceof Error ? e.message : String(e)}）`);
+        throw new Error(`${p.label}：JSON 格式不对（${errorText(e, "无法解析")}）`);
       }
     }
     default: {

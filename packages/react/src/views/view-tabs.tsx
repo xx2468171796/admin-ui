@@ -7,7 +7,7 @@
  * bold with a 2px primary underline and a ⋯ menu (also right-click / Shift+F10 on any tab); double-click a view
  * the user owns to rename it in place (`onRename`). Tabs that don't fit go into 「更多 N」, grouped 标准 / 共享 /
  * 我的, with 「管理视图…」 at the bottom; the active tab always stays in the bar. Phones: every tab in one row that
- * scrolls sideways (edges fade, the active tab scrolls to the middle); the dashboard group moves into 「视图」.
+ * scrolls sideways (edges fade, the active tab scrolls to the middle); the dashboard group moves into 「视图」 (picking one closes it).
  *
  * Buttons with aria-current (a view switcher, not page-section tabs): ←/→ move between tabs, Enter / Space opens.
  * Views and their order come from the host (view-core `tabViews`).
@@ -18,12 +18,12 @@ import { Button, cn } from "../primitives.tsx";
 import { ContextMenu, MenuButton, type MenuSection } from "../menu.tsx";
 import { PopoverPanel } from "../popover-panel.tsx";
 import { useIsMobile } from "../media-query.ts";
-import { fitTabs, managerCountText, overflowGroups, tabViews, VIEW_KIND_LABELS, VIEW_KINDS, VIEW_TIER_LABELS, type NewViewDraft, type ViewAudience, type ViewKind, type ViewSummary } from "./view-core.ts";
+import { fitTabs, managerCountText, overflowGroups, tabViews, viewTabTip, VIEW_KINDS, VIEW_TIER_LABELS, type NewViewDraft, type ViewAudience, type ViewKind, type ViewSummary } from "./view-core.ts";
 import { ViewKindIcon } from "./view-parts.tsx";
 import { NewViewPanel } from "./view-create.tsx";
+import { preloadViewManager, usePreloadViewManager } from "./view-manager-lazy.tsx";
 import { MoreMenu } from "../buttons.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
+import { isComposingEvent } from "../ime.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
 
@@ -60,8 +60,7 @@ export type ViewTabsProps = {
   trailing?: ReactNode;
 };
 
-/** What ViewTabs tells the ViewManager inside its panel: 「+ 新建视图」 there opens the same create panel. */
-export const ViewTabsContext = /* @__PURE__ */ createContext<{ openCreate?: () => void } | null>(null);
+export const ViewTabsContext = /* @__PURE__ */ createContext<{ openCreate?: () => void; closeManager?: () => void } | null>(null); // openCreate: ViewManager's 「+ 新建视图」; closeManager: DashboardTabs after a pick
 
 type Fit = { shown: number[]; overflow: number[] };
 const TIER_MARK = { standard: Lock, shared: Users } as const;
@@ -71,11 +70,6 @@ function TierMark({ view }: { view: ViewSummary }) {
   if (view.tier === "mine") return null;
   const Icon = TIER_MARK[view.tier];
   return <Icon size={12} className="aui-vtab-tier" data-tier={view.tier} aria-hidden="true" />;
-}
-
-function tabTip(view: ViewSummary): string {
-  const tier = view.tier === "standard" ? " · 业务线标准视图（条件锁定）" : view.tier === "shared" ? " · 共享视图" : "";
-  return `${VIEW_KIND_LABELS[view.kind]}视图${tier}${view.modified ? " · 你改过，只对你生效" : ""}`;
 }
 
 function TabContent({ view }: { view: ViewSummary }) {
@@ -107,6 +101,7 @@ function RenameBox({ view, onDone }: { view: ViewSummary; onDone: (name: string 
         onBlur={finish}
         onKeyDown={(e) => {
           e.stopPropagation();
+          if (isComposingEvent(e)) return; // IME candidate Enter / Esc belong to the input method
           if (e.key === "Enter") finish();
           if (e.key === "Escape") onDone(null);
         }}
@@ -135,8 +130,9 @@ export function ViewTabs(props: ViewTabsProps) {
   const activeIndex = tabs.findIndex((t) => t.id === activeId);
   const signature = tabs.map((t) => `${t.id}:${t.name}:${t.tier}:${t.modified ? 1 : 0}`).join("|");
   const canCreate = Boolean(onCreateView || onCreate);
+  usePreloadViewManager(manager !== undefined);
   const renamable = (view: ViewSummary) => Boolean(props.onRename) && (props.canRename ? props.canRename(view) : view.tier === "mine");
-
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `signature` (tab names / tiers) and `canCreate` (the 「+」 button) change the widths measured in the DOM: fit again.
   useLayoutEffect(() => {
     const el = box.current;
     const m = measure.current;
@@ -156,7 +152,7 @@ export function ViewTabs(props: ViewTabsProps) {
     return () => ro.disconnect();
   }, [signature, activeIndex, canCreate, phone]);
 
-  // Phones: the strip scrolls sideways; bring the active tab to the middle.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: phones — the strip scrolls sideways; bring the active tab to the middle, also after the tabs (`signature`) changed.
   useLayoutEffect(() => {
     if (!phone) return;
     const button = buttons.current.get(activeId);
@@ -224,8 +220,8 @@ export function ViewTabs(props: ViewTabsProps) {
             data-tier={view.tier}
             data-modified={view.modified || undefined}
             aria-current={active ? "page" : undefined}
-            data-tip={tabTip(view)}
-            aria-description={tabTip(view)}
+            data-tip={viewTabTip(view)}
+            aria-description={viewTabTip(view)}
             tabIndex={active || (activeIndex < 0 && index === 0) ? 0 : -1}
             onClick={() => onSelect(view.id)}
             onDoubleClick={() => renamable(view) && setRenaming(view.id)}
@@ -241,7 +237,7 @@ export function ViewTabs(props: ViewTabsProps) {
     );
   };
   return (
-    <ViewTabsContext.Provider value={canCreate ? { openCreate: () => { setOpen(false); setCreating(true); } } : {}}>
+    <ViewTabsContext.Provider value={{ ...(canCreate ? { openCreate: () => { setOpen(false); setCreating(true); } } : {}), closeManager: () => { if (open) setOpen(false); } }}>
       <div className="aui-vtabs" data-phone={phone || undefined}>
         <div ref={box} className="aui-vtabs-strip">
           <nav className="aui-vtabs-list" aria-label={label}>
@@ -276,7 +272,7 @@ export function ViewTabs(props: ViewTabsProps) {
           </div>
         </div>
         {manager !== undefined && (
-          <Button ref={managerButton} variant="ghost" size="sm" className="aui-vtabs-manage" aria-label={phone ? "视图管理" : undefined} aria-expanded={open} aria-haspopup="dialog" data-tip="视图管理" onClick={() => setOpen(!open)}>
+          <Button ref={managerButton} variant="ghost" size="sm" className="aui-vtabs-manage" aria-label={phone ? "视图管理" : undefined} aria-expanded={open} aria-haspopup="dialog" data-tip="视图管理" onPointerEnter={preloadViewManager} onFocus={preloadViewManager} onClick={() => setOpen(!open)}>
             <Settings2 size={15} aria-hidden="true" />
             <span className="aui-vtabs-managetext">视图</span>
           </Button>

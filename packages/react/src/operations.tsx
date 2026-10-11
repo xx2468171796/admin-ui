@@ -17,8 +17,8 @@ import {
   type TaskAdapter,
 } from "./workflow-core.ts";
 import { useAdminResource } from "./workflow-hooks.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/workflows.css";
+import { errorText } from "./error-text.ts";
+import { useAbortOwner } from './abort-owner.ts';
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/workflows.css";
 type TaskContextValue = {
@@ -62,6 +62,7 @@ function TaskScope({
     </TaskContext.Provider>
   );
 }
+/** @deprecated No consumers; kept for compatibility, no new features. Show long jobs with your own list + useAdminResource. */
 export function TaskCenterProvider(props: ComponentProps<typeof TaskScope>) {
   return <TaskScope key={props.scope} {...props} />;
 }
@@ -77,12 +78,14 @@ const taskLabels = {
   failed: "失败",
   cancelled: "已取消",
 } as const;
+/** @deprecated See TaskCenterProvider. */
 export function TaskCenter() {
   const { tasks, loading, error, refresh, adapter } = useTaskCenter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState("");
   const [failure, setFailure] = useState("");
   const lock = useRef(false);
+  const ops = useAbortOwner();
   const execute = async (
     id: string,
     fn?: (id: string, signal: AbortSignal) => Promise<void>,
@@ -92,10 +95,10 @@ export function TaskCenter() {
     setBusy(id);
     setFailure("");
     try {
-      await fn(id, new AbortController().signal);
+      await fn(id, ops.next());
       await refresh();
     } catch (e) {
-      setFailure(String(e));
+      setFailure(errorText(e));
     } finally {
       lock.current = false;
       setBusy("");
@@ -201,6 +204,7 @@ export function TaskCenter() {
     </>
   );
 }
+/** @deprecated No consumers; use LogTimeline (page-templates) / AccessConsole audit views. Kept for compatibility. */
 export function AuditTimeline({ events }: { events: readonly AuditEvent[] }) {
   return (
     <ol className="aui-audit">

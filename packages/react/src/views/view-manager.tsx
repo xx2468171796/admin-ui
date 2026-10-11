@@ -8,9 +8,8 @@
  * Put it in ViewTabs `manager` (it becomes a PopoverPanel), a SideSheet, or a page.
  */
 import { useContext, useState, type ReactNode } from "react";
-import { Copy, Eye, EyeOff, Lock, Pencil, Plus, Trash2, User, Users, X } from "lucide-react";
+import { Copy, Eye, EyeOff, Lock, Pencil, Plus, Trash2, User, Users } from "lucide-react";
 import { Button, Input } from "../primitives.tsx";
-import { InlineAlert } from "../layout.tsx";
 import { ConfirmDialog } from "../forms.tsx";
 import { MenuButton, type MenuItem, type MenuSection } from "../menu.tsx";
 import { SortableList } from "../sortable.tsx";
@@ -18,9 +17,7 @@ import { SearchBox } from "../search.tsx";
 import { can, searchViews, tierViews, VIEW_KIND_LABELS, VIEW_KINDS, VIEW_TIER_LABELS, VIEW_TIERS, viewActions, type ViewKind, type ViewPolicy, type ViewSummary, type ViewTier } from "./view-core.ts";
 import { ViewKindIcon } from "./view-parts.tsx";
 import { ViewTabsContext } from "./view-tabs.tsx";
-import { IconButton, MoreMenu } from "../buttons.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
+import { MoreMenu } from "../buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
 
@@ -199,43 +196,6 @@ export function ViewManager({ views, activeId, policy = {}, tierNotes, onSelect,
           setDeleting(null);
         }}
       />
-    </div>
-  );
-}
-
-export type ViewLockNoticeProps = {
-  view: Pick<ViewSummary, "name" | "tier">;
-  /** 「复制为我的视图」 */
-  onDuplicate?: () => void;
-  onDismiss?: () => void;
-};
-/**
- * Shown when someone tries to change the filter / group / sort of a view they don't maintain (D16):
- * explains why, and offers 「复制为我的视图」. Temporary search stays allowed.
- */
-export function ViewLockNotice({ view, onDuplicate, onDismiss }: ViewLockNoticeProps) {
-  const what = view.tier === "standard" ? "业务线标准视图" : "共享视图";
-  return (
-    <div className="aui-vlock">
-      <InlineAlert
-        tone="warning"
-        title={`这是${what}，不能修改筛选、分组、排序。`}
-        action={
-          <span className="aui-vlock-actions">
-            {onDuplicate && (
-              <Button size="sm" onClick={onDuplicate}>
-                <Copy size={14} aria-hidden="true" />
-                复制为我的视图
-              </Button>
-            )}
-            {onDismiss && (
-              <IconButton label="关闭提示" onClick={onDismiss} icon={<X size={15} aria-hidden="true" />} />
-            )}
-          </span>
-        }
-      >
-        可以临时搜索；想换条件，复制一份到「我的视图」再改。
-      </InlineAlert>
     </div>
   );
 }

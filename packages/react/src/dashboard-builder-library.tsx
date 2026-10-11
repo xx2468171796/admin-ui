@@ -12,8 +12,6 @@ import { WIDGET_KIND_LABELS, type DashboardWidget, type WidgetKind } from "./das
 import { IconButton } from "./buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard-builder.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard-builder.css";
 
 /** A ready-made widget the host offers (standard metric widgets, bitable views …). */
 export type WidgetTemplate = {

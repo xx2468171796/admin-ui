@@ -21,8 +21,6 @@ import { tipProps } from "./tooltip.tsx";
 import { newOptionId, nextOptionTone, optionProblems, type EditableOption } from "./field-dialog-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/fields.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/fields.css";
 
 export type OptionsEditorProps = {
   options: readonly EditableOption[];

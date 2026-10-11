@@ -24,8 +24,6 @@ import { assignKey, describeAssignScope } from "./matrix-core.ts";
 import { AssignRoleDialog, ErrorAlert, LockedNote, ReadOnlyNote, StatusLine, inDialog, useAction, useConsole, revealDetail } from "./console-shared.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 /** Roles assigned to a department / post, with「分配角色」and「取消分配」. */
 export function SubjectRoles({ type, id, name, manage }: { type: AssignSubjectType; id: string; name: string; manage: boolean }) {

@@ -26,8 +26,6 @@ import { AudienceSection, CapabilityRow, ExpiryRow, FieldsRow, OpensRow, Passwor
 import { IconButton, MoreMenu } from "./buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/share.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/share.css";
 
 /** Save progress in the footer; `onRetry` adds 「重试」 to an error. */
 export type ShareSaveState = { kind: "saved" | "saving" | "error"; text?: string; onRetry?: () => void };
@@ -84,6 +82,7 @@ export type ShareDialogProps = {
   /** ⋯ 「以访客身份预览」; `previewText` (a string) is its grey note. */
   onPreview?: () => void;
   previewText?: ReactNode;
+  /** Length of a generated PIN (default 6; 4 is guessable for a public link). */
   passwordLength?: number;
   /** Make a new PIN (default: crypto random from an unambiguous alphabet). */
   generatePassword?: () => string;
@@ -157,7 +156,7 @@ export function ShareDialog(props: ShareDialogProps) {
     opened = 0,
     maxOpens = 999,
     paused = false,
-    passwordLength = 4,
+    passwordLength = 6,
     generatePassword = () => randomPin(passwordLength),
     expiryHours = [],
     expiryDays = [1, 7, 30],

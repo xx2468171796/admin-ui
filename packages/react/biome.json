@@ -1,0 +1,28 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "vcs": { "enabled": false },
+  "files": { "includes": ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.d.ts"] },
+  "formatter": { "enabled": false },
+  "assist": { "enabled": false },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": false,
+      "correctness": {
+        "useExhaustiveDependencies": { "level": "error", "options": { "hooks": [{ "name": "useHostFunction", "stableResult": [0] }] } },
+        "useHookAtTopLevel": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noTsIgnore": "error"
+      },
+      "style": {
+        "noDefaultExport": "error",
+        "noNonNullAssertion": "error"
+      },
+      "complexity": {
+        "noExcessiveLinesPerFunction": { "level": "error", "options": { "maxLines": 80, "skipBlankLines": true } }
+      }
+    }
+  }
+}

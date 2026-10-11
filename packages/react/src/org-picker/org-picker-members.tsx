@@ -13,7 +13,7 @@ import { chainOf, lockedNotice, nodeCheckState, personSubject, pickAll, unitSubj
 import { listKey, scrollToRow, virtualWindow } from "./org-picker-nav.ts";
 import { blockedReason, type PickerModel } from "./org-picker-model.ts";
 import { PickRow, SkeletonRows, SubjectMark, Tick } from "./org-picker-parts.tsx";
-import { useMembers, type OrgTree } from "./use-org-data.ts";
+import { useListedMembers, useMembers, type OrgTree } from "./use-org-data.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/org-picker.css";
 
@@ -115,6 +115,8 @@ export function MembersPane({ model, tree, source, nodeId, deep, onDeep, shortcu
   const [scroll, setScroll] = useState({ top: 0, height: 320 });
   const [active, setActive] = useState(0);
   const listId = `aui-orgp-members-${nodeId ?? "none"}`;
+  const { listed, omitted } = useListedMembers(list, model.hideUnselectable ? (p) => model.omits({ kind: "person", id: p.id }, p.availability, p.status) : null, scroll.height + rowH * 4, rowH);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `nodeId` re-attaches to the scroller, which only mounts once the node is known (the skeleton has none).
   useLayoutEffect(() => {
     const node = scroller.current;
     if (!node) return;
@@ -124,17 +126,15 @@ export function MembersPane({ model, tree, source, nodeId, deep, onDeep, shortcu
     ro?.observe(node);
     return () => ro?.disconnect();
   }, [nodeId]);
-  useEffect(() => {
-    setActive(0);
-    if (scroller.current) scroller.current.scrollTop = 0;
-  }, [nodeId, deep]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: another node or 「含下级」 toggled = a new list: back to its first row.
+  useEffect(() => { setActive(0); if (scroller.current) scroller.current.scrollTop = 0; }, [nodeId, deep]);
   if (!unit) return <div className="aui-orgp-members"><SkeletonRows label={model.m.loading} /></div>;
   const chain = chainOf(tree.index, unit.parentId);
   const pathText = chain.map((id) => tree.index.get(id)?.label ?? "").filter(Boolean).join(" › ");
   const a = model.avail({ kind: unit.kind, id: unit.id }, unit.availability);
   const canWhole = model.canSelect(unit.kind) && !model.single;
-  const people = list.items.map((p) => ({ person: p, subject: personSubject(p, tree.index, unit.id) }));
-  const total = list.total ?? (list.more ? undefined : people.length);
+  const people = listed.map((p) => ({ person: p, subject: personSubject(p, tree.index, unit.id) }));
+  const total = list.total !== undefined ? Math.max(people.length, list.total - omitted) : list.more ? undefined : people.length;
   const hasSub = Boolean(unit.childCount ?? tree.children.get(unit.id)?.length);
   // The listbox may sit below other rows in the same scroller (phones): window from its own top.
   const win = virtualWindow(scroll.top - (listbox.current?.offsetTop ?? 0), scroll.height, rowH, people.length);
@@ -231,11 +231,11 @@ export function MembersPane({ model, tree, source, nodeId, deep, onDeep, shortcu
             {model.t(model.m.loadFailed, { reason: list.error })}
             <Button size="sm" variant="outline" onClick={list.retry}>{model.m.retry}</Button>
           </div>
-        ) : list.loading && !people.length ? (
+        ) : (list.loading || (omitted > 0 && list.more)) && !people.length ? (
           <SkeletonRows label={model.m.loading} />
         ) : !people.length ? (
           <div className="aui-orgp-empty">
-            <span>{model.t(model.m.emptyDept, { name: unit.label })}</span>
+            <span>{omitted > 0 ? model.t(model.m.hiddenCount, { n: omitted }) : model.t(model.m.emptyDept, { name: unit.label })}</span>
             {emptyAction}
           </div>
         ) : (

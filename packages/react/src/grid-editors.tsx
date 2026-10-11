@@ -18,8 +18,6 @@ import { DateCellEditor } from "./grid-editors-date.tsx"; // bt/datepicker
 import { Kbd } from "./tooltip.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grid.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grid.css";
 
 /** Where the active cell goes after a commit. */
 export type GridCommitMove = "down" | "up" | "right" | "left" | "none";
@@ -43,6 +41,12 @@ export type GridEditorProps<T> = {
    * hang under the box, long text: Enter = new line, Ctrl + Enter saves.
    */
   variant?: "cell" | "field";
+  /**
+   * The typed text so far (text editors). BitableGrid keeps it so a record that leaves the view while being
+   * edited (a refresh, a re-sort) does not lose what was typed: the editor reopens with it, or the status line
+   * offers 「重新填入」.
+   */
+  onDraft?: (text: string) => void;
 };
 
 const MOVE = { commitDown: "down", commitUp: "up", commitRight: "right", commitLeft: "left" } as const;
@@ -59,7 +63,7 @@ export function GridCellEditor<T>(props: GridEditorProps<T>) {
   return <TextEditor {...props} />;
 }
 
-function TextEditor<T>({ field, row, startText, onCommit, onCancel, error, variant = "cell" }: GridEditorProps<T>) {
+function TextEditor<T>({ field, row, startText, onCommit, onCancel, error, variant = "cell", onDraft }: GridEditorProps<T>) {
   const multiline = field.type === "longText";
   const [text, setText] = useState(startText ?? editorText(field, readField(field, row)));
   const ref = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
@@ -70,21 +74,23 @@ function TextEditor<T>({ field, row, startText, onCommit, onCancel, error, varia
     if (done.current) return;
     onCommit({ text: textRef.current }, move);
   };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount only — focus once with the start text's caret / selection.
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
     node.focus({ preventScroll: true });
     if (startText === undefined) node.select?.();
     else node.setSelectionRange?.(node.value.length, node.value.length);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
   // Clicking outside the editor commits (the grid ignores the click that started editing).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one outside-click listener for the editor's life; commit reads the text through textRef, and the grid's onCommit forwards to its stable handlers (useStableHandlers).
   useEffect(() => {
     const onDown = (event: PointerEvent) => {
       if (ref.current && event.target instanceof Node && !ref.current.closest(".aui-grid-editor")?.contains(event.target)) commit("none");
     };
     document.addEventListener("pointerdown", onDown, true);
     return () => document.removeEventListener("pointerdown", onDown, true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
   const onKeyDown = (event: ReactKeyboardEvent) => {
     const action = editorKeyAction({ key: event.key, shiftKey: event.shiftKey, altKey: event.altKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey, isComposing: event.nativeEvent.isComposing }, multiline, variant);
     event.stopPropagation();
@@ -104,7 +110,10 @@ function TextEditor<T>({ field, row, startText, onCommit, onCancel, error, varia
     "aria-label": prefix ? `编辑「${field.title}」（${prefix}）` : `编辑「${field.title}」`,
     "aria-invalid": error ? true : undefined,
     placeholder: field.placeholder,
-    onChange: (event: { target: { value: string } }) => setText(event.target.value),
+    onChange: (event: { target: { value: string } }) => {
+      setText(event.target.value);
+      onDraft?.(event.target.value);
+    },
     onKeyDown,
   };
   return (

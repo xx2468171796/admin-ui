@@ -9,8 +9,6 @@ import { todayKey, zonedInstant } from "./date-core.ts";
 import { fieldDeadline } from "../deadline-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 export function CardFooter<T>({ record, owner, due, comments, today, timeZone }: {
   record: T;

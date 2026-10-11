@@ -24,8 +24,6 @@ import {
 } from "./atoms-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/atoms.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/atoms.css";
 
 // AvatarStack moved to avatar.tsx (per-person colours, 「+k」 opens a list).
 
@@ -412,7 +410,7 @@ export type WatermarkProps = {
  * that leaks are traceable; the server still decides what a visitor gets. Token colour, never blocks
  * clicks or text selection of the content, hidden from screen readers, printed too.
  */
-export function Watermark({ text, children, gap = [240, 150], rotate = -20 }: WatermarkProps) {
+export function Watermark({ text, children, gap: [gapX, gapY] = [240, 150], rotate = -20 }: WatermarkProps) {
   const layer = useRef<HTMLDivElement>(null);
   const [grid, setGrid] = useState({ cols: 6, rows: 8 });
   const lines = typeof text === "string" ? [text] : text;
@@ -420,7 +418,7 @@ export function Watermark({ text, children, gap = [240, 150], rotate = -20 }: Wa
     const node = layer.current;
     if (!node) return;
     const measure = () => {
-      const next = watermarkTiles(node.clientWidth, node.clientHeight, gap[0], gap[1]);
+      const next = watermarkTiles(node.clientWidth, node.clientHeight, gapX, gapY);
       setGrid((old) => (old.cols === next.cols && old.rows === next.rows ? old : next));
     };
     measure();
@@ -428,9 +426,9 @@ export function Watermark({ text, children, gap = [240, 150], rotate = -20 }: Wa
     const observer = new ResizeObserver(measure);
     observer.observe(node);
     return () => observer.disconnect();
-  }, [gap[0], gap[1]]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [gapX, gapY]);
   const mark = (
-    <div ref={layer} className="aui-watermark" aria-hidden="true" style={{ "--aui-wm-x": `${gap[0]}px`, "--aui-wm-y": `${gap[1]}px`, "--aui-wm-rotate": `${rotate}deg` } as CSSProperties}>
+    <div ref={layer} className="aui-watermark" aria-hidden="true" style={{ "--aui-wm-x": `${gapX}px`, "--aui-wm-y": `${gapY}px`, "--aui-wm-rotate": `${rotate}deg` } as CSSProperties}>
       {Array.from({ length: grid.rows }, (_, row) => (
         <div key={row} className="aui-watermark-row" data-odd={row % 2 || undefined}>
           {Array.from({ length: grid.cols }, (_, col) => (

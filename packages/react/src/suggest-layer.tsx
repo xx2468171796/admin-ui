@@ -13,8 +13,6 @@ import { useAdminTheme } from "./theme.tsx";
 import { LAYER_ATTR, layerHost, rectOf, useLayerPosition } from "./floating-layer.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/ai.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/ai.css";
 
 export type SuggestItem = { key: string; content: ReactNode; disabled?: boolean };
 export type SuggestLayerProps = {

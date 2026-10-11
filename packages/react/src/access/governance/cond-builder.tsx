@@ -20,8 +20,6 @@ import { OPS_FOR_TYPE, REFS_FOR_TYPE, isListRef, condDraftToTree, condRowToCondi
 import { impactRows, impactSummary, impactTone } from "./governance-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export type CondBuilderProps = {
   fields: readonly CondFieldDef[];

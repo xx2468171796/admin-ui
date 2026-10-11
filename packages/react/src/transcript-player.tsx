@@ -18,8 +18,6 @@ import type { OptionHue } from "./option-palette.ts";
 import { MoreMenu } from "./buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/transcript.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/transcript.css";
 
 export const SKIP_SECONDS = 15;
 const SEEK_KEY_STEP = 5;

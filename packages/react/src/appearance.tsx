@@ -16,8 +16,6 @@ import { DEFAULT_PALETTE, isPaletteId, PALETTES, validColor } from "./palette.ts
 import { IconButton } from "./buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/shell.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/shell.css";
 
 const FONT_SHORT: Record<AdminFontSize, string> = { small: "小", medium: "中", mediumLarge: "中大", large: "大", xlarge: "特大" };
 const MODE_ICON: Record<AdminColorMode, LucideIcon> = { light: Sun, dark: Moon, system: SunMoon };

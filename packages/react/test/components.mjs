@@ -9,7 +9,7 @@ import react from '@vitejs/plugin-react';
 import { chromium } from 'playwright';
 import { existsSync, mkdirSync } from 'node:fs';
 
-const executablePath = () => { const cached = '/home/admin/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome'; return process.env.CHROMIUM_PATH || (existsSync(cached) ? cached : chromium.executablePath()); };
+const executablePath = () => { const cached = '/home/admin/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome'; return process.env.PLAYWRIGHT_CHROMIUM_PATH || process.env.CHROMIUM_PATH || (existsSync(chromium.executablePath()) ? chromium.executablePath() : cached); };
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const output = resolve(root, 'test/artifacts/components');

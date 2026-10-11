@@ -38,8 +38,6 @@ import { CondBuilder, RuleImpactView } from "./cond-builder.tsx";
 import { GovLoad, feedbackOf, staleAlert, ReadOnlyNote, defaultNow, optionLabeler, toChoice, useGov, useNotice, type GovPageBaseProps } from "./shared.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 type Kind = "share" | "restriction";
 type AnyRule = ShareRuleDto | RestrictionRuleDto;

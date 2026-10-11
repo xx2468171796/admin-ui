@@ -14,8 +14,8 @@ import { LAYER_ATTR } from "./floating-layer.ts";
 import { editChanged, insertMention, keptMentions, mentionQuery, type CommentDraft, type CommentItem, type CommentPerson } from "./comment-core.ts";
 import { Avatar } from "./avatar.tsx";
 import { Kbd } from "./tooltip.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/comments.css";
+import { isComposingEvent } from "./ime.ts";
+import { createLatestSearch } from "./latest-search.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/comments.css";
 
@@ -51,10 +51,22 @@ export function CommentComposer({ onSubmit, searchMentions, onUpload, placeholde
   const [active, setActive] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const seq = useRef(0);
+  // Mention search: 150 ms after the last keystroke, never while an IME is still composing (each pinyin
+  // letter would be a request), only the newest answer shows.
+  const searchRef = useRef(searchMentions);
+  searchRef.current = searchMentions;
+  const composing = useRef(false);
+  const [search] = useState(() =>
+    createLatestSearch(
+      (query: string) => searchRef.current?.(query) ?? [],
+      (found: readonly CommentPerson[] | null) => setMatches(found ? found.slice(0, 8) : []),
+    ),
+  );
+  useEffect(() => () => search.cancel(), [search]);
   useEffect(() => {
     if (replyTo) area.current?.focus();
   }, [replyTo]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount only — an edit composer is mounted fresh for the comment it edits; focus once at the end of its text.
   useEffect(() => {
     const el = area.current;
     if (!editing || !el) return;
@@ -64,13 +76,11 @@ export function CommentComposer({ onSubmit, searchMentions, onUpload, placeholde
   const lookup = (next: { start: number; query: string } | null) => {
     setMention(next);
     setActive(0);
-    if (!next || !searchMentions) return setMatches([]);
-    const n = ++seq.current;
-    void Promise.resolve(searchMentions(next.query)).then((found) => n === seq.current && setMatches(found.slice(0, 8)), () => n === seq.current && setMatches([]));
+    search.request(next && searchMentions ? next.query : null);
   };
   const onText = (value: string, caret: number) => {
     setText(value);
-    lookup(searchMentions ? mentionQuery(value, caret) : null);
+    if (!composing.current) lookup(searchMentions ? mentionQuery(value, caret) : null);
   };
   const pick = (person: CommentPerson | undefined) => {
     const el = area.current;
@@ -158,14 +168,20 @@ export function CommentComposer({ onSubmit, searchMentions, onUpload, placeholde
         aria-autocomplete={searchMentions ? "list" : undefined}
         aria-activedescendant={open && matches.length ? suggestOptionId(listId, active) : undefined}
         onChange={(event) => onText(event.currentTarget.value, event.currentTarget.selectionStart ?? event.currentTarget.value.length)}
+        onCompositionStart={() => (composing.current = true)}
+        onCompositionEnd={(event) => {
+          composing.current = false;
+          onText(event.currentTarget.value, event.currentTarget.selectionStart ?? event.currentTarget.value.length);
+        }}
         onBlur={() => lookup(null)}
         onKeyDown={(event) => {
+          if (isComposingEvent(event)) return; // IME: Enter / Esc / arrows pick or cancel candidates
           if (event.key === "Escape" && (open || (editing && onCancel && !busy))) {
             event.preventDefault();
             event.stopPropagation();
             return open ? lookup(null) : onCancel?.();
           }
-          if (open && matches.length && (event.key === "Enter" || event.key === "Tab") && !event.nativeEvent.isComposing) {
+          if (open && matches.length && (event.key === "Enter" || event.key === "Tab")) {
             event.preventDefault();
             return pick(matches[active]);
           }

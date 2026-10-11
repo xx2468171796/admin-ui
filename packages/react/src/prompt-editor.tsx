@@ -13,18 +13,17 @@
  *
  * UI only: the host stores versions, runs the model and counts tokens. Styles: styles/ai.css.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Braces, Check, Columns2, History, Play, RotateCcw, TriangleAlert } from "lucide-react";
 import { Button, Choice } from "./primitives.tsx";
 import { SegmentedControl } from "./choices.tsx";
 import { useNotify } from "./notifications.tsx";
 import { countChars, estimateTokens, insertVariable, lineMarks, promptSegments, unknownVariables, usedVariables, winnerTally } from "./ai-core.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/ai.css";
+import { errorText } from "./error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/ai.css";
 
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+const message = (e: unknown) => errorText(e);
 
 // ---------------------------------------------------------------- PromptEditor (A4)
 
@@ -60,7 +59,10 @@ export function PromptEditor({ value, onChange, label, badges, variables = [], b
   const [compare, setCompare] = useState(defaultCompare ?? base !== undefined);
   const [tokens, setTokens] = useState<{ n: number; exact: boolean }>(() => ({ n: estimateTokens(value), exact: false }));
   const lines = useMemo(() => value.replace(/\r\n?/g, "\n").split("\n"), [value]);
-  const marks = useMemo(() => (base !== undefined ? lineMarks(base, value) : null), [base, value]);
+  // The line diff is O(lines²): run it on a deferred copy so typing never waits for it (React renders the
+  // marks in a background pass and drops it when the next key comes).
+  const diffed = useDeferredValue(value);
+  const marks = useMemo(() => (base !== undefined ? lineMarks(base, diffed) : null), [base, diffed]);
   const used = useMemo(() => usedVariables(value), [value]);
   const unknown = useMemo(() => unknownVariables(value, variables.map((v) => v.name)), [value, variables]);
   useEffect(() => {

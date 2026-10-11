@@ -36,4 +36,4 @@
 .adminui .aui-action-sheet-sub { color: var(--aui-note); }
 .adminui .aui-action-sheet-cancel { min-height: 48px; border: 0; border-radius: 12px; background: var(--aui-elev); color: var(--aui-text); font: inherit; font-size: calc(14.5px * var(--aui-font-scale)); font-weight: 600; cursor: pointer; }
 .adminui .aui-action-sheet-cancel:focus-visible,
-.adminui .aui-action-sheet-row:focus-visible { outline: none; box-shadow: inset var(--aui-focus-ring); }
+.adminui .aui-action-sheet-row:focus-visible { outline: 2px solid transparent; box-shadow: inset 0 0 0 2px var(--aui-focus); }

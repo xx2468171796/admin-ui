@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useId, useRef, type CSSProperties, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, ChevronDown, Maximize2 } from "lucide-react";
 import { Checkbox } from "./primitives.tsx";
 import { useAdminTheme } from "./theme.tsx";
@@ -17,13 +17,13 @@ import { DataTableCards } from "./data-cards.tsx";
 import { TableFooter } from "./table-footer.tsx";
 import type { ColumnMobileRole } from "./data-card-core.ts";
 import { IconButton } from "./buttons.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/table.css";
+import { useOverflowing, useUtilityWidths } from "./table-measure.ts";
+import { defaultRowLabel } from "./row-label.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/table.css";
 export type { ColumnMobileRole } from "./data-card-core.ts";
 export { BulkActionBar, type BulkAction, type BulkActionBarProps } from "./bulk-action-bar.tsx";
-export { useDataSource, useCursorDataSource, type ReloadOptions } from "./data-sources.ts";
+export { useDataSource, useCursorDataSource, type DataSourceOptions, type ReloadOptions } from "./data-sources.ts";
 export type TableCellContext = {
   selected: boolean;
 };
@@ -158,6 +158,8 @@ type DataTableBase<T> = {
   /** Phones (≤ 760px): "cards" (default) = one card per row, no sideways scroll; "table" keeps the scrolling table. */
   mobile?: "cards" | "table";
   isRowSelectable?: (row: T) => boolean;
+  /** Name of a row for its select checkbox (「选择 赵静怡」); default the first column's text, else the row key. */
+  rowLabel?: (row: T) => string;
   expandable?: {
     expanded: readonly string[];
     onExpandedChange: (keys: string[]) => void;
@@ -209,49 +211,14 @@ export function DataTable<T>(props: DataTableProps<T>) {
   const expandHeader = useRef<HTMLTableCellElement>(null);
   const selectHeader = useRef<HTMLTableCellElement>(null);
   const recordHeader = useRef<HTMLTableCellElement>(null);
-  const [utilityWidths, setUtilityWidths] = useState({ expand: 44, select: 44, record: 44 });
-  const hasExpansion = Boolean(expansion);
-  const hasSelection = Boolean(onSelectionChange);
-  const hasRecord = Boolean(record);
-  const hasPinned = Boolean(pinned);
-  useEffect(() => {
-    if (!hasPinned) return;
-    const measure = () => {
-      const expand = expandHeader.current?.getBoundingClientRect().width ?? 0;
-      const select = selectHeader.current?.getBoundingClientRect().width ?? 0;
-      const record = recordHeader.current?.getBoundingClientRect().width ?? 0;
-      setUtilityWidths(previous => previous.expand === expand && previous.select === select && previous.record === record ? previous : { expand, select, record });
-    };
-    measure();
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", measure);
-      return () => window.removeEventListener("resize", measure);
-    }
-    const observer = new ResizeObserver(measure);
-    for (const node of [expandHeader.current, selectHeader.current, recordHeader.current]) if (node) observer.observe(node);
-    return () => observer.disconnect();
-  }, [hasPinned, hasExpansion, hasSelection, hasRecord]);
+  // Phones: one card per row instead of a sideways-scrolling table.
+  const phone = useIsMobile();
+  const cards = phone && props.mobile !== "table";
+  const utilityWidths = useUtilityWidths({ expand: expandHeader, select: selectHeader, record: recordHeader }, Boolean(pinned) && !cards, `${Boolean(expansion)}${Boolean(onSelectionChange)}${Boolean(record)}`);
   // 最后一列是操作列时，宽表放不下就把它固定在右边：不用滚到最右才能点「编辑 / 删除」
   const pinEndKey = columns.at(-1)?.kind === "actions" ? columns.at(-1)?.key : undefined;
   const scrollBox = useRef<HTMLDivElement>(null);
-  const [overflowing, setOverflowing] = useState(false);
-  useEffect(() => {
-    const node = scrollBox.current;
-    if (!pinEndKey || !node) return;
-    const measure = () => {
-      const next = node.scrollWidth > node.clientWidth + 1;
-      setOverflowing(previous => previous === next ? previous : next);
-    };
-    measure();
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", measure);
-      return () => window.removeEventListener("resize", measure);
-    }
-    const observer = new ResizeObserver(measure);
-    observer.observe(node);
-    if (node.firstElementChild) observer.observe(node.firstElementChild);
-    return () => observer.disconnect();
-  }, [pinEndKey]);
+  const overflowing = useOverflowing(scrollBox, Boolean(pinEndKey) && !cards);
   const selectOffset = expansion ? utilityWidths.expand : 0;
   const recordOffset = selectOffset + (onSelectionChange ? utilityWidths.select : 0);
   const keyOffset = recordOffset + (record ? utilityWidths.record : 0);
@@ -266,13 +233,12 @@ export function DataTable<T>(props: DataTableProps<T>) {
   const pagination = props.pagination;
   const pageSize = pagination.mode === "all" ? Math.max(rows.length, 1) : pagination.pageSize;
   const pageKeys = rows.filter(row => props.isRowSelectable?.(row) !== false).map(rowKey);
-  const checked = pageKeys.filter((k) => selected.includes(k)).length;
+  const selectedSet = new Set(selected);
+  const isSelected = (row: T) => selectedSet.has(rowKey(row));
+  const checked = pageKeys.filter((k) => selectedSet.has(k)).length;
   const interactive = !loading && !error;
   const slow = useSlowLoading(Boolean(loading));
   const grouping = props.grouping;
-  // Phones: one card per row instead of a sideways-scrolling table.
-  const phone = useIsMobile();
-  const cards = phone && props.mobile !== "table";
   const skeletonCount = pagination.mode === "all" ? 6 : Math.min(pageSize, 8);
   // 展开记录：弹框里一条记录的全部字段，上一条 / 下一条按本页显示顺序（与 BitableGrid 共用 record-expand）
   const recordButtons = useRef(new Map<string, HTMLButtonElement>());
@@ -288,14 +254,14 @@ export function DataTable<T>(props: DataTableProps<T>) {
     fields: row => recordColumns.map(column => ({
       key: column.key,
       label: column.title,
-      value: column.detail ? column.detail(row) : column.truncate ? column.truncate(row) : column.render(row, { selected: selected.includes(rowKey(row)) }),
+      value: column.detail ? column.detail(row) : column.truncate ? column.truncate(row) : column.render(row, { selected: isSelected(row) }),
       full: Boolean(column.detail),
     })),
     onRefocus: key => recordButtons.current.get(key)?.focus({ preventScroll: true }),
   });
   const recordLabel = expand.labelOf;
   const cell = (c: Column<T>, row: T) => {
-    const content = c.render(row, { selected: selected.includes(rowKey(row)) });
+    const content = c.render(row, { selected: isSelected(row) });
     if (c.kind === "actions") return <div className="aui-table-row-actions">{content}</div>;
     if (c.truncate) return <div className="aui-cell"><span className="aui-cell-clip" data-tip={c.truncate(row)} data-tip-truncated="">{content}</span></div>;
     const clampText = Boolean(c.wrap && layout.clamped);
@@ -307,7 +273,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
                 <tr
                   data-row-key={rowKey(row)}
                   data-stripe={index % 2 === 1 || undefined}
-                  data-selected={selected.includes(rowKey(row)) || undefined}
+                  data-selected={isSelected(row) || undefined}
                 >
                   {expansion && <td className="aui-table-utility" data-pinned={Boolean(pinned) || undefined} style={{ left: 0 }}>
                     {expansion.canExpand?.(row) !== false && <IconButton label={`${expansion.expanded.includes(rowKey(row)) ? "收起" : "展开"} ${expansion.label(row)}`} aria-expanded={expansion.expanded.includes(rowKey(row))} aria-controls={`${tableId}-${encodeURIComponent(rowKey(row))}`} onClick={() => expansion.onExpandedChange(expansion.expanded.includes(rowKey(row)) ? expansion.expanded.filter(key => key !== rowKey(row)) : [...expansion.expanded, rowKey(row)])} icon={expansion.expanded.includes(rowKey(row)) ? <ChevronDown /> : <ChevronRight />} />}
@@ -315,8 +281,8 @@ export function DataTable<T>(props: DataTableProps<T>) {
                   {onSelectionChange && (
                     <td className="aui-table-utility" data-pinned={Boolean(pinned) || undefined} style={{ left: selectOffset }}>
                       <Checkbox
-                        aria-label={`选择 ${rowKey(row)}`}
-                        checked={selected.includes(rowKey(row))}
+                        aria-label={`选择 ${props.rowLabel ? props.rowLabel(row) : defaultRowLabel(row, columns, rowKey)}`}
+                        checked={isSelected(row)}
                         disabled={props.isRowSelectable?.(row) === false}
                         onCheckedChange={(v) =>
                           onSelectionChange(
@@ -359,7 +325,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
           columns={columns}
           rowKey={rowKey}
           caption={caption}
-          context={(row) => ({ selected: selected.includes(rowKey(row)) })}
+          context={(row) => ({ selected: isSelected(row) })}
           selected={selected}
           onSelectionChange={interactive ? onSelectionChange : undefined}
           isRowSelectable={props.isRowSelectable}
@@ -381,7 +347,8 @@ export function DataTable<T>(props: DataTableProps<T>) {
                 <th ref={selectHeader} scope="col" className="aui-table-utility" data-pinned={Boolean(pinned) || undefined} style={{ left: selectOffset }}>
                   <Checkbox
                     aria-label="选择当前页"
-                    disabled={!interactive || !pageKeys.length}
+                    // aria-disabled, not disabled: a disabled control drops keyboard focus to <body> on every (auto) reload.
+                    aria-disabled={!interactive || !pageKeys.length || undefined}
                     checked={
                       checked && checked === pageKeys.length
                         ? true
@@ -389,13 +356,14 @@ export function DataTable<T>(props: DataTableProps<T>) {
                           ? "indeterminate"
                           : false
                     }
-                    onCheckedChange={(v) =>
+                    onCheckedChange={(v) => {
+                      if (!interactive || !pageKeys.length) return;
                       onSelectionChange(
                         v
                           ? [...new Set([...selected, ...pageKeys])]
                           : selected.filter((k) => !pageKeys.includes(k)),
-                      )
-                    }
+                      );
+                    }}
                   />
                 </th>
               )}
@@ -420,8 +388,9 @@ export function DataTable<T>(props: DataTableProps<T>) {
                   {c.sortable && (onSortChange || props.onSortsChange) ? (
                     <button
                       className="aui-sort"
-                      disabled={!interactive}
+                      aria-disabled={!interactive || undefined}
                       onClick={() => {
+                        if (!interactive) return;
                         if (props.onSortsChange) {
                           const current = multiSorts.find(s => s.key === c.key);
                           props.onSortsChange(!current ? [...multiSorts, { key: c.key, direction: "asc" }] : current.direction === "asc" ? multiSorts.map(s => s.key === c.key ? { ...s, direction: "desc" } : s) : multiSorts.filter(s => s.key !== c.key));

@@ -35,25 +35,39 @@ export function firstInlineEditColumn(
 
 type Options = {
   onAddRow: GridAddRowHandler | undefined;
-  /** Server mode: refetch the loaded blocks / groups so the new row comes in. */
-  refresh: () => void;
+  /** Server mode: refetch the loaded blocks / groups so the new row (this id) comes in; skip it when the host already inserted the row. */
+  refresh: (id: string) => void;
   /** Item index showing this row now (-1 = not loaded / not shown yet). */
   locate: (rowId: string) => number;
-  /** Bring the row into view and open its first editable cell. */
-  reveal: (index: number) => void;
+  /** Bring the row into view and focus its first cell, or open its first editable cell when `edit`. */
+  reveal: (index: number, edit: boolean) => void;
   /** Not there yet: move towards where it will appear (ungrouped: the end). */
   seek: () => void;
+  /** Nothing is loading: a row that is not there now will not come by itself. */
+  idle: () => boolean;
 };
+
+/** How long `revealRow` waits on an idle grid before answering false (the row may need one more render). */
+const REVEAL_IDLE_MS = 300;
+type Pending = { id: string; edit: boolean; seek: boolean; done?: (found: boolean) => void };
 
 /**
  * Runs `onAddRow` (one at a time: a double click adds one record) and, when it answers an id, keeps
- * looking for that row on every render until it shows up or {@link ADD_ROW_REVEAL_MS} passes.
+ * looking for that row on every render until it shows up or {@link ADD_ROW_REVEAL_MS} passes. `reveal`
+ * (8.9, BitableGridHandle.revealRow) looks for any row the same way and answers whether it was found.
  */
 export function useAddRow(options: Options) {
   const latest = useRef(options);
   latest.current = options;
   const busy = useRef(false);
-  const [pending, setPending] = useState<string | null>(null);
+  const [pending, setPendingState] = useState<Pending | null>(null);
+  const pendingRef = useRef<Pending | null>(null);
+  const setPending = useCallback((next: Pending | null, found = false) => {
+    const old = pendingRef.current;
+    if (old && old !== next) old.done?.(found);
+    pendingRef.current = next;
+    setPendingState(next);
+  }, []);
   const run = useCallback(async (group: Readonly<Record<string, string>>) => {
     const handler = latest.current.onAddRow;
     if (!handler || busy.current) return;
@@ -61,28 +75,34 @@ export function useAddRow(options: Options) {
     try {
       const id = await handler(group);
       if (typeof id === "string" && id) {
-        latest.current.refresh();
-        setPending(id);
+        latest.current.refresh(id);
+        setPending({ id, edit: true, seek: true });
       }
     } finally {
       busy.current = false;
     }
-  }, []);
+  }, [setPending]);
+  const reveal = useCallback((id: string, edit: boolean) => new Promise<boolean>((done) => setPending({ id, edit, seek: false, done })), [setPending]);
   // Every render while pending: the rows / blocks / layout it depends on change from render to render.
   useEffect(() => {
     if (!pending) return;
-    const index = latest.current.locate(pending);
+    const index = latest.current.locate(pending.id);
     if (index < 0) {
-      latest.current.seek();
+      if (pending.seek) latest.current.seek();
+      else if (latest.current.idle()) {
+        const timer = setTimeout(() => { if (pendingRef.current === pending) setPending(null); }, REVEAL_IDLE_MS);
+        return () => clearTimeout(timer);
+      }
       return;
     }
-    setPending(null);
-    latest.current.reveal(index);
+    setPending(null, true);
+    latest.current.reveal(index, pending.edit);
   });
   useEffect(() => {
     if (!pending) return;
-    const timer = setTimeout(() => setPending(null), ADD_ROW_REVEAL_MS);
+    const timer = setTimeout(() => { if (pendingRef.current === pending) setPending(null); }, ADD_ROW_REVEAL_MS);
     return () => clearTimeout(timer);
-  }, [pending]);
-  return { run, adding: pending !== null };
+  }, [pending, setPending]);
+  useEffect(() => () => pendingRef.current?.done?.(false), []);
+  return { run, reveal, adding: pending !== null && pending.seek };
 }

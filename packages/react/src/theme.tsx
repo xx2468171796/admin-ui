@@ -1,25 +1,61 @@
 "use client";
-import { useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { TooltipLayer } from "./tooltip.tsx";
 import { AdminDefaultsProvider } from "./admin-defaults-context.tsx";
 import type { AdminDefaults } from "./admin-defaults.ts";
 import { sharedContext } from "./context.ts";
-import { createPalette, DEFAULT_PALETTE, isPaletteId, paletteById, validColor, type AdminPalette, type PaletteSpec } from "./palette.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/core.css";
+import { useMediaQuery } from "./media-query.ts";
+import { createPalette, DEFAULT_PALETTE, FONT_SIZE_PRESETS, isPaletteId, paletteById, validColor, type AdminFontSize, type AdminPalette, type PaletteSpec } from "./palette.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/core.css";
 export { createPalette, PALETTES, DEFAULT_PALETTE, paletteById, isPaletteId, type PaletteSpec, type PaletteId, type AdminPalette } from "./palette.ts";
+export { FONT_SIZE_PRESETS, adminThemeBootScript, type AdminFontSize, type AdminThemeBootOptions } from "./palette.ts";
 
-export const FONT_SIZE_PRESETS = [
-  { id: "small", name: "小号", scale: 0.9 },
-  { id: "medium", name: "中号", scale: 1 },
-  { id: "mediumLarge", name: "中大号", scale: 1.075 },
-  { id: "large", name: "大号", scale: 1.15 },
-  { id: "xlarge", name: "特大号", scale: 1.3 },
-] as const;
-export type AdminFontSize = (typeof FONT_SIZE_PRESETS)[number]["id"];
 const isFontSize = (value: string | null): value is AdminFontSize => FONT_SIZE_PRESETS.some((preset) => preset.id === value);
+
+/*
+ * The user's 外观 choices live in localStorage (`${storageKey}:palette` / `:mode` / `:font-size`). They are read with
+ * useSyncExternalStore: a client-only render (Vite SPA) paints the stored choice on the very first frame (8.10: it
+ * used to start from the defaults and switch in an effect — a white flash for dark users and ECharts initialised
+ * twice); SSR renders the defaults, hydrates on them and re-renders before the effects (adminThemeBootScript paints
+ * the stored choice even before hydration). Storage that throws (Safari private mode) falls back to memory.
+ */
+const memoryStore = new Map<string, string | null>();
+const storeListeners = new Set<() => void>();
+function readStored(key: string): string | null {
+  if (memoryStore.has(key)) return memoryStore.get(key) ?? null;
+  if (typeof window === "undefined") return null;
+  try { return window.localStorage.getItem(key); } catch { return null; }
+}
+function writeStored(key: string, value: string | null) {
+  try {
+    if (value === null) window.localStorage.removeItem(key);
+    else window.localStorage.setItem(key, value);
+    memoryStore.delete(key);
+  } catch {
+    memoryStore.set(key, value);
+  }
+  for (const notify of storeListeners) notify();
+}
+function subscribeStored(notify: () => void) {
+  storeListeners.add(notify);
+  // another tab changed the same key
+  if (typeof window !== "undefined") window.addEventListener("storage", notify);
+  return () => {
+    storeListeners.delete(notify);
+    if (typeof window !== "undefined") window.removeEventListener("storage", notify);
+  };
+}
+const serverStored = () => null;
+function useStored(key: string): string | null {
+  return useSyncExternalStore(subscribeStored, () => readStored(key), serverStored);
+}
+const subscribeVisibility = (notify: () => void) => {
+  document.addEventListener("visibilitychange", notify);
+  return () => document.removeEventListener("visibilitychange", notify);
+};
+const readVisible = () => document.visibilityState !== "hidden";
+const serverVisible = () => true;
 
 /** A palette choice: an approved palette id ("forest" …), a full spec, or a bare brand colour (#rrggbb, default accents). */
 export type PaletteChoice = string | PaletteSpec;
@@ -85,103 +121,58 @@ export type AdminProviderProps = {
 
 /** One provider per admin root. Tokens and portals stay inside this root; no document/global mutations. */
 export function AdminProvider({ children, storageKey, palette: projectPalette = DEFAULT_PALETTE.id, className = "", motion = "system", mode = "light", density = "compact", defaultFontSize = "mediumLarge", defaults }: AdminProviderProps) {
-  const [choice, setChoice] = useState<PaletteChoice>(projectPalette);
-  const [loaded, setLoaded] = useState<string | null>(null);
-  const [fontSize, updateFontSize] = useState<AdminFontSize>(defaultFontSize);
-  const [fontSizeLoaded, setFontSizeLoaded] = useState<string | null>(null);
   const [portal, setPortal] = useState<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const [motionAllowed, setMotionAllowed] = useState(false);
-  const [visible, setVisible] = useState(true);
-  const [darkSystem, setDarkSystem] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const update = () => setDarkSystem(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => {
-      setMotionAllowed(!media.matches);
-      setVisible(document.visibilityState !== "hidden");
-    };
-    update();
-    media.addEventListener("change", update);
-    document.addEventListener("visibilitychange", update);
-    return () => {
-      media.removeEventListener("change", update);
-      document.removeEventListener("visibilitychange", update);
-    };
-  }, []);
+  const darkSystem = useMediaQuery("(prefers-color-scheme: dark)");
+  // server / first hydration render: reduced (no motion), as before
+  const motionAllowed = !useMediaQuery("(prefers-reduced-motion: reduce)", true);
+  const visible = useSyncExternalStore(subscribeVisibility, readVisible, serverVisible);
   const motionEnabled = motion === "system" && motionAllowed && visible;
+
   // The user's 外观 choice (stored) wins over the host's default `mode`; hosts that never show the picker never store one.
-  const [userMode, setUserMode] = useState<AdminColorMode | null>(null);
-  useEffect(() => {
-    let stored: string | null = null;
-    try { stored = localStorage.getItem(`${storageKey}:mode`); } catch {}
-    setUserMode(isColorMode(stored) ? stored : null);
-  }, [storageKey]);
-  const setMode = (next: AdminColorMode) => {
-    setUserMode(next);
-    try { localStorage.setItem(`${storageKey}:mode`, next); } catch {}
-  };
+  const modeKey = `${storageKey}:mode`;
+  const storedMode = useStored(modeKey);
+  const userMode = isColorMode(storedMode) ? storedMode : null;
+  const setMode = (next: AdminColorMode) => writeStored(modeKey, next);
   // The host switching `mode` itself (its own light / dark button) wins again: the stored choice is dropped.
   const hostMode = useRef(mode);
   useEffect(() => {
     if (hostMode.current === mode) return;
     hostMode.current = mode;
-    setUserMode(null);
-    try { localStorage.removeItem(`${storageKey}:mode`); } catch {}
-  }, [mode, storageKey]);
+    writeStored(modeKey, null);
+  }, [mode, modeKey]);
   const modeChoice = userMode ?? mode;
   const resolvedMode = modeChoice === "system" ? (darkSystem ? "dark" : "light") : modeChoice;
 
-  // The user's saved palette (an id or a colour) wins over the project's default.
+  // The user's saved palette (an id or a colour) wins over the project's default; a full spec passed to setPalette
+  // is not persisted (kept in memory until storageKey or the project palette changes).
+  const paletteKey = `${storageKey}:palette`;
   const projectKey = choiceKey(projectPalette);
-  useEffect(() => {
-    let next: PaletteChoice = projectPalette;
-    try {
-      const stored = localStorage.getItem(`${storageKey}:palette`);
-      if (stored && (isPaletteId(stored) || validColor(stored))) next = stored;
-    } catch {}
-    setChoice(next);
-    setLoaded(storageKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageKey, projectKey]);
-  useEffect(() => {
-    if (loaded !== storageKey || typeof choice !== "string") return;
-    try {
-      if (choice === projectPalette) localStorage.removeItem(`${storageKey}:palette`);
-      else localStorage.setItem(`${storageKey}:palette`, choice);
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [choice, loaded, storageKey]);
-  useEffect(() => {
-    let next = defaultFontSize;
-    try {
-      const stored = localStorage.getItem(`${storageKey}:font-size`);
-      if (isFontSize(stored)) next = stored;
-    } catch {}
-    updateFontSize(next);
-    setFontSizeLoaded(storageKey);
-  }, [storageKey, defaultFontSize]);
-  useEffect(() => {
-    if (fontSizeLoaded !== storageKey) return;
-    try { localStorage.setItem(`${storageKey}:font-size`, fontSize); } catch {}
-  }, [fontSize, fontSizeLoaded, storageKey]);
-
-  const palette = useMemo(() => createPalette(resolveChoice(choice), resolvedMode), [choiceKey(choice), resolvedMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  const storedPalette = useStored(paletteKey);
+  const [specChoice, setSpecChoice] = useState<{ scope: string; spec: PaletteSpec } | null>(null);
+  const scope = `${storageKey}\n${projectKey}`;
+  const choice: PaletteChoice =
+    specChoice?.scope === scope ? specChoice.spec : storedPalette && (isPaletteId(storedPalette) || validColor(storedPalette)) ? storedPalette : projectPalette;
   const setPalette = (next: PaletteChoice) => {
     if (typeof next === "string" && !isPaletteId(next) && !validColor(next)) throw new Error("色卡不存在，品牌色要写成 #rrggbb");
-    setChoice(next);
+    if (typeof next !== "string") return setSpecChoice({ scope, spec: next });
+    setSpecChoice(null);
+    writeStored(paletteKey, next === projectPalette ? null : next);
   };
+
+  const fontKey = `${storageKey}:font-size`;
+  const storedFont = useStored(fontKey);
+  const fontSize: AdminFontSize = isFontSize(storedFont) ? storedFont : defaultFontSize;
+  const setFontSize = (next: AdminFontSize) => writeStored(fontKey, next);
+
+  const paletteChoice = choiceKey(choice);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed by the choice's content (`paletteChoice`): an inline palette object is new each render.
+  const palette = useMemo(() => createPalette(resolveChoice(choice), resolvedMode), [paletteChoice, resolvedMode]);
   const style = Object.fromEntries(Object.entries(palette.vars).map(([key, v]) => [`--aui-${key}`, v])) as CSSProperties & { "--aui-font-scale"?: number };
   style["--aui-font-scale"] = FONT_SIZE_PRESETS.find((preset) => preset.id === fontSize)!.scale;
   return (
-    <ThemeContext.Provider value={{ palette, paletteChoice: choice, setPalette, fontSize, setFontSize: updateFontSize, portal, motionEnabled, mode: resolvedMode, modeChoice, setMode, density }}>
-      <div ref={rootRef} className={`adminui ${className}`} style={style} data-adminui="1" data-aui-mode={resolvedMode} data-aui-palette={palette.id} data-aui-font-size={fontSize} data-density={density} data-aui-motion={motion} data-aui-paused={!visible}>
+    <ThemeContext.Provider value={{ palette, paletteChoice: choice, setPalette, fontSize, setFontSize, portal, motionEnabled, mode: resolvedMode, modeChoice, setMode, density }}>
+      <div ref={rootRef} className={`adminui ${className}`} style={style} data-adminui="1" data-aui-storage={storageKey} suppressHydrationWarning data-aui-mode={resolvedMode} data-aui-palette={palette.id} data-aui-font-size={fontSize} data-density={density} data-aui-motion={motion} data-aui-paused={!visible}>
         <div className="aui-portal" ref={setPortal} />
         <AdminDefaultsProvider defaults={defaults}><TooltipLayer rootRef={rootRef} portal={portal}>{children}</TooltipLayer></AdminDefaultsProvider>
       </div>

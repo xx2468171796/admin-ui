@@ -2,7 +2,7 @@
 
 /* —— transcript —— */
 .adminui .aui-transcript { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--aui-line); border-radius: var(--aui-radius-lg); background: var(--aui-surface); overflow: hidden; }
-.adminui .aui-transcript:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: -2px; }
+.adminui .aui-transcript:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: -2px; }
 .adminui .aui-tx-header { display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 60px; padding: 10px 16px; border-bottom: 1px solid var(--aui-line); }
 .adminui .aui-tx-icon { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: var(--aui-soft); color: var(--aui-ink); }
 .adminui .aui-tx-icon svg { width: 16px; height: 16px; }
@@ -35,9 +35,9 @@
 .adminui .aui-tx-pin-name { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); display: none; align-items: center; height: 20px; padding: 0 6px; border-radius: 5px; background: var(--aui-soft); color: var(--aui-ink); font-size: calc(12px * var(--aui-font-scale)); font-weight: 500; white-space: nowrap; pointer-events: none; }
 .adminui .aui-tx-pin:is(:hover, :focus-visible, [data-current]) .aui-tx-pin-name { display: inline-flex; }
 .adminui .aui-tx-pin[data-current] .aui-tx-pin-name { background: var(--aui-primary-fill); color: var(--aui-on-primary); }
-.adminui .aui-tx-pin:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 1px; border-radius: 4px; }
+.adminui .aui-tx-pin:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: 1px; border-radius: 4px; }
 .adminui .aui-tx-track { position: relative; min-width: 0; height: 44px; border-radius: var(--aui-radius-sm); cursor: pointer; touch-action: none; }
-.adminui .aui-tx-track:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 2px; }
+.adminui .aui-tx-track:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: 2px; }
 .adminui .aui-tx-head { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--aui-text); pointer-events: none; }
 .adminui .aui-tx-head::before { content: ""; position: absolute; left: -3px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--aui-text); }
 .adminui .aui-tx-axis { display: flex; justify-content: space-between; color: var(--aui-note); font-size: calc(12px * var(--aui-font-scale)); font-variant-numeric: tabular-nums; }
@@ -49,7 +49,7 @@
 .adminui .aui-tx-play { display: inline-grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: var(--aui-primary-fill); color: var(--aui-on-primary); cursor: pointer; }
 .adminui .aui-tx-play svg { width: 16px; height: 16px; fill: currentColor; }
 .adminui .aui-tx-play:disabled { background: var(--aui-surface-subtle); color: var(--aui-note); cursor: default; }
-.adminui :is(.aui-tx-skip, .aui-tx-play):focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 2px; }
+.adminui :is(.aui-tx-skip, .aui-tx-play):focus-visible { outline: 2px solid var(--aui-focus); outline-offset: 2px; }
 .adminui .aui-tx-time { margin: 0 6px; color: var(--aui-secondary); font-size: calc(13px * var(--aui-font-scale)); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .adminui .aui-tx-time b { color: var(--aui-text); font-weight: 600; }
 .adminui .aui-tx-failed { color: var(--aui-note); font-size: calc(12px * var(--aui-font-scale)); white-space: nowrap; }
@@ -70,7 +70,7 @@
 .adminui .aui-tx-row[data-current] { background: color-mix(in srgb, var(--aui-primary) 7%, var(--aui-surface)); }
 .adminui .aui-tx-stamp { justify-self: start; height: 22px; padding: 0 4px; margin: 0 0 0 -4px; border: 0; border-radius: var(--aui-radius-sm); background: none; color: var(--aui-note); font-size: calc(12.5px * var(--aui-font-scale)); font-variant-numeric: tabular-nums; cursor: pointer; }
 .adminui .aui-tx-stamp:hover { color: var(--aui-primary); text-decoration: underline; text-underline-offset: 3px; }
-.adminui .aui-tx-stamp:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: -2px; }
+.adminui .aui-tx-stamp:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: -2px; }
 .adminui .aui-tx-row[data-current] .aui-tx-stamp { color: var(--aui-ink); font-weight: 600; }
 .adminui .aui-tx-avatar { display: inline-grid; place-items: center; width: 24px; height: 24px; margin-top: 1px; border-radius: 50%; background: var(--aui-tx-soft); color: var(--aui-tx-text); font-size: calc(12px * var(--aui-font-scale)); font-weight: 600; }
 .adminui .aui-tx-body { display: grid; gap: 3px; min-width: 0; }
@@ -91,7 +91,7 @@
 .adminui .aui-tx-mask { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 5px; border: 0; border-radius: 4px; background: var(--aui-surface-subtle); color: var(--aui-text); font-family: var(--aui-font-mono, ui-monospace, Consolas, monospace); font-size: calc(13px * var(--aui-font-scale)); font-weight: 400; }
 .adminui button.aui-tx-mask { cursor: pointer; }
 .adminui button.aui-tx-mask:hover:not(:disabled) svg { color: var(--aui-primary); }
-.adminui button.aui-tx-mask:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 1px; }
+.adminui button.aui-tx-mask:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: 1px; }
 .adminui .aui-tx-mask svg { width: 13px; height: 13px; color: var(--aui-primary); }
 .adminui .aui-tx-mask small { color: var(--aui-note); font-family: var(--aui-font-sans, inherit); font-size: calc(12px * var(--aui-font-scale)); }
 .adminui .aui-tx-mask[data-shown] { background: var(--aui-warning-soft); }

@@ -21,8 +21,6 @@ import { RecordCard, useCoverLightbox, type CoverLightboxOptions, type RecordCar
 import { defaultCoverField, NO_COVER } from "./record-card-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 export type GalleryCoverOption = { value: string; label: string };
 export type GalleryViewProps<T> = {

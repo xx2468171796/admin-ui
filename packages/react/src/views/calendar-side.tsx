@@ -16,8 +16,6 @@ import { DayBadge, type CalendarEvent } from "./calendar-parts.tsx";
 import { IconButton } from "../buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 /** A record without a date (the drawer); drag it onto a day to give it one. */
 export type CalendarUndatedItem = { id: string; title: string; badge?: string; tone?: OptionTone; /** Owner name (row tooltip). */ person?: string };

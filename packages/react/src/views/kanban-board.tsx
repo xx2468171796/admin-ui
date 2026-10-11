@@ -15,7 +15,7 @@
  *
  * Data-source agnostic: pass the records already filtered and sorted (by the grid's view or the server).
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { ArrowRightLeft, ChevronLeft, ChevronRight, Eye, Maximize2 } from "lucide-react";
 import { ContextMenu, MenuButton, type MenuSection } from "../menu.tsx";
@@ -35,8 +35,6 @@ import { KanbanHint, KanbanPills, useFlashHint } from "./kanban-parts.tsx";
 type InFlightMove = PendingKanbanMove & { key: number; base: Readonly<Record<string, readonly string[]>>; settled: boolean };
 import { edgeScroll, trackPointer, useAnnouncer } from "./view-parts.tsx";
 import { IconButton } from "../buttons.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
 
@@ -143,7 +141,7 @@ export function KanbanBoard<T>(props: KanbanBoardProps<T>) {
   const labelOf = (key: string) => allColumns.find((c) => c.key === key)?.label ?? key;
   const movable = (id: string) => Boolean(onMove) && (!canMove || canMove(byId.get(id) as T));
 
-  const updateEdges = () => {
+  const updateEdges = useCallback(() => {
     const el = scroller.current;
     if (!el) return;
     setEdges((old) => {
@@ -162,7 +160,7 @@ export function KanbanBoard<T>(props: KanbanBoardProps<T>) {
       }
     }
     setCurrent((old) => (old === best ? old : best));
-  };
+  }, []);
   useLayoutEffect(updateEdges);
   useEffect(() => {
     const el = scroller.current;
@@ -170,7 +168,7 @@ export function KanbanBoard<T>(props: KanbanBoardProps<T>) {
     const ro = new ResizeObserver(updateEdges);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [updateEdges]);
   useLayoutEffect(() => {
     const id = focusAfter.current;
     if (!id) return;

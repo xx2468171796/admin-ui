@@ -33,8 +33,6 @@ import type { RecordCardDensity } from "./record-card.tsx";
 import { IconButton } from "../buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 const DATE_TYPES: readonly GridFieldType[] = ["date", "datetime"];
 const NONE = "__none";

@@ -21,8 +21,7 @@ import { RECORD_LEVEL_LABEL, REQUEST_STATUS_LABEL, type AccessRequest, type Acce
 import { describeScope } from "./matrix-core.ts";
 import { REQUEST_TRANSITIONS, isoToLocalInput as toLocal, localInputToIso as toIso, requestActions, requestTone, reviewProgress, staleGrant } from "./review-core.ts";
 import { ExpiryBadge } from "./record-team.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
+import { errorText } from "../error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
 
@@ -226,7 +225,7 @@ export function ReviewList({ items, title = "权限复核", dueAt, onDecide, onS
       setFailure("");
       void onDecide?.(ids, "keep", "").then(
         () => setSelected([]),
-        (e: unknown) => setFailure(e instanceof Error ? e.message : String(e)),
+        (e: unknown) => setFailure(errorText(e)),
       );
     }
     else setConfirm({ ids, decision });

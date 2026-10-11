@@ -12,8 +12,6 @@ import { ganttTrack, spanText, type GanttRow, type GanttSpan, type GanttWindow }
 import { addDays, diffDays, shortDay, type DayKey } from "./date-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 export type GanttListItem = { title: string; tone: OptionTone; chip?: string; owner?: string; span: GanttSpan | null };
 

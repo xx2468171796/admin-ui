@@ -22,8 +22,6 @@ import { useAdminDefaults } from "../admin-defaults-context.tsx";
 import { FORM_COUNTRY_CODES, joinPhone, splitPhone, type FormCountryCode, type FormField, type FormQuestion } from "./form-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/form-builder.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/form-builder.css";
 
 export type FormInputProps = {
   question: FormQuestion;

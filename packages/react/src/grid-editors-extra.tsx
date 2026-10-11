@@ -16,8 +16,6 @@ import { toRating } from "./grid-field-types.ts";
 import type { GridCommitMove, GridEditorProps } from "./grid-editors.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grid.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grid.css";
 
 export function GridRatingEditor<T>({ field, row, startText, onCommit, onCancel, error, variant = "cell" }: GridEditorProps<T>) {
   const max = field.max ?? 5;
@@ -33,6 +31,7 @@ export function GridRatingEditor<T>({ field, row, startText, onCommit, onCancel,
     if (done.current) return;
     onCommit({ value: valueRef.current }, move);
   };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: focus the slider once and one outside-click listener for the editor's life; commit reads the value through valueRef, and the grid's onCommit forwards to its stable handlers (useStableHandlers).
   useEffect(() => {
     box.current?.querySelector<HTMLElement>("[role=slider]")?.focus({ preventScroll: true });
     const onDown = (event: PointerEvent) => {
@@ -40,7 +39,7 @@ export function GridRatingEditor<T>({ field, row, startText, onCommit, onCancel,
     };
     document.addEventListener("pointerdown", onDown, true);
     return () => document.removeEventListener("pointerdown", onDown, true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
   const onKeyDown = (event: ReactKeyboardEvent) => {
     event.stopPropagation();
     if (event.key === "Escape") {
@@ -68,7 +67,7 @@ export function GridRatingEditor<T>({ field, row, startText, onCommit, onCancel,
 const MOVE = { commitDown: "down", commitUp: "up", commitRight: "right", commitLeft: "left" } as const;
 
 /** Percent cells: the 「%」 stays inside the box while typing (「格子里编辑时 % 还在」); 「60%」 / 「60」 both parse. */
-export function GridPercentEditor<T>({ field, row, startText, onCommit, onCancel, error, variant = "cell" }: GridEditorProps<T>) {
+export function GridPercentEditor<T>({ field, row, startText, onCommit, onCancel, error, variant = "cell", onDraft }: GridEditorProps<T>) {
   const [text, setText] = useState(() => (startText ?? editorText(field, readField(field, row))).replace(/\s*[%％]$/, ""));
   const ref = useRef<HTMLInputElement>(null);
   const done = useRef(false);
@@ -78,6 +77,7 @@ export function GridPercentEditor<T>({ field, row, startText, onCommit, onCancel
     if (done.current) return;
     onCommit({ text: textRef.current }, move);
   };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount only — focus with the start text's caret and one outside-click listener for the editor's life; commit reads textRef, and the grid's onCommit forwards to its stable handlers.
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
@@ -89,7 +89,7 @@ export function GridPercentEditor<T>({ field, row, startText, onCommit, onCancel
     };
     document.addEventListener("pointerdown", onDown, true);
     return () => document.removeEventListener("pointerdown", onDown, true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
   const onKeyDown = (event: ReactKeyboardEvent) => {
     const action = editorKeyAction({ key: event.key, shiftKey: event.shiftKey, altKey: event.altKey, ctrlKey: event.ctrlKey, metaKey: event.metaKey, isComposing: event.nativeEvent.isComposing }, false, variant);
     event.stopPropagation();
@@ -114,7 +114,7 @@ export function GridPercentEditor<T>({ field, row, startText, onCommit, onCancel
           aria-invalid={error ? true : undefined}
           placeholder={field.placeholder}
           style={{ paddingInlineEnd: 24, textAlign: variant === "cell" ? "right" : undefined, fontVariantNumeric: "tabular-nums" }}
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => { setText(event.target.value); onDraft?.(event.target.value); }}
           onKeyDown={onKeyDown}
         />
         <span className="aui-grid-editor-suffix" aria-hidden="true">%</span>

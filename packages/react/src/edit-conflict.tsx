@@ -19,8 +19,6 @@ import { conflictCounts, conflictHeadline, pickOf, type ConflictPick } from "./e
 import { IconButton } from "./buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/conflict.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/conflict.css";
 
 export type EditConflictNoticeProps = {
   /** Who saved first. */

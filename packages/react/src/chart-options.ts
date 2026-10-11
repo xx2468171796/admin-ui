@@ -12,10 +12,9 @@ import {
   Z998,
   type BandVerdict,
 } from "./dashboard-core.ts";
-import { resolveVizToken, VIZ_BRAND, vizBrandStep, vizCategory, vizColors, VIZ_CATEGORY_HUES, VIZ_SURFACE, VIZ_TEXT, type ChartColors, type VizMode } from "./viz-palette.ts";
+import { resolveVizToken, VIZ_BRAND, vizBrandStep, vizCategory, VIZ_CATEGORY_HUES, VIZ_STATUS_TOKENS, VIZ_SURFACE, VIZ_TEXT, type ChartColors, type VizMode } from "./viz-palette.ts";
+import { chartFormatter } from "./chart-formatter.ts";
 import { formatDuration, isDurationUnit } from "./duration-format.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
 
@@ -79,7 +78,7 @@ export function withGaps(points: readonly Point[], expectedIntervalMs?: number):
 
 function annotationMarks(annotations: readonly Annotation[] | undefined, mode: VizMode): Pick<LineSeriesOption, "markLine" | "markArea"> {
   if (!annotations?.length) return {};
-  const muted = vizColors(mode).status.neutral;
+  const muted = VIZ_STATUS_TOKENS.neutral;
   const lines = annotations.filter((a): a is { at: number; label: string } => "at" in a);
   const areas = annotations.filter((a): a is { from: number; to: number; label: string } => "from" in a);
   return {
@@ -96,7 +95,7 @@ function annotationMarks(annotations: readonly Annotation[] | undefined, mode: V
     ...(areas.length && {
       markArea: {
         silent: true,
-        itemStyle: { color: mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.05)" },
+        itemStyle: { color: `${VIZ_TEXT}${mode === "dark" ? "0f" : "0d"}` },
         label: { color: muted, fontSize: 12, position: "insideTop" as const },
         data: areas.map((a) => [{ xAxis: a.from, name: a.label }, { xAxis: a.to }] as [{ xAxis: number; name: string }, { xAxis: number }]),
       },
@@ -223,12 +222,12 @@ export function timeSeriesOption(input: {
   return {
     animation: !live,
     grid: { left: 8, right: 16, top: 36, bottom: 8, containLabel: true },
-    tooltip: { trigger: "axis", confine: true, formatter: axisTooltip(digits, unit) as never },
+    tooltip: { trigger: "axis", confine: true, formatter: chartFormatter(axisTooltip(digits, unit)) },
     legend: input.series.length > 1 ? { top: 0, right: 0, data: input.series.map((s) => s.name) } : { show: false },
     xAxis: {
       type: "time",
       // Overlapping labels are dropped rather than drawn on top of each other (narrow phones).
-      axisLabel: { hideOverlap: true, formatter: ((v: number) => timeAxisLabel(v, span)) as never },
+      axisLabel: { hideOverlap: true, formatter: chartFormatter((v: number) => timeAxisLabel(v, span)) },
     },
     yAxis: {
       type: "value",
@@ -259,7 +258,7 @@ export function toleranceBandOption(input: {
   annotations?: readonly Annotation[];
 }): EChartsOption {
   const { theoretical, sigma, minN = 1000, z = Z95, mode = "light", label = "实际比率" } = input;
-  const c = vizColors(mode);
+  const c = { status: VIZ_STATUS_TOKENS };
   const pts = [...input.points].sort((a, b) => a.t - b.t);
   const lower: [number, number | null][] = [];
   const width: [number, number | null][] = [];
@@ -281,7 +280,7 @@ export function toleranceBandOption(input: {
     tooltip: {
       trigger: "axis",
       confine: true,
-      formatter: ((params: { dataIndex: number; axisValueLabel: string }[]) => {
+      formatter: chartFormatter((params: { dataIndex: number; axisValueLabel: string }[]) => {
         const i = params[0]?.dataIndex ?? 0;
         const p = pts[i];
         const v = verdicts[i];
@@ -297,11 +296,11 @@ export function toleranceBandOption(input: {
           `有效样本：${formatNumber(p.n, { compact: true })}`,
           `判定：${word[v.level]}${v.z != null ? `（z=${v.z.toFixed(2)}）` : ""}`,
         ].join("<br/>");
-      }) as never,
+      }),
     },
     xAxis: {
       type: "time",
-      axisLabel: { hideOverlap: true, formatter: ((v: number) => timeAxisLabel(v, pts.length > 1 ? pts[pts.length - 1]!.t - pts[0]!.t : 0)) as never },
+      axisLabel: { hideOverlap: true, formatter: chartFormatter((v: number) => timeAxisLabel(v, pts.length > 1 ? pts[pts.length - 1]!.t - pts[0]!.t : 0)) },
     },
     yAxis: { type: "value", scale: true, axisLabel: { formatter: "{value}%" } },
     series: [
@@ -369,12 +368,13 @@ export function funnelPlotOption(input: {
   theoretical: number;
   sigma: number;
   minN?: number;
+  /** Not needed since 8.10: every colour is a palette token (AdminChart resolves light / dark). Kept for compatibility. */
   mode?: VizMode;
   xLabel?: string;
   yLabel?: string;
 }): EChartsOption {
-  const { theoretical, sigma, minN = 1000, mode = "light", xLabel = "有效样本量", yLabel = "实际比率" } = input;
-  const c = vizColors(mode);
+  const { theoretical, sigma, minN = 1000, xLabel = "有效样本量", yLabel = "实际比率" } = input;
+  const c = { status: VIZ_STATUS_TOKENS };
   const ns = input.items.map((i) => i.n).filter((n) => n > 0);
   const nMin = Math.max(Math.min(minN, ...ns), 1);
   const nMax = Math.max(...ns, nMin * 10);
@@ -413,7 +413,7 @@ export function funnelPlotOption(input: {
     tooltip: {
       trigger: "item",
       confine: true,
-      formatter: ((p: { seriesId: string; dataIndex: number }) => {
+      formatter: chartFormatter((p: { seriesId: string; dataIndex: number }) => {
         if (p.seriesId !== "items") return "";
         const item = input.items[p.dataIndex];
         const v = verdicts[p.dataIndex];
@@ -424,7 +424,7 @@ export function funnelPlotOption(input: {
           `${escapeHtml(xLabel)}：${formatNumber(item.n, { compact: true })}`,
           v.z == null ? "样本不足，不判断" : `z=${v.z.toFixed(2)}`,
         ].join("<br/>");
-      }) as never,
+      }),
     },
     xAxis: { type: "log", name: xLabel, nameLocation: "middle", nameGap: 24, axisLabel: { formatter: (v: number) => formatNumber(v, { compact: true }) } },
     yAxis: { type: "value", min: yMin, max: yMax, interval: step, axisLabel: { formatter: (v: number) => `${Number.isInteger(v) ? v : v.toFixed(1)}%` } },
@@ -454,7 +454,7 @@ export function funnelPlotOption(input: {
             name: item.name,
             symbol: v.level === "insufficient" ? "emptyCircle" : "circle",
             itemStyle: { color: colorOf(v), borderColor: colorOf(v), opacity: v.level === "normal" ? 0.75 : 1 },
-            label: { show: v.level === "alert", formatter: "{b}", position: "right" as const, fontSize: 12, color: mode === "dark" ? "#e5e7eb" : "#182230", textBorderWidth: 0 },
+            label: { show: v.level === "alert", formatter: "{b}", position: "right" as const, fontSize: 12, color: VIZ_TEXT, textBorderWidth: 0 },
           };
         }),
       },
@@ -498,10 +498,10 @@ export function cohortHeatmapOption(input: {
     grid: { left: 8, right: 8, top: 28, bottom: 48, containLabel: true },
     tooltip: {
       confine: true,
-      formatter: ((p: { value: [number, number, number | "-"] }) => {
+      formatter: chartFormatter((p: { value: [number, number, number | "-"] }) => {
         const [x, y, v] = p.value;
         return `${escapeHtml(input.cohorts[y] ?? "")} · ${escapeHtml(input.periods[x] ?? "")}<br/><b>${v === "-" ? "未到期" : `${v}%`}</b>`;
-      }) as never,
+      }),
     },
     // Unreached cells show a faint band per mode; ECharts' default split colours are light-theme greys.
     xAxis: { type: "category", position: "top", data: [...input.periods], axisTick: { show: false }, axisLine: { show: false } },
@@ -511,7 +511,7 @@ export function cohortHeatmapOption(input: {
       data: [...input.cohorts],
       axisTick: { show: false },
       axisLine: { show: false },
-      splitArea: { show: true, areaStyle: { color: mode === "dark" ? ["rgba(255,255,255,0.035)", "rgba(255,255,255,0)"] : ["rgba(15,23,42,0.03)", "rgba(15,23,42,0)"] } },
+      splitArea: { show: true, areaStyle: { color: [`${VIZ_TEXT}${mode === "dark" ? "09" : "08"}`, `${VIZ_TEXT}00`] } },
     },
     visualMap: {
       min: 0,
@@ -532,9 +532,9 @@ export function cohortHeatmapOption(input: {
         id: "cohort",
         type: "heatmap",
         data,
-        label: { show: true, fontSize: 12, formatter: ((p: { value: [number, number, number | "-"] }) => (p.value[2] === "-" ? "" : `${p.value[2]}`)) as never },
+        label: { show: true, fontSize: 12, formatter: chartFormatter((p: { value: [number, number, number | "-"] }) => (p.value[2] === "-" ? "" : `${p.value[2]}`)) },
         itemStyle: { borderColor: VIZ_SURFACE, borderWidth: 2 },
-        emphasis: { itemStyle: { borderColor: vizColors(mode).status.neutral } },
+        emphasis: { itemStyle: { borderColor: VIZ_STATUS_TOKENS.neutral } },
       },
     ],
   };

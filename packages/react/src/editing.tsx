@@ -2,6 +2,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { Button } from "./primitives.tsx";
 import { type Draft } from "./workflow-hooks.ts";
+import { errorText } from "./error-text.ts";
 export function DraftBanner<T>({
   draft,
   conflict,
@@ -68,7 +69,7 @@ export function Stepper({
         setDone(true);
       }
     } catch (e) {
-      setError(String(e));
+      setError(errorText(e));
     } finally {
       lock.current = false;
       setBusy(false);

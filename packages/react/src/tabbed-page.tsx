@@ -1,9 +1,8 @@
 "use client";
 import { Component, useEffect, useId, useState, type ErrorInfo, type ReactNode } from "react";
 import { Tabs } from "./primitives.tsx";
+import { errorText } from "./error-text.ts";
 import { EmbeddedPage, PageHeader, StatePanel } from "./layout.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/table.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/table.css";
 
@@ -33,7 +32,7 @@ export class PanelErrorBoundary extends Component<PanelErrorBoundaryProps, { err
     return (
       <StatePanel
         kind="error"
-        message={`这一块出错了：${error.message || String(error)}。点「重试」重新加载；一直这样请把这句话发给管理员。`}
+        message={`这一块出错了：${errorText(error, "未知错误")}。点「重试」重新加载；一直这样请把这句话发给管理员。`}
         onRetry={() => {
           this.props.onReset?.();
           this.setState({ error: null });

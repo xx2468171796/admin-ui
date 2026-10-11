@@ -12,8 +12,6 @@ import { groupLabel, type GridGroup } from "./grid-group-core.ts";
 import type { GridField } from "./grid-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grid.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grid.css";
 
 export type GridGroupSummaryCell = { id: string; colIndex: number; style: CSSProperties; numeric?: boolean; label?: string; text?: string; pin?: string; edge?: string };
 

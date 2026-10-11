@@ -5,8 +5,6 @@ import { toTime, type DateInput } from "./format.ts";
 import type { LogStatus, LogUndoKind } from "./log-timeline.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/history.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/history.css";
 
 export const letterOf = (name: ReactNode) => (typeof name === "string" ? name.trim().slice(0, 1) : "");
 export const UNDO_LABEL: Readonly<Record<LogUndoKind, string>> = { batch: "撤回整批", field: "恢复字段（连数据）", revert: "撤销撤回" };

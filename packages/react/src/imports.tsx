@@ -3,6 +3,9 @@ import { useRef, useState } from "react";
 import { Button, Choice, Input } from "./primitives.tsx";
 import { parseCsv, type ImportIssue, type ImportRow } from "./workflow-core.ts";
 import { buildCsv, downloadCsv } from "./reports.tsx";
+import { readTextFile } from "./text-decode.ts";
+import { useAbortOwner } from "./abort-owner.ts";
+import { errorText } from "./error-text.ts";
 export type ImportField = { key: string; label: string; required?: boolean };
 export type ImportAdapter = {
   parse?: (
@@ -41,6 +44,8 @@ export function ImportWizard({
   const [policy, setPolicy] = useState(duplicatePolicies[0]?.value ?? "reject");
   const operation = useRef<string>("");
   const lock = useRef(false);
+  // Real signals for the host: a new file / step aborts the previous one, unmounting aborts the running one.
+  const ops = useAbortOwner();
   const [done, setDone] = useState(false);
   const run = async (action: () => Promise<void>) => {
     if (lock.current) return;
@@ -50,7 +55,7 @@ export function ImportWizard({
     try {
       await action();
     } catch (e) {
-      setMessage(String(e));
+      setMessage(errorText(e));
     } finally {
       lock.current = false;
       setBusy(false);
@@ -78,6 +83,7 @@ export function ImportWizard({
             setValidated(false);
             setDone(false);
             operation.current = crypto.randomUUID();
+            const signal = ops.next();
             void run(async () => {
               if (file.size > 2 * 1024 * 1024) {
                 if (!adapter.largeFile)
@@ -86,8 +92,9 @@ export function ImportWizard({
                 return;
               }
               const parsed = adapter.parse
-                ? await adapter.parse(file, new AbortController().signal)
-                : parseCsv(await file.text());
+                ? await adapter.parse(file, signal)
+                : parseCsv(await readTextFile(file));
+              signal.throwIfAborted();
               if (parsed.rows.length > 1000)
                 throw Error("最多预览 1000 行，请使用服务端导入任务");
               setData(parsed);
@@ -208,7 +215,7 @@ export function ImportWizard({
                     throw Error("请完成必填字段映射");
                   const errors = await adapter.validate(
                     mapped(),
-                    new AbortController().signal,
+                    ops.next(),
                   );
                   setIssues(errors);
                   setValidated(!errors.length);
@@ -227,7 +234,7 @@ export function ImportWizard({
               onClick={() =>
                 void run(async () => {
                   const result = await adapter.commit(mapped(), {
-                    signal: new AbortController().signal,
+                    signal: ops.next(),
                     duplicatePolicy: policy,
                     operationId: operation.current,
                   });

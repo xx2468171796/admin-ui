@@ -33,7 +33,17 @@
 .adminui .aui-imgs-add > svg { width: 18px; height: 18px; }
 .adminui .aui-imgs-add > small { color: var(--aui-note); font-size: calc(12px * var(--aui-font-scale)); }
 .adminui .aui-imgs-add:hover { border-color: var(--aui-primary); background: var(--aui-wash); color: var(--aui-primary); }
-.adminui .aui-imgs-add:focus-visible { outline: none; border-color: var(--aui-primary); box-shadow: var(--aui-focus-ring); }
+.adminui .aui-imgs-add:focus-visible { outline: 2px solid transparent; border-color: var(--aui-primary); box-shadow: var(--aui-focus-ring); }
 @media (max-width: 760px) {
   .adminui .aui-upload-file-actions .aui-button { min-height: 32px; }
 }
+
+/* —— moved from core.css (8.11.1): rendered only by this chunk's components —— */
+.adminui .aui-upq-x { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; padding: 0; border: 0; border-radius: var(--aui-radius-sm); background: transparent; color: var(--aui-note); cursor: pointer; }
+.adminui .aui-upq-x > svg { width: 14px; height: 14px; }
+.adminui .aui-upq-x:hover { background: var(--aui-surface-subtle); color: var(--aui-text); }
+.adminui .aui-upq-x:focus-visible { outline: 2px solid transparent; box-shadow: var(--aui-focus-ring); }
+.adminui .aui-upq-status { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--aui-note); font-size: calc(12px * var(--aui-font-scale)); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.adminui .aui-upq-bar { flex: 1 1 auto; min-width: 40px; max-width: 220px; height: 4px; overflow: hidden; border-radius: 2px; background: var(--aui-surface-subtle); }
+.adminui[data-aui-mode=dark] .aui-upq-bar { background: color-mix(in srgb, var(--aui-text) 12%, var(--aui-surface)); }
+.adminui .aui-upq-bar > i { display: block; height: 100%; border-radius: inherit; background: var(--aui-primary-fill); transition: width var(--aui-duration-normal) linear; }

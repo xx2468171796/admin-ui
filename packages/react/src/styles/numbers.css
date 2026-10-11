@@ -5,7 +5,7 @@
 .adminui .aui-rating[data-size=md] .aui-rating-star { width: 18px; height: 18px; }
 .adminui .aui-rating[data-input] { border-radius: 5px; cursor: pointer; }
 .adminui .aui-rating[data-input][aria-disabled=true] { cursor: not-allowed; opacity: .55; }
-.adminui .aui-rating[data-input]:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 2px; }
+.adminui .aui-rating[data-input]:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: 2px; }
 .adminui .aui-rating-hit { display: inline-flex; padding: 1px; }
 .adminui .aui-rating[data-size=md] .aui-rating-hit { padding: 3px 2px; }
 
@@ -62,7 +62,7 @@
 }
 .adminui .aui-slider-thumb:focus-visible,
 .adminui .aui-slider[data-drag] .aui-slider-thumb,
-.adminui .aui-slider:hover .aui-slider-thumb { outline: none; box-shadow: var(--aui-focus-ring); }
+.adminui .aui-slider:hover .aui-slider-thumb { outline: 2px solid transparent; box-shadow: var(--aui-focus-ring); }
 .adminui .aui-slider-tip {
   position: absolute;
   bottom: calc(100% + 2px);

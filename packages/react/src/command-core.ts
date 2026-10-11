@@ -1,3 +1,4 @@
+import { errorText as textOf } from "./error-text.ts";
 /** Pure command-palette logic: no React / DOM, unit-tested in test/command-core.test.ts. */
 export type AdminCommand = {
   id: string;
@@ -206,7 +207,7 @@ export type RunProvidersOptions<T extends CommandSearchItem = CommandSearchItem>
   timers?: { set: (fn: () => void, ms: number) => unknown; clear: (handle: unknown) => void };
 };
 
-const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
+const errorText = (error: unknown) => textOf(error);
 
 /**
  * Ask every provider concurrently, each with its own AbortSignal. Each becomes a group:

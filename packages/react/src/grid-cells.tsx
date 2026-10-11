@@ -9,8 +9,6 @@ import { resolveOptionTone } from "./option-tone.ts";
 import { DeadlineDate } from "./grid-cells-due.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grid.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grid.css";
 import { GRID_EXTRA_CELL_RENDERERS, GRID_EXTRA_FIELD_ICONS } from "./grid-cells-extra.tsx"; // bt/grid-b
 
 // ---------------------------------------------------------------- cell renderers

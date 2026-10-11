@@ -22,13 +22,25 @@ import {
   type GridSaveResult,
 } from "./grid-edit-core.ts";
 import { readField, type GridField } from "./grid-core.ts";
+import {
+  confirmedBefore,
+  failureText,
+  markSaving,
+  overlayKey as keyOf,
+  rebaseGridHistory,
+  releaseSavedCells,
+  settleOverlay,
+  type GridEditFailure,
+  type GridOverlay,
+} from "./grid-editing-core.ts";
 
 /** `overwrite`: the user chose 「用我的覆盖」 after a conflict — save even though someone changed it since. */
 export type GridCellsChangeHandler<T> = (changes: GridCellChange<T>[], context: { source: GridEditSource; overwrite?: boolean }) => GridSaveResult | Promise<GridSaveResult>;
-type CellState = { value: unknown; state: "saving" | "saved" };
 /** One cell edit that collided (status line shows EditConflictNotice; stays until handled). */
 export type GridStatusConflict<T = unknown> = { change: GridCellChange<T>; by: string; at?: string; theirs: unknown };
-export type GridStatus = { tone: "info" | "success" | "error"; text: string; undo?: boolean; conflict?: GridStatusConflict } | null;
+/** Unsaved text of an editor whose record left the view (it was not thrown away: 「重新填入」 puts it back). */
+export type GridStatusDraft = { rowId: string; field: string; text: string };
+export type GridStatus = { tone: "info" | "success" | "error"; text: string; undo?: boolean; conflict?: GridStatusConflict; draft?: GridStatusDraft } | null;
 
 export type UseGridEditingInput<T> = {
   fields: readonly GridField<T>[];
@@ -42,33 +54,49 @@ export type UseGridEditingInput<T> = {
   onSaved?: (rows: ReadonlyMap<string, T>) => void;
 };
 
-const keyOf = (rowId: string, field: string) => `${rowId}\u0000${field}`;
-
 export function useGridEditing<T>({ fields, getRowId, onCellsChange, findRow, dataVersion, onSaved }: UseGridEditingInput<T>) {
-  const [overlay, setOverlay] = useState<ReadonlyMap<string, CellState>>(new Map());
-  const [history, setHistory] = useState<GridHistory>(emptyGridHistory);
+  const [overlay, setOverlayState] = useState<GridOverlay>(new Map());
+  const [history, setHistoryState] = useState<GridHistory>(emptyGridHistory);
   const [status, setStatus] = useState<GridStatus>(null);
+  // Refs are updated together with the state: overlapping saves resolve against what the previous one left.
   const historyRef = useRef(history);
-  historyRef.current = history;
   const overlayRef = useRef(overlay);
-  overlayRef.current = overlay;
+  const setOverlay = useCallback((fn: (old: GridOverlay) => GridOverlay) => {
+    const next = fn(overlayRef.current);
+    if (next === overlayRef.current) return;
+    overlayRef.current = next;
+    setOverlayState(next);
+  }, []);
+  const setHistory = useCallback((fn: (old: GridHistory) => GridHistory) => {
+    const next = fn(historyRef.current);
+    if (next === historyRef.current) return;
+    historyRef.current = next;
+    setHistoryState(next);
+  }, []);
   const byKey = new Map(fields.map((field) => [field.key, field]));
   const byKeyRef = useRef(byKey);
   byKeyRef.current = byKey;
+  const findRowRef = useRef(findRow);
+  findRowRef.current = findRow;
   const busy = useRef(0);
+  /** Recent edits whose save failed (the undo stack must not record their optimistic values as `before`). */
+  const failures = useRef<GridEditFailure[]>([]);
 
-  // Saved cells stay in the overlay until the host's data changes (it then carries the value).
+  // A saved cell leaves the overlay once the host's data carries its value (a host update that does not yet carry
+  // it keeps it: no flash back to the old value).
   const firstVersion = useRef(true);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `dataVersion` is the trigger (the host's data changed); rows and fields are read through refs.
   useEffect(() => {
     if (firstVersion.current) {
       firstVersion.current = false;
       return;
     }
-    setOverlay((old) => {
-      if (![...old.values()].some((cell) => cell.state === "saved")) return old;
-      return new Map([...old].filter(([, cell]) => cell.state === "saving"));
-    });
-  }, [dataVersion]);
+    setOverlay((old) => releaseSavedCells(old, (rowId, key) => {
+      const row = findRowRef.current(rowId);
+      const field = byKeyRef.current.get(key);
+      return row === undefined || !field ? { found: false } : { found: true, value: readField(field, row) };
+    }));
+  }, [dataVersion, setOverlay]);
 
   /** The record as the user should see it: pending / just-saved values applied. */
   const present = useCallback((row: T): T => {
@@ -101,11 +129,7 @@ export function useGridEditing<T>({ fields, getRowId, onCellsChange, findRow, da
       return false;
     }
     busy.current++;
-    setOverlay((old) => {
-      const next = new Map(old);
-      for (const change of changes) next.set(keyOf(change.rowId, change.field), { value: change.value, state: "saving" });
-      return next;
-    });
+    setOverlay((old) => markSaving(old, changes));
     const n = changes.length;
     setStatus({ tone: "info", text: `正在保存 ${n} 格…` });
     let rejected: { rowId: string; field: string; error: string; conflict?: { by: string; at?: string; value: unknown } }[] = [];
@@ -120,17 +144,16 @@ export function useGridEditing<T>({ fields, getRowId, onCellsChange, findRow, da
     }
     const refused = new Set(failure ? changes.map((c) => keyOf(c.rowId, c.field)) : rejected.map((r) => keyOf(r.rowId, r.field)));
     const accepted = changes.filter((c) => !refused.has(keyOf(c.rowId, c.field)));
-    setOverlay((old) => {
-      const next = new Map(old);
-      for (const change of changes) {
-        const key = keyOf(change.rowId, change.field);
-        // A newer edit of the same cell owns it now.
-        if (next.get(key)?.value !== change.value) continue;
-        if (refused.has(key)) next.delete(key);
-        else next.set(key, { value: change.value, state: "saved" });
-      }
-      return next;
-    });
+    // A newer edit of the same cell owns it now: a refused older one rolls nothing back there.
+    const settled = settleOverlay(overlayRef.current, changes, refused);
+    setOverlay(() => settled.next);
+    const refusedChanges = changes.filter((c) => refused.has(keyOf(c.rowId, c.field)));
+    for (const change of refusedChanges) {
+      const failure = { rowId: change.rowId, field: change.field, value: change.value, previous: change.previous };
+      failures.current = [...failures.current, failure].slice(-50);
+      // A later edit of this cell that already landed on the undo stack recorded this (never saved) value as `before`.
+      setHistory((old) => rebaseGridHistory(old, failure));
+    }
     if (accepted.length && onSaved) {
       const rows = new Map<string, T>();
       for (const change of accepted) {
@@ -140,10 +163,14 @@ export function useGridEditing<T>({ fields, getRowId, onCellsChange, findRow, da
       }
       onSaved(rows);
     }
-    if ((source === "edit" || source === "paste" || source === "clear" || source === "fill") && accepted.length) setHistory((old) => pushGridHistory(old, options.label ?? "编辑", accepted));
+    if ((source === "edit" || source === "paste" || source === "clear" || source === "fill") && accepted.length) {
+      // `before` = a value the server really had (an earlier edit of the cell may have failed meanwhile).
+      const recorded = accepted.map((c) => ({ ...c, previous: confirmedBefore(c.previous, c.rowId, c.field, failures.current) }));
+      setHistory((old) => pushGridHistory(old, options.label ?? "编辑", recorded));
+    }
     const verb = source === "undo" ? "已撤销" : source === "redo" ? "已重做" : source === "paste" ? "已粘贴" : source === "clear" ? "已清空" : source === "fill" ? "已填充" : "已保存";
     const skipped = options.skipped ?? 0;
-    if (failure) setStatus({ tone: "error", text: `保存失败，已恢复原值：${failure}` });
+    if (failure) setStatus({ tone: "error", text: failureText(failure, settled.rolledBack, changes.length) });
     else if (rejected.length === 1 && changes.length === 1 && rejected[0]!.conflict) {
       // someone saved this cell first — keep theirs, keep mine aside to put back / force.
       const { by, at, value } = rejected[0]!.conflict;
@@ -152,7 +179,7 @@ export function useGridEditing<T>({ fields, getRowId, onCellsChange, findRow, da
     else if (skipped) setStatus({ tone: "error", text: `${verb} ${accepted.length} 格，跳过 ${skipped} 格：${options.skipReason ?? ""}`, undo: source !== "undo" && source !== "redo" });
     else setStatus({ tone: "success", text: `${verb} ${accepted.length} 格`, undo: source !== "undo" && source !== "redo" });
     return !failure && !rejected.length;
-  }, [onCellsChange, onSaved, findRow]);
+  }, [onCellsChange, onSaved, findRow, setOverlay, setHistory]);
 
   const replay = useCallback(async (entry: GridHistoryEntry, direction: "undo" | "redo") => {
     const changes: GridCellChange<T>[] = [];
@@ -172,24 +199,24 @@ export function useGridEditing<T>({ fields, getRowId, onCellsChange, findRow, da
     }
     const ok = await apply(changes, direction);
     if (!ok) setHistory((old) => restoreGridHistory(old, entry, direction));
-  }, [apply, findRow, present]);
+  }, [apply, findRow, present, setHistory]);
 
   const undo = useCallback(() => {
     const step = undoGridHistory(historyRef.current);
     if (!step) return setStatus({ tone: "info", text: "没有可撤销的操作" });
-    setHistory(step.history);
+    setHistory(() => step.history);
     void replay(step.entry, "undo");
-  }, [replay]);
+  }, [replay, setHistory]);
   const redo = useCallback(() => {
     const step = redoGridHistory(historyRef.current);
     if (!step) return setStatus({ tone: "info", text: "没有可重做的操作" });
-    setHistory(step.history);
+    setHistory(() => step.history);
     void replay(step.entry, "redo");
-  }, [replay]);
+  }, [replay, setHistory]);
 
   // Status disappears after a while (errors stay longer).
   useEffect(() => {
-    if (!status || status.tone === "info" || status.conflict) return;
+    if (!status || status.tone === "info" || status.conflict || status.draft) return; // conflicts and drafts stay until handled
     const timer = setTimeout(() => setStatus(null), status.tone === "error" ? 10000 : 6000);
     return () => clearTimeout(timer);
   }, [status]);

@@ -18,8 +18,6 @@ import type { GridFilterBodyProps } from "./grid-filter-body.tsx";
 import { PanelFooter, ToolbarPanel, type GridToolContext } from "./grid-toolbar-panel.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grid.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grid.css";
 
 const FILTER_HELP = "条件按「全部满足」（且）或「任一满足」（或）组合，点行前的「且 / 或」也能切换；条件组里的条件有自己的关系，例如「阶段是报价，并且（意向 ≥ 4 或 过去 7 天要跟进）」。没填完的条件先不生效。「我」按当前登录的人算，相对日期每天自动往后走。";
 

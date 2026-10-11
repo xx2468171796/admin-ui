@@ -380,6 +380,7 @@ function NoteEditor({ ctx, row, field }: { ctx: RecordFieldEditContext; row: Cus
 }
 // 字段：{ key: 'note', label: '备注', value: (c) => c.note, edit: (c) => c.canEdit ? { render: (ctx) => <NoteEditor ctx={ctx} row={c} field={NOTE} /> } : null, lockedReason: '只有负责人能改' }
 ```
+- `GridCellEditor` 不在首屏：编辑器模块（文本 / 下拉 / 日期 / 评分）在页面上第一次出现编辑器时才下载（BitableGrid 在空闲时预取），那一次晚一帧出现、自带 `Suspense`（等待时什么也不画），之后的编辑器立即出现。测试里第一次断言编辑器用 `findBy…` / 等待，别用同步的 `getBy…`。
 - **字段按钮**（这一行悬停或有焦点时出现）：`action`（一个，编辑 / 补填）+ `actions`（更多，`onSelect` 或 `href`）+ 内置的留痕查看（`reveal`）、拨打（`tel`）、复制（`copy`）、打开（`href`）。打码时不出复制按钮；查看后复制的是明文。点按钮不关详情弹框。
 - **留痕查看**：`reveal(row)` / `SensitiveValue onReveal` 由宿主调接口——服务端判权限、写「谁在什么时候看了哪条记录的哪个字段」、返回明文；明文只留在组件内存里，`remaskAfter`（默认 30 秒）后自动打码，读秒显示在值后面。没权限就 reject 一个写着原因的 Error。
 - **评论**：`CommentThread` 的 `comments` 是服务端给的一页（`CommentItem`：作者、时间、正文 + `mentions`、`attachments`、`reactions`、`resolved`、一层 `replies`）；`onSend(draft)` reject 时文字保留并提示；`searchMentions` 只返回能看这条记录的人；回应固定 4 种（赞 / 收到 / 看过 / 有疑问，`COMMENT_REACTION_KEYS`），只用图标 + 名字，不用 emoji；已解决的默认隐藏（`defaultFilter="open"`，受控用 `filter` / `onFilterChange`，纯函数 `filterComments(items, "open" | "all")`）；`onUpload` 把选的图片 / 文件先传好变成 `MediaItem`。编辑 / 删除自己的评论：传 `canEdit` / `canDelete`（例如 `(c) => c.author.id === me`，服务端再核对）和 `onEdit(id, body, mentions, { attachments, files })` / `onDelete(id)`；服务端写 `editedAt`（显示「已编辑」），有回复的删除可以留墓碑 `deleted: true`（显示「评论已删除」，回复保留）；本地更新用 `patchComment` / `removeComment`。整套服务端合同见 `CommentThreadAdapter`（list / create / update / react / resolve / remove / searchMentions / upload）。
@@ -426,7 +427,7 @@ const layout: RecordLayout<Customer> = {
 <DataTable … expandRecord={{ layout, url: true }} />
 ```
 
-`sections` 里用 `block` / `render` 画的分区（子表、评论）自动变成 slot，id = 分区 `key`。**自己的页面 / 框**用 `<RecordDetail row fields spec stage keyNumbers slots follow layoutEditor title avatar status badges tags meta nav actions recordKey />`（头部 + 编辑条 + 正文；`badges` = 标题旁彩色小标签，`meta` 可给分段数组 `["智能家居客户", { person: "小王", suffix: "负责" }, "建档 2 天"]`，`avatar` 默认标题第一个字）；表格里的弹框用 `RecordLayout.badges` / `RecordLayout.meta`。字段说明给 `RecordField.description`（悬停字段名看），不要用 ⓘ 图标。跟进类的「写一条」用 `ActivityComposer`（方式小标签 + 短文本 + 底部一行：工具 | 下次跟进 + 日期 + 1/3/7 天 + 保存）。只要正文用 `RecordDetailBody` + `useRecordLayoutEditor`。starter「系统 → 记录详情 · 卡片」。
+`sections` 里用 `block` / `render` 画的分区（子表、评论）自动变成 slot，id = 分区 `key`。**自己的页面 / 框**用 `<RecordDetail row fields spec stage keyNumbers slots follow layoutEditor title avatar status badges tags meta nav actions recordKey />`（头部 + 编辑条 + 正文；`badges` = 标题旁彩色小标签，`meta` 可给分段数组 `["智能家居客户", { person: "小王", suffix: "负责" }, "建档 2 天"]`，`avatar` 默认标题第一个字）；表格里的弹框用 `RecordLayout.badges` / `RecordLayout.meta`。字段说明给 `RecordField.description`（悬停字段名看），不要用 ⓘ 图标。跟进类的「写一条」用 `ActivityComposer`（方式小标签 + 短文本 + 底部一行：工具 | 下次跟进 + 日期 + 1/3/7 天 + 保存）。方式可以带颜色：`ActivityKind.tone`（选项标签同一套 20 色，`blue` / `orangeSolid` …）或 `color`（库里存的颜色名 / 十六进制，和单选选项的 `color` 一样就近换成色卡色，不直接上色）——图标跟着变色，没图标的显示一个小色点；选中 = 软底 + 色字 + 色边（实心色 = 实底白字），浅深色都够对比度。只要正文用 `RecordDetailBody` + `useRecordLayoutEditor`。starter「系统 → 记录详情 · 卡片」。
 
 ## 4. 验收
 

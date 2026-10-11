@@ -17,7 +17,7 @@
 .adminui .aui-conflict-picks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .adminui .aui-conflict-pick { display: flex; align-items: flex-start; gap: 8px; min-height: 54px; padding: 8px 10px; border: 1px solid var(--aui-line); border-radius: var(--aui-radius); background: var(--aui-surface); color: var(--aui-text); font: inherit; text-align: left; cursor: pointer; }
 .adminui .aui-conflict-pick:hover { border-color: var(--aui-control-border); }
-.adminui .aui-conflict-pick[aria-checked=true] { border-color: var(--aui-primary); background: color-mix(in srgb, var(--aui-primary) 5%, var(--aui-surface)); box-shadow: var(--aui-focus-ring); }
+.adminui .aui-conflict-pick[aria-checked=true] { border-color: var(--aui-primary); background: color-mix(in srgb, var(--aui-primary) 5%, var(--aui-surface)); box-shadow: var(--aui-selected-ring); }
 .adminui .aui-conflict-pick > .aui-radio { flex: none; margin-top: 2px; }
 .adminui .aui-conflict-pick-text { display: grid; gap: 3px; min-width: 0; }
 .adminui .aui-conflict-pick-text > small { color: var(--aui-note); font-size: calc(12px * var(--aui-font-scale)); }

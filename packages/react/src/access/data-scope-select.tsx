@@ -12,8 +12,6 @@ import { describeScope } from "./matrix-core.ts";
 import { indexTree } from "./tree-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export type DataScopeSelectProps = {
   /** 当前范围；null = 还没选（显示第一项可选的）。 */

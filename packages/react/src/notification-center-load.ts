@@ -39,6 +39,7 @@ export function usePagedList<T extends { id: string }>(active: boolean, key: str
   const cursorRef = useRef<string | null>(null);
   cursorRef.current = state.key === key ? state.cursor : null;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `refreshKey` (host asks for a reload) and `attempt` (retry) are triggers; the loader is read through loadRef.
   useEffect(() => {
     if (!active) return;
     const ctrl = new AbortController();

@@ -19,6 +19,7 @@ import { OptionContent, OptionList, RemovableChip, SelectFooter, SelectSearch, t
 import { chipsThatFit, showsSearch, toggleValue } from "./option-list-core.ts";
 import { useOptionNav } from "./use-option-nav.ts";
 import { resolveOptionTone } from "./option-tone.ts";
+import { withWidth, type ControlWidth } from "./control-width.ts";
 
 export type { SelectItem } from "./option-list.tsx";
 export type { SelectOption } from "./option-list-core.ts";
@@ -47,6 +48,8 @@ type SharedSelectProps = FieldAria & {
   className?: string;
   /** Text of the empty state (default 「没有匹配的选项」). */
   emptyText?: string;
+  /** Box width (inline-size): a number = px or a CSS length; instead of `.x > .aui-select { width }` overrides. */
+  width?: ControlWidth;
 };
 
 export type ChoiceProps = SharedSelectProps & {
@@ -118,6 +121,7 @@ export function Choice(props: ChoiceProps) {
         aria-readonly={readOnly || undefined}
         disabled={disabled}
         className={["aui-input aui-select", className].filter(Boolean).join(" ")}
+        style={withWidth(undefined, props.width)}
         data-size={size}
         data-state={pop.open ? "open" : undefined}
         data-filled={filled || undefined}
@@ -266,6 +270,7 @@ export function MultiChoice(props: MultiChoiceProps) {
         aria-disabled={disabled || undefined}
         aria-readonly={readOnly || undefined}
         className={["aui-input aui-select aui-multiselect", className].filter(Boolean).join(" ")}
+        style={withWidth(undefined, props.width)}
         data-size={size}
         data-state={pop.open ? "open" : undefined}
         data-filled={(value.length > 0 && !locked) || undefined}

@@ -140,7 +140,19 @@ export type GridBlockState<T> = {
   summaries?: Readonly<Record<string, string>>;
   /** Bumped by refresh: answers of older generations are dropped. */
   generation: number;
+  /**
+   * 8.9: blocks kept from before a refresh / local insert or removal. Still shown (rows keep their DOM), fetched
+   * again like missing blocks, replaced when the newer answer arrives.
+   */
+  stale?: ReadonlySet<number>;
+  /** Blocks a newer answer overlaps (a record shown by both): fetched again, their copies of those records hidden. */
+  outdated?: ReadonlySet<number>;
+  /** 8.9.1: answers of this generation waiting for the kept blocks still in flight (one refresh lands at once). */
+  held?: readonly BlockAnswer<T>[];
 };
+/** `rowId` (the grid's getRowId): rows of this answer win over the same records in older blocks (see storeBlock). */
+type BlockAnswer<T> = { key: string; generation: number; block: number; result: GridLoadResult<T>; rowId?: (row: T) => string };
+
 export const emptyBlockState = <T,>(key: string, generation = 0): GridBlockState<T> => ({ key, total: null, blocks: new Map(), loading: new Set(), failed: new Map(), generation });
 
 /** Block numbers covering rows start..end (inclusive). */
@@ -150,10 +162,10 @@ export function blocksForRange(start: number, end: number, blockSize = GRID_BLOC
   const last = Math.floor(Math.max(0, end) / blockSize);
   return Array.from({ length: last - first + 1 }, (_, i) => first + i);
 }
-/** Blocks of a range that are neither cached nor loading (failed ones only when `retry`). */
+/** Blocks of a range that are not cached (or only stale) and not loading (failed ones only when `retry`). */
 export function missingBlocks<T>(state: GridBlockState<T>, start: number, end: number, blockSize = GRID_BLOCK_SIZE, retry = false): number[] {
   const limit = state.total === null ? end : Math.min(end, state.total - 1);
-  return blocksForRange(start, limit, blockSize).filter((block) => !state.blocks.has(block) && !state.loading.has(block) && (retry || !state.failed.has(block)));
+  return blocksForRange(start, limit, blockSize).filter((block) => (!state.blocks.has(block) || Boolean(state.stale?.has(block)) || Boolean(state.outdated?.has(block))) && !state.loading.has(block) && (retry || !state.failed.has(block)));
 }
 /** The row at a position, or undefined when its block is not loaded. */
 export function rowAtIndex<T>(state: GridBlockState<T>, index: number, blockSize = GRID_BLOCK_SIZE): T | undefined {
@@ -170,27 +182,59 @@ export function markLoading<T>(state: GridBlockState<T>, blocks: readonly number
 }
 /**
  * Store an answer. Ignored when it belongs to an older query / generation. Keeps at most
- * `maxBlocks` blocks, dropping those farthest from the block just loaded.
+ * `maxBlocks` blocks, dropping those farthest from the block just loaded; a stale block it answers is
+ * fresh again, and stale blocks past the new total are dropped. 8.9.1: while a kept (stale) block of the
+ * same refresh is still in flight the answer is held, then all of them land in one state — rows that moved
+ * across a block boundary never show twice (or as a placeholder) in between.
  */
-export function receiveBlock<T>(state: GridBlockState<T>, answer: { key: string; generation: number; block: number; result: GridLoadResult<T> }, maxBlocks = GRID_MAX_BLOCKS): GridBlockState<T> {
+export function receiveBlock<T>(state: GridBlockState<T>, answer: BlockAnswer<T>, maxBlocks = GRID_MAX_BLOCKS, blockSize = GRID_BLOCK_SIZE): GridBlockState<T> {
   if (answer.key !== state.key || answer.generation !== state.generation) return state;
-  const blocks = new Map(state.blocks);
-  blocks.set(answer.block, answer.result.rows);
-  if (blocks.size > maxBlocks) {
-    const far = [...blocks.keys()].sort((a, b) => Math.abs(b - answer.block) - Math.abs(a - answer.block));
-    for (const block of far.slice(0, blocks.size - maxBlocks)) blocks.delete(block);
-  }
   const loading = new Set(state.loading);
   loading.delete(answer.block);
-  return { ...state, total: answer.result.total, blocks, loading, summaries: answer.result.summaries ?? state.summaries };
+  return settleBlocks({ ...state, loading, held: [...(state.held ?? []), answer] }, maxBlocks, blockSize);
 }
-export function failBlock<T>(state: GridBlockState<T>, answer: { key: string; generation: number; block: number; error: string }): GridBlockState<T> {
+/** Land the held answers once no kept block is in flight (or now, with `force`: a refresh that took too long). */
+export function settleBlocks<T>(state: GridBlockState<T>, maxBlocks = GRID_MAX_BLOCKS, blockSize = GRID_BLOCK_SIZE, force = false): GridBlockState<T> {
+  if (!state.held?.length || (!force && [...(state.stale ?? [])].some((block) => state.loading.has(block)))) return state;
+  return state.held.reduce<GridBlockState<T>>((next, answer) => storeBlock(next, answer, maxBlocks, blockSize), { ...state, held: undefined });
+}
+function storeBlock<T>(state: GridBlockState<T>, answer: BlockAnswer<T>, maxBlocks: number, blockSize: number): GridBlockState<T> {
+  const blocks = new Map(state.blocks);
+  // Insertion order = arrival order (newest last): visibleRowOffsets lets the newest copy of a record win.
+  blocks.delete(answer.block);
+  blocks.set(answer.block, answer.result.rows);
+  const stale = new Set(state.stale);
+  stale.delete(answer.block);
+  const outdated = outdatedBlocks(state, blocks, answer);
+  for (const block of stale) if (block > 0 && block * blockSize >= answer.result.total) { blocks.delete(block); stale.delete(block); }
+  if (blocks.size > maxBlocks) {
+    const far = [...blocks.keys()].sort((a, b) => Math.abs(b - answer.block) - Math.abs(a - answer.block));
+    for (const block of far.slice(0, blocks.size - maxBlocks)) { blocks.delete(block); stale.delete(block); outdated.delete(block); }
+  }
+  return { ...state, total: answer.result.total, blocks, stale, outdated, summaries: answer.result.summaries ?? state.summaries };
+}
+/**
+ * Records of this answer that an older block also holds (rows shifted on the server between the two requests):
+ * that block is out of date — fetched again like a stale block, its copies hidden until then (visibleRowOffsets).
+ * Kept apart from `stale` (a refresh's kept blocks), so it never holds back the answers of a refresh.
+ */
+function outdatedBlocks<T>(state: GridBlockState<T>, blocks: ReadonlyMap<number, readonly T[]>, answer: BlockAnswer<T>): Set<number> {
+  const outdated = new Set(state.outdated);
+  outdated.delete(answer.block);
+  const rowId = answer.rowId;
+  if (!rowId) return outdated;
+  const ids = new Set(answer.result.rows.map(rowId));
+  for (const [block, rows] of blocks) if (block !== answer.block && rows.some((row) => ids.has(rowId(row)))) outdated.add(block);
+  return outdated;
+}
+export function failBlock<T>(state: GridBlockState<T>, answer: { key: string; generation: number; block: number; error: string }, maxBlocks = GRID_MAX_BLOCKS, blockSize = GRID_BLOCK_SIZE): GridBlockState<T> {
   if (answer.key !== state.key || answer.generation !== state.generation) return state;
   const loading = new Set(state.loading);
   loading.delete(answer.block);
   const failed = new Map(state.failed);
   failed.set(answer.block, answer.error);
-  return { ...state, loading, failed };
+  // A failed kept block keeps its stale rows; the ones that arrived land now.
+  return settleBlocks({ ...state, loading, failed }, maxBlocks, blockSize);
 }
 /** Replace cached records by id (after the host saved edits), keeping their positions. */
 export function patchBlockRows<T>(state: GridBlockState<T>, updates: ReadonlyMap<string, T>, getRowId: (row: T) => string): GridBlockState<T> {
@@ -211,10 +255,21 @@ export function patchBlockRows<T>(state: GridBlockState<T>, updates: ReadonlyMap
   }
   return changed ? { ...state, blocks } : state;
 }
-/** Start over (new generation): keeps the total so the scroll height does not jump while refetching. */
-export function refreshBlockState<T>(state: GridBlockState<T>): GridBlockState<T> {
-  return { ...emptyBlockState<T>(state.key, state.generation + 1), total: state.total, summaries: state.summaries };
+/**
+ * Start over (new generation): keeps the total so the scroll height does not jump while refetching, and
+ * (8.9) the `keep` blocks — those on screen — marked stale: their rows stay until the new answers replace them.
+ */
+export function refreshBlockState<T>(state: GridBlockState<T>, keep: readonly number[] = []): GridBlockState<T> {
+  const blocks = new Map<number, readonly T[]>();
+  for (const block of keep) {
+    const rows = state.blocks.get(block);
+    if (rows) blocks.set(block, rows);
+  }
+  return { ...emptyBlockState<T>(state.key, state.generation + 1), total: state.total, summaries: state.summaries, blocks, stale: new Set(blocks.keys()) };
 }
+
+/** Where `insertBlockRow` (grid-data-edit.ts, 8.9) puts a row: next to a loaded row, or after the last record. */
+export type GridRowAnchor = { before: string } | { after: string } | "end";
 
 // ---------------------------------------------------------------- backend helpers
 

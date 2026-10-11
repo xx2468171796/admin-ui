@@ -9,9 +9,8 @@ import type { EChartsOption } from "echarts";
 import { formatNumber } from "./dashboard-core.ts";
 import { VIZ_BRAND, VIZ_CATEGORY_HUES, VIZ_NOTE, VIZ_OTHER, VIZ_SECONDARY, VIZ_SURFACE, VIZ_TEXT, vizCategory } from "./viz-palette.ts";
 import { escapeHtml } from "./chart-options.ts";
+import { chartFormatter } from "./chart-formatter.ts";
 import { formatDuration, isDurationUnit } from "./duration-format.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
 
@@ -86,10 +85,10 @@ export function barOption(input: BarInput): EChartsOption {
       trigger: "axis",
       confine: true,
       axisPointer: { type: "shadow" },
-      formatter: ((params: { dataIndex: number; color?: string }[]) => {
+      formatter: chartFormatter((params: { dataIndex: number; color?: string }[]) => {
         const i = params[0]?.dataIndex ?? 0;
         return tooltipHtml({ head: categories[i], rows: [{ color: params[0]?.color, name, value: values[i], unit, digits }] });
-      }) as never,
+      }),
     },
     xAxis: horizontal ? { ...value, splitLine: { show: true } } : category,
     yAxis: horizontal ? { ...category, inverse: true, axisLine: { show: false } } : value,
@@ -102,7 +101,7 @@ export function barOption(input: BarInput): EChartsOption {
         barMaxWidth: horizontal ? 20 : 32,
         barCategoryGap: "42%",
         itemStyle: { color: VIZ_BRAND, borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0] },
-        label: { show: labels, position: horizontal ? "right" : "top", distance: 6, ...VALUE_LABEL, formatter: ((p: { value: number }) => (isDurationUnit(unit) ? formatDuration(p.value) : chartValueText(p.value, digits))) as never },
+        label: { show: labels, position: horizontal ? "right" : "top", distance: 6, ...VALUE_LABEL, formatter: chartFormatter((p: { value: number }) => (isDurationUnit(unit) ? formatDuration(p.value) : chartValueText(p.value, digits))) },
         emphasis: { disabled: true },
       },
     ],
@@ -146,19 +145,19 @@ export function donutOption(input: DonutInput): EChartsOption {
     tooltip: {
       trigger: "item",
       confine: true,
-      formatter: ((p: { dataIndex: number; color?: string }) => {
+      formatter: chartFormatter((p: { dataIndex: number; color?: string }) => {
         const s = slices[p.dataIndex];
         return s ? tooltipHtml({ rows: [{ color: p.color, name: s.name, value: s.value, unit, digits, note: pct(s.share) }] }) : "";
-      }) as never,
+      }),
     },
     legend: {
       ...(stacked ? { orient: "horizontal" as const, left: "center", bottom: 0, itemGap: 12 } : { orient: "vertical" as const, left: "56%", top: "middle", itemGap: 10 }),
       data: slices.map((s) => s.name),
-      formatter: ((name: string) => {
+      formatter: chartFormatter((name: string) => {
         const s = slices.find((x) => x.name === name);
         if (!s) return name;
         return stacked ? `${name} ${pct(s.share)}` : `${name}  ${isDurationUnit(unit) ? formatDuration(s.value) : `${chartValueText(s.value, digits)}${unit}`}  ${pct(s.share)}`;
-      }) as never,
+      }),
     },
     title: {
       text: isDurationUnit(unit) ? formatDuration(total) : chartValueText(total, digits),
@@ -229,14 +228,14 @@ export function stackedBarOption(input: StackedBarInput): EChartsOption {
       trigger: "axis",
       confine: true,
       axisPointer: { type: "shadow" },
-      formatter: ((params: { dataIndex: number; seriesIndex: number; color?: string }[]) => {
+      formatter: chartFormatter((params: { dataIndex: number; seriesIndex: number; color?: string }[]) => {
         const i = params[0]?.dataIndex ?? 0;
         const rows = params
           .map((p) => ({ color: p.color, name: list[p.seriesIndex]?.name ?? "", value: list[p.seriesIndex]?.values[i] ?? null, unit, digits }))
           .filter((r) => finite(r.value));
         const sum = rows.reduce((n, r) => n + (r.value as number), 0);
         return tooltipHtml({ head: categories[i], rows, ...(rows.length > 1 ? { total: { label: "合计", text: isDurationUnit(unit) ? formatDuration(sum) : `${chartValueText(sum, digits)}${unit ? ` ${unit}` : ""}` } } : {}) });
-      }) as never,
+      }),
     },
     xAxis: horizontal ? value : category,
     yAxis: horizontal ? { ...category, inverse: true, axisLine: { show: false } } : value,

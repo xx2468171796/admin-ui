@@ -19,12 +19,11 @@ import { Button } from "./primitives.tsx";
 import { Count } from "./kit.tsx";
 import { useNotify } from "./notifications.tsx";
 import { answerSegments, safeCitationHref } from "./ai-core.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/ai.css";
+import { errorText } from "./error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/ai.css";
 
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+const message = (e: unknown) => errorText(e);
 
 // ---------------------------------------------------------------- SuggestionReview (A2)
 

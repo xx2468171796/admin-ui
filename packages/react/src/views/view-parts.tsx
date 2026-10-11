@@ -13,8 +13,6 @@ import type { LayerPlacement, LayerRect } from "../menu-core.ts";
 import type { ViewKind } from "./view-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 export const VIEW_KIND_ICONS: Readonly<Record<ViewKind, LucideIcon>> = {
   grid: Table2,
@@ -163,23 +161,23 @@ export function HoverCard({ target, label, children, placement = { side: "bottom
 export function useHoverIntent<K>(delayIn = 350, delayOut = 180) {
   const [current, setCurrent] = useState<{ key: K; target: HTMLElement } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const clear = () => {
+  const clear = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
-  };
+  }, []);
   const enter = useCallback((key: K, target: HTMLElement, immediate = false) => {
     clear();
     if (immediate) setCurrent({ key, target });
     else timer.current = setTimeout(() => setCurrent({ key, target }), delayIn);
-  }, [delayIn]);
+  }, [delayIn, clear]);
   const leave = useCallback(() => {
     clear();
     timer.current = setTimeout(() => setCurrent(null), delayOut);
-  }, [delayOut]);
-  const keep = useCallback(() => clear(), []);
+  }, [delayOut, clear]);
+  const keep = useCallback(() => clear(), [clear]);
   const close = useCallback(() => {
     clear();
     setCurrent(null);
-  }, []);
+  }, [clear]);
   return { current, enter, leave, keep, close };
 }

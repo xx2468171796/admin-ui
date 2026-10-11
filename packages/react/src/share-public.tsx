@@ -19,8 +19,7 @@ import type { MediaItem } from "./media-parts.tsx";
 import { avatarTone } from "./avatar-core.ts";
 import { shareWatermarkText } from "./share-core.ts";
 import { IconButton } from "./buttons.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/share.css";
+import { errorText } from "./error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/share.css";
 
@@ -237,7 +236,7 @@ function SharedFieldTile({ field }: { field: SharedField }) {
       await edit.onSave(draft);
       setEditing(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     } finally {
       setBusy(false);
     }

@@ -37,6 +37,16 @@ export type OrgPickOptions = {
   max?: number;
   /** Viewer's scope: locked (grey + lock + reason) / partial / hidden per subject; the host decides. */
   availability?: (ref: SubjectRef) => Availability | undefined;
+  /**
+   * Leave out what the viewer can never pick instead of greying it out (default false): out-of-scope (`locked`)
+   * departments and people are treated like `hidden`, and departed / disabled people are not listed — in the tree,
+   * the members, search, extra tabs, shortcuts and OrgPickerField's suggestions. Counts follow what is shown (the
+   * tree's 「N 个…已隐藏」 counts them; the members count is the server total minus the people left out of the pages
+   * loaded so far, exact once the list is fully loaded); more pages load on their own while the list is too short to
+   * scroll. Already-granted (`existing`), covered and 「已满」 rows still show: they say why. Picks already in the value
+   * are never dropped.
+   */
+  hideUnselectable?: boolean;
   /** Already on the list: subjectKey (`person:u1`) or plain id → 「已授权 · 可读写」; shown grey, not pickable again. */
   existing?: Readonly<Record<string, string>>;
   locale?: OrgPickerLocale;
@@ -57,7 +67,11 @@ export type PickerModel = {
   includeSubDefault: boolean;
   mixed: ReadonlySet<string>;
   canSelect: (kind: SubjectKind) => boolean;
+  /** `hideUnselectable` is on. */
+  hideUnselectable: boolean;
   avail: (ref: SubjectRef, own?: Availability) => Availability;
+  /** Left out of the lists (`hideUnselectable`: hidden, locked, departed / disabled); always false without the option. */
+  omits: (ref: SubjectRef, own?: Availability, status?: OrgPerson["status"]) => boolean;
   existingNote: (ref: SubjectRef) => string | undefined;
   isPicked: (ref: SubjectRef) => boolean;
   covered: (ref: SubjectRef & { ancestors?: readonly string[]; deptIds?: readonly string[] }) => PickedSubject | null;
@@ -67,7 +81,7 @@ export type PickerModel = {
 };
 
 export function usePickerModel(options: OrgPickOptions, value: readonly PickedSubject[], setValue: (next: PickedSubject[]) => void, index: OrgIndex): PickerModel {
-  const { mode = "multiple", selectable, includeSubDefault = true, max, availability, existing, locale = "zh-CN", messages } = options;
+  const { mode = "multiple", selectable, includeSubDefault = true, max, availability, existing, locale = "zh-CN", messages, hideUnselectable = false } = options;
   const m = useMemo(() => orgPickerMessages(locale, messages), [locale, messages]);
   // The index is a live map that grows as nodes load, so this is derived on every render (cheap: walks the picks).
   const mixed = mixedIds(value, index);
@@ -87,7 +101,17 @@ export function usePickerModel(options: OrgPickOptions, value: readonly PickedSu
     includeSubDefault,
     mixed,
     canSelect: (kind) => kinds.includes(kind),
-    avail: (ref, own) => availabilityOf(ref, availability, own),
+    hideUnselectable,
+    avail: (ref, own) => {
+      const a = availabilityOf(ref, availability, own);
+      return hideUnselectable && a.state === "locked" ? { state: "hidden", ...(a.reason ? { reason: a.reason } : {}) } : a;
+    },
+    omits: (ref, own, status) => {
+      if (!hideUnselectable) return false;
+      if (status === "left" || status === "disabled") return true;
+      const state = availabilityOf(ref, availability, own).state;
+      return state === "locked" || state === "hidden";
+    },
     existingNote: (ref) => existing?.[subjectKey(ref)] ?? existing?.[ref.id],
     isPicked: (ref) => value.some((s) => sameSubject(s, ref)),
     covered: (ref) => coveredBy(ref, value, index),
@@ -106,7 +130,8 @@ export function usePickerModel(options: OrgPickOptions, value: readonly PickedSu
 /** Why a row can't be ticked (null = it can): not selectable, locked, departed, already granted, covered, full. */
 export function blockedReason(model: PickerModel, ref: SubjectRef & { ancestors?: readonly string[]; deptIds?: readonly string[] }, own?: Availability, status?: OrgPerson["status"]): { reason: string; kind: "locked" | "partial" | "left" | "existing" | "covered" | "full" | "kind" } | null {
   const a = model.avail(ref, own);
-  if (a.state === "locked") return { reason: a.reason ?? model.m.locked, kind: "locked" };
+  // hideUnselectable turns locked into hidden: still never pickable if it shows up anyway (a defaultFocus on it).
+  if (a.state === "locked" || (model.hideUnselectable && a.state === "hidden")) return { reason: a.reason ?? model.m.locked, kind: "locked" };
   if (a.state === "partial") return { reason: a.reason ?? model.m.partial, kind: "partial" };
   if (status === "left") return { reason: model.m.departed, kind: "left" };
   if (status === "disabled") return { reason: model.m.disabledPerson, kind: "left" };

@@ -22,11 +22,11 @@
 固定版本安装（`npm install @adminui/react`）：
 
 ```json
-{"dependencies":{"@adminui/react":"8.6.0","react":"^19.0.0","react-dom":"^19.0.0"}}
+{"dependencies":{"@adminui/react":"8.11.2","react":"^19.0.0","react-dom":"^19.0.0"}}
 ```
 
 
-- npm 包发布之前，可以安装 GitHub Release 里的 tarball：`npm install https://github.com/xx2468171796/admin-ui/releases/download/v8.2.0/adminui-react-8.2.0.tgz`；也可以从源码 `npm pack ./packages/react` 自己打包；workspace 用户可整体 vendor 并记录版本。消费方固定版本，不跟 main。
+- npm 包发布之前，可以安装 GitHub Release 里的 tarball：`npm install https://github.com/xx2468171796/admin-ui/releases/download/v8.11.2/adminui-react-8.11.2.tgz`；也可以从源码 `npm pack ./packages/react` 自己打包；workspace 用户可整体 vendor 并记录版本。消费方固定版本，不跟 main。
 - Node ≥ 26；包分发编译产物（`dist/`，源码同包附带），Vite 直接用；Next App Router 用客户端入口并配置 `transpilePackages: ['@adminui/react']`；SSR 首屏用项目 `palette`，挂载后再读用户的色卡和字号。
 - 本包按 `strict` + `noUncheckedIndexedAccess` 编译，消费方开这两项也不报错，不需要 `skipLibCheck`。
 
@@ -329,8 +329,9 @@ export const orgSource: OrgDataSource = {
 <OrgPickerField source={orgSource} value={value} onChange={setValue} commit="instant" suggestions={[myDept, ...recent]} />
 ```
 
-- `OrgPicker`：`open, onClose, title, description?, source, value, onChange(next, picks), mode?: 'single' | 'multiple', selectable?, max?, includeSubDefault?（默认 true）, defaultFocus?, shortcuts?, extraSources?, availability?, existing?, lockedHint?, emptyAction?, confirmLabel?, locale?: 'zh-CN' | 'zh-TW' | 'en', messages?`。草稿只在「确定」时交出；`value` 里 `status: 'left'` 的人留在右栏划掉，只能手动去掉。手机自动换整屏下钻。
+- `OrgPicker`：`open, onClose, title, description?, source, value, onChange(next, picks), mode?: 'single' | 'multiple', selectable?, max?, includeSubDefault?（默认 true）, defaultFocus?, shortcuts?, extraSources?, availability?, existing?, hideUnselectable?（默认 false：不能选的不灰着、直接不列）, lockedHint?, emptyAction?, confirmLabel?, locale?: 'zh-CN' | 'zh-TW' | 'en', messages?`。草稿只在「确定」时交出；`value` 里 `status: 'left'` 的人留在右栏划掉，只能手动去掉。手机自动换整屏下钻。
 - `OrgPickerField`：同上的选项 + `placeholder?, commit?: 'instant' | 'batch', suggestions?, chips?（默认 true）, dialogTitle?, dialogDescription?, disabled?, label?, id?, autoFocus?, defaultQuery?`（后两个给懒加载的宿主：占位框里已经点了 / 打了字，真框挂上时接着用）。
+- `hideUnselectable`：`locked` 当 `hidden`（树 / 成员 / 搜索 / 额外分页 / 快捷 / 行内建议都不出现），已离职 / 停用的人不出现；人数和搜索计数按列出来的算（成员数 = 服务端 `total` − 已加载页里拿掉的，全部加载完即准确），一页大部分被拿掉时自动接着加载下一页；已授权（`existing`）、被盖住、已满的仍显示。`value` 里已有的选择不会被拿掉。
 - `defaultFocus` 可以晚到：宿主的「我的部门」接口比弹框慢时，先打开、值到了再定位（换了值会重新定位）；`lockedHint` 只接在没有原因的锁定提示后面——`availability` 给了原因（通常已经写了找谁开）就原样显示。
 - **GrantList / ShareDialog**：`<GrantList mode="picked" orgSource={orgSource} orgPicker={{ availability, defaultFocus, extraSources, suggestions }} …/>`、`<ShareDialog people={{ …, orgSource, orgPicker }} />`——添加框换成 `OrgPickerField`（懒加载，JS 和 `org-picker` 样式块按需进来），已授权的灰着写「已授权 · 档位」，选中的按 `entryFromPick` 变成 `GrantEntry`（`kind`、`hint` = 路径、`path`、`includeSub`）；`GrantEntry.status: 'left'` 的行标「已离职」。
 - 体积：`@adminui/react/org-picker` 45.7 KB JS / 27.3 KB CSS（gzip，含核心；样式块单独一份），核心入口不变；只有渲染了带 `orgSource` 的 GrantList / ShareDialog 或直接引子路径的页面才下载它。
@@ -413,7 +414,7 @@ tool/
 
 ## 11. 升级到 8.0
 
-- **升不升由项目自己定**：已有项目可以继续钉着原来的 tag，照常能用，不强制升级；**新项目一律用最新版**（当前 `adminUI-v8.8.0`）；大型宿主项目跟最新。
+- **升不升由项目自己定**：已有项目可以继续钉着原来的 tag，照常能用，不强制升级；**新项目一律用最新版**（当前 `adminUI-v8.11.2`）；大型宿主项目跟最新。
 - 这一版不留兼容层：被新组件取代的旧 API、旧 prop、旧类名和旧 CSS 变量都已去掉。旧 → 新对照表见 [MIGRATION-8.md](MIGRATION-8.md)。
 - 升级前先在项目里跑审计，按输出逐条改：
 

@@ -31,8 +31,6 @@ import {
 } from "./record-detail-spec.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/record.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/record.css";
 
 export type RecordDetailBodyProps<T> = {
   row: T;
@@ -60,7 +58,7 @@ export function recordDetailCatalog<T>(input: { fields: readonly RecordField<T>[
 /** The saved spec normalized for this catalog (memoized by content). */
 export function useRecordDetailSpec(spec: unknown, catalog: RecordDetailCatalog, fallback?: RecordDetailSpec): RecordDetailSpec {
   const key = JSON.stringify([spec ?? null, catalog, fallback ?? null]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: memoized by content (`key` serializes spec / catalog / fallback), not by the identity of inline objects.
   return useMemo(() => normalizeRecordDetailSpec(spec, catalog, fallback), [key]);
 }
 

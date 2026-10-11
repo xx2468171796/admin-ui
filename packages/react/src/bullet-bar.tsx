@@ -4,8 +4,6 @@ import { bulletGeometry, bulletLabels, ringGeometry, type BulletMark } from "./d
 import { formatNumber } from "./dashboard-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard.css";
 
 export type BulletBarProps = {
   /** Current value. null = no data: an empty track and 「—」 for screen readers, never a 0-width bar. */

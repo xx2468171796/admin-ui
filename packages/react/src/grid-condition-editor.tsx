@@ -37,8 +37,6 @@ import {
 import { gridFilterOps, patchGridFilter, type GridField, type GridFilter, type GridFilterGroup, type GridFilterOp, type GridFilterValue, type GridSelectOption } from "./grid-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grid.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grid.css";
 
 export type GridConditionTreeProps<T> = {
   /** Fields that can be filtered (restricted ones are shown locked in the picker). */

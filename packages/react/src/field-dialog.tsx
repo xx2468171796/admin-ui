@@ -18,8 +18,6 @@ import { OptionsEditor, type OptionsEditorProps } from "./options-editor.tsx";
 import { FIELD_NAME_MAX, hasFieldErrors, validateFieldDraft, type FieldDraft, type FieldDraftErrors, type FieldTypeTile } from "./field-dialog-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/fields.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/fields.css";
 
 export type FieldDialogProps<V extends string = string> = {
   open: boolean;

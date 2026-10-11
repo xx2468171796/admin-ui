@@ -76,6 +76,7 @@ export function ScrollStrip({
   }, []);
 
   const first = React.useRef(true);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `activeKey` is the trigger; the selected item is found by aria-selected.
   React.useEffect(() => {
     const el = list.current;
     let item = el?.querySelector<HTMLElement>('[aria-selected="true"]') ?? null;

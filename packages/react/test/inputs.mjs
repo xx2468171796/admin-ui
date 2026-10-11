@@ -38,7 +38,8 @@ try {
   assert.equal(await style(nameBox, 'border-top-color'), await style(select, 'border-top-color'), '输入框和下拉同一根边');
   await text.locator('#it-name').focus();
   await page.waitForTimeout(250);
-  assert.match(await style(nameBox, 'box-shadow'), /3px/, '聚焦光圈');
+  // 8.10: double ring (2px surface gap + 2px focus colour, outer edge 4px) instead of a 3px 16% halo (1.2:1 contrast)
+  assert.match(await style(nameBox, 'box-shadow'), /4px/, '聚焦光圈');
   const clear = nameBox.getByRole('button', { name: '清空' });
   assert.equal(await clear.isVisible(), true, '有值且聚焦时出现 ×');
   assert.match(await text.locator('.aui-field').first().locator('.aui-input-count').innerText(), /6\/30/);

@@ -634,10 +634,11 @@ export function summarizeField<T>(field: GridField<T>, rows: readonly T[], kind:
     return done(result, extraSummaryText(source, formatNumber(result, { digits }))); // bt/grid-b: progress %
   }
   if ((field.type === "date" || field.type === "datetime") && (kind === "min" || kind === "max")) {
-    const times = values.map(toTime).filter((v): v is number => v !== null);
+    const times = values.flatMap((v) => { const time = toTime(v); return time === null ? [] : [{ time, value: v }]; });
     if (!times.length) return done(null, "—");
-    const result = kind === "min" ? Math.min(...times) : Math.max(...times);
-    return done(result, formatDateTime(result, { time: field.type === "datetime", timeZone: field.timeZone }) ?? "—");
+    const pick = times.reduce((best, item) => (kind === "min" ? item.time < best.time : item.time > best.time) ? item : best);
+    // The winning value itself (a calendar day stays that day; only instants are shown in the zone).
+    return done(pick.time, formatDateTime(pick.value as string | number | Date, { time: field.type === "datetime", timeZone: field.timeZone }) ?? "—");
   }
   return done(null, "—");
 }

@@ -20,8 +20,7 @@ import {
   type Delta,
   type Freshness,
 } from "./dashboard-core.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard.css";
+import { errorText } from "./error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
 
@@ -130,6 +129,13 @@ export type KpiCardProps = {
   /** Drill-through to the detail view (keeps the host's filter context). */
   onDrill?: () => void;
   drillLabel?: string;
+  /**
+   * 8.9: the whole card (its number) opens the detail — one button over the card, read as
+   * 「{title} {value}{unit}，{activateLabel}」; the ⓘ and 「查看明细」 buttons on it stay separate.
+   */
+  onActivate?: () => void;
+  /** What activating does (default 「查看明细」). */
+  activateLabel?: string;
   /** lg = 28px north-star number (may carry a bullet), md = 24px (default), sm = 20px for rollups and narrow cells (no trend). */
   size?: "lg" | "md" | "sm";
 };
@@ -166,6 +172,8 @@ export function KpiCard({
   stale,
   onDrill,
   drillLabel = "查看明细",
+  onActivate,
+  activateLabel = "查看明细",
   size = "md",
 }: KpiCardProps) {
   const id = useId();
@@ -177,9 +185,12 @@ export function KpiCard({
   const unitText = duration ? undefined : unit;
   const trendValues = !pending && size !== "sm" && trend && trend.length > 1 ? trend : null;
   const inlineTrend = trendValues && trendPlacement === "inline" && !target;
+  const activatable = Boolean(onActivate) && !loading;
+  const valueText = fullValue ?? (typeof shown === "string" || typeof shown === "number" ? String(shown) : "—");
   return (
     <Panel>
-      <div className="aui-kpi" data-size={size === "md" ? undefined : size} data-muted={muted || undefined} data-placeholder={pending || undefined} aria-busy={loading || undefined}>
+      <div className="aui-kpi" data-size={size === "md" ? undefined : size} data-muted={muted || undefined} data-placeholder={pending || undefined} data-activate={activatable || undefined} aria-busy={loading || undefined}>
+        {activatable && <button type="button" className="aui-kpi-activate" aria-label={`${title} ${valueText}${shown != null ? unitText ?? "" : ""}，${activateLabel}`} onClick={onActivate} />}
         <div className="aui-kpi-head">
           <h3 className="aui-kpi-title" id={`${id}-title`}>
             {title}
@@ -388,7 +399,7 @@ export function useLiveResource<T>(
       } catch (error) {
         if (stopped || controller.signal.aborted) return;
         failures++;
-        const message = error instanceof Error ? error.message : String(error);
+        const message = errorText(error);
         setState((old) => ({ ...(old.key === key ? old : { key, offset: 0 }), loading: false, error: message, failures }));
       } finally {
         inFlight = false;

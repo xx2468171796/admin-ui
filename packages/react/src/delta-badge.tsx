@@ -3,8 +3,6 @@ import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { deltaTone, type Better, type Delta } from "./dashboard-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard.css";
 
 const TONE_WORD = { good: "向好", bad: "变差", neutral: "" } as const;
 const DIRECTION_WORD = { up: "上升", down: "下降", flat: "持平" } as const;

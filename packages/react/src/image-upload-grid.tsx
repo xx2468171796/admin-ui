@@ -15,8 +15,6 @@ import type { UploadResult } from "./contracts.ts";
 import type { UploadQueueItem } from "./media-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/uploads.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/uploads.css";
 
 /** A finished photo in the grid (host data). */
 export type ImageUploadTile = { id: string; url: string; name?: string };

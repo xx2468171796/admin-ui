@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, Filter, X } from "lucide-react";
 import { Button } from "./primitives.tsx";
@@ -21,8 +21,6 @@ import {
   type DashboardFilterValue,
   type FilterOption,
 } from "./dashboard-filters-core.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
 
@@ -288,6 +286,7 @@ export function DashboardFilterBar({
   );
 }
 
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 /**
  * Filter context in the URL (DASHBOARDS.md §5): reads the initial value from `location.search`
  * (unknown values dropped), writes changes back with `history.pushState` so the back button returns
@@ -311,7 +310,12 @@ export function useDashboardFilters(
     });
   }, [url]); // defaults are the page's constants
 
-  const [value, setValue] = useState<DashboardFilterValue>(read);
+  // First render = `defaults` on the server and in the browser alike (reading location.search here made the
+  // hydrated markup differ from the server's); the URL is applied right after mount, before paint.
+  const [value, setValue] = useState<DashboardFilterValue>(defaults);
+  useIsomorphicLayoutEffect(() => {
+    if (url) setValue(read());
+  }, [url, read]);
   useEffect(() => {
     if (!url) return;
     const onPop = () => setValue(read());

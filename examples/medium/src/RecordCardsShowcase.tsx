@@ -32,8 +32,9 @@ const STEPS: StagePathStep[] = [
 // 谈判 = 以前走到过又退回来（有天数，但在当前阶段后面：不填色）
 const DAYS: Record<string, number> = { first: 1, need: 3, talk: 2 };
 const KINDS: ActivityKind[] = [
-  { value: "phone", label: "电话", icon: Phone }, { value: "line", label: "LINE", icon: MessageCircle }, { value: "visit", label: "拜访", icon: MapPin },
-  { value: "store", label: "到店", icon: Store }, { value: "video", label: "视频", icon: Video }, { value: "other", label: "其他" },
+  // tone = 跟进方式的颜色（和单选选项同一套 20 色）；color = 库里存的颜色名 / 十六进制，自动就近换成色卡色；没图标就显示小色点
+  { value: "phone", label: "电话", icon: Phone, tone: "blue" }, { value: "line", label: "LINE", icon: MessageCircle, tone: "green" }, { value: "visit", label: "拜访", icon: MapPin, tone: "orange" },
+  { value: "store", label: "到店", icon: Store, tone: "violet" }, { value: "video", label: "视频", icon: Video, tone: "teal" }, { value: "other", label: "其他", color: "#9ca3af" },
 ];
 const FOLLOW = [
   { id: "f1", at: new Date(Date.now() - 2 * 3600e3).toISOString(), who: "小赵", what: "LINE · 需求确认", text: "把门锁 + 窗帘的方案 PDF 传给客户，她说周末和先生一起看，想到门市摸一下样品。" },

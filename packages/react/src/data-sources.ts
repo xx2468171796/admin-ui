@@ -13,11 +13,38 @@ import {
   type ReloadMode,
 } from "./data-core.ts";
 import type { CursorListAdapter, CursorQuery, CursorResult, ListAdapter, ListQuery, ListResult } from "./contracts.ts";
+import { useHostFunction } from "./host-function.ts";
 /** `reload({ silent: true })` keeps the rows on screen; a click event passed as `onClick={reload}` is a normal reload. */
 export type ReloadOptions = { silent?: boolean };
 const requestedMode = (options: unknown): ReloadMode =>
   typeof options === "object" && options !== null && (options as ReloadOptions).silent === true ? "silent" : "normal";
 const failureMessage = (err: unknown) => (err instanceof Error ? err.message : "加载失败");
+/**
+ * Comparison key of a query (only decides "did the query change"; the adapter always gets the original
+ * object, so Dates stay Dates). Dates compare by time, bigints by value — JSON.stringify alone throws on them.
+ */
+export function listQueryKey(query: unknown): string {
+  return (
+    JSON.stringify(query, function (this: Record<string, unknown>, key: string, value: unknown) {
+      const raw = this[key];
+      if (raw instanceof Date) return { $date: raw.getTime() };
+      return typeof value === "bigint" ? { $bigint: String(value) } : value;
+    }) ?? ""
+  );
+}
+/** The last page when `page` is past it (rows deleted on the last page); null when the page is fine or the list is empty. */
+export function pageOverflow(page: number, total: number, pageSize: number): number | null {
+  if (!(total > 0) || !(pageSize > 0)) return null;
+  const last = Math.ceil(total / pageSize);
+  return page > last ? last : null;
+}
+export type DataSourceOptions = {
+  /**
+   * The query's page is past the last page (a delete emptied the last page): called with the last page
+   * so the host can move there (`setQuery(q => ({ ...q, page }))`). DataTable's footer does this by itself.
+   */
+  onPageOverflow?: (lastPage: number) => void;
+};
 /**
  * Page listing state. A changed query cancels the old request and never shows old rows.
  * `reload()` reloads with a loading state (unchanged behaviour); `refresh()` = `reload({ silent: true })`
@@ -27,6 +54,7 @@ const failureMessage = (err: unknown) => (err instanceof Error ? err.message : "
 export function useDataSource<T, F>(
   adapter: ListAdapter<T, F>,
   query: ListQuery<F>,
+  options: DataSourceOptions = {},
 ) {
   const [state, dispatch] = useReducer(
     listLoadReducer<ListResult<T>>,
@@ -36,7 +64,11 @@ export function useDataSource<T, F>(
   const sequence = useRef(0);
   const pending = useRef<ReloadMode | null>(null);
   const lastKey = useRef<string | null>(null);
-  const serialized = JSON.stringify(query);
+  const [host, generation] = useHostFunction(adapter);
+  const latest = useRef({ query, options });
+  latest.current = { query, options };
+  const serialized = listQueryKey(query);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `generation` (a memoized adapter swapped) and `revision` (reload()) are re-run triggers; the query is read from `latest`, keyed by `serialized`.
   useEffect(() => {
     const request = ++sequence.current;
     const controller = new AbortController();
@@ -44,10 +76,9 @@ export function useDataSource<T, F>(
     pending.current = null;
     lastKey.current = serialized;
     dispatch({ type: "start", silent });
+    const asked = latest.current.query;
     Promise.resolve()
-      .then(() =>
-        adapter(JSON.parse(serialized), { signal: controller.signal }),
-      )
+      .then(() => host.current(asked, { signal: controller.signal }))
       .then((data) => {
         if (request === sequence.current && !controller.signal.aborted) {
           if (
@@ -57,6 +88,8 @@ export function useDataSource<T, F>(
           )
             throw Error("列表响应格式不正确");
           dispatch({ type: "success", data });
+          const last = pageOverflow(asked.page, data.total, asked.pageSize);
+          if (last !== null) latest.current.options.onPageOverflow?.(last);
         }
       })
       .catch((err) => {
@@ -64,7 +97,7 @@ export function useDataSource<T, F>(
           dispatch({ type: "failure", message: failureMessage(err), silent });
       });
     return () => controller.abort();
-  }, [adapter, serialized, revision]);
+  }, [generation, serialized, revision]);
   const reload = useCallback((options?: ReloadOptions | object) => {
     pending.current = mergeReloadMode(pending.current, requestedMode(options));
     setRevision((n) => n + 1);
@@ -90,13 +123,17 @@ export function useCursorDataSource<T, F>(
   const sequence = useRef(0);
   const pending = useRef<ReloadMode | null>(null);
   const lastKey = useRef<string | null>(null);
-  const serialized = JSON.stringify(query);
+  const [host, generation] = useHostFunction(adapter);
+  const latest = useRef(query);
+  latest.current = query;
+  const serialized = listQueryKey(query);
   const previous = useRef(serialized);
   if (previous.current !== serialized) {
     previous.current = serialized;
     if (stack.length !== 1 || stack[0] !== null) setStack([null]);
   }
   const cursor = stack[stack.length - 1] ?? null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `generation` (a memoized adapter swapped) and `revision` (reload()) are re-run triggers; the query is read from `latest`, keyed by `serialized`.
   useEffect(() => {
     const request = ++sequence.current;
     const controller = new AbortController();
@@ -106,13 +143,9 @@ export function useCursorDataSource<T, F>(
     pending.current = null;
     lastKey.current = key;
     dispatch({ type: "start", silent });
+    const asked = { ...latest.current, cursor };
     Promise.resolve()
-      .then(() =>
-        adapter(
-          { ...(JSON.parse(serialized) as Omit<CursorQuery<F>, "cursor">), cursor },
-          { signal: controller.signal },
-        ),
-      )
+      .then(() => host.current(asked, { signal: controller.signal }))
       .then((data) => {
         if (request !== sequence.current || controller.signal.aborted) return;
         if (!Array.isArray(data.rows) || typeof data.hasMore !== "boolean")
@@ -126,7 +159,7 @@ export function useCursorDataSource<T, F>(
           dispatch({ type: "failure", message: failureMessage(err), silent });
       });
     return () => controller.abort();
-  }, [adapter, serialized, cursor, revision]);
+  }, [generation, serialized, cursor, revision]);
   const reload = useCallback((options?: ReloadOptions | object) => {
     pending.current = mergeReloadMode(pending.current, requestedMode(options));
     setRevision((n) => n + 1);

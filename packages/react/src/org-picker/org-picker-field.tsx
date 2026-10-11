@@ -77,7 +77,7 @@ export function OrgPickerField(props: OrgPickerFieldProps) {
   const [dialog, setDialog] = useState(false);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const search = useOrgSearch(source, open ? query : "", kinds, 30, m.networkError);
-  const taken = (s: PickedSubject) => tags.some((t) => sameSubject(t, s)) || value.some((t) => sameSubject(t, s)) || Boolean(model.existingNote(s)) || model.avail(s, "availability" in s ? (s as OrgSearchHit).availability : undefined).state === "hidden";
+  const taken = (s: PickedSubject) => tags.some((t) => sameSubject(t, s)) || value.some((t) => sameSubject(t, s)) || Boolean(model.existingNote(s)) || model.avail(s, "availability" in s ? (s as OrgSearchHit).availability : undefined).state === "hidden" || model.omits(s, "availability" in s ? (s as OrgSearchHit).availability : undefined, s.status);
   const pool: readonly (OrgSearchHit | PickedSubject)[] = query.trim() ? search.hits : suggestions;
   const groups = groupHits(pool.filter((s) => !taken(s)) as OrgSearchHit[], 6);
   const options: Option[] = groups.flatMap((g) => g.items).map((s) => {
@@ -85,13 +85,13 @@ export function OrgPickerField(props: OrgPickerFieldProps) {
     const block = blockedReason(model, s, "availability" in s ? s.availability : undefined, s.status);
     return { subject: s, disabled: departed || Boolean(block), note: departed ? m.departed : block?.kind === "locked" ? block.reason : undefined };
   });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: autoFocus applies on mount only, like the native attribute.
   useEffect(() => {
     if (!props.autoFocus || disabled) return;
     const el = input.current;
     if (!el) return;
     el.focus();
     el.setSelectionRange(el.value.length, el.value.length);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const showLayer = open && !disabled && (Boolean(query.trim()) || suggestions.length > 0);
   useLayoutEffect(() => setHost(showLayer ? layerHost(box.current, portal) : null), [showLayer, portal]);

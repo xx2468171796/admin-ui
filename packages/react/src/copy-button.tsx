@@ -12,6 +12,8 @@ import { Check, Copy, X } from "lucide-react";
 import { Button } from "./primitives.tsx";
 import { tipProps, useTipFlash } from "./tooltip.tsx";
 import { COPY_FEEDBACK_MS } from "./tooltip-core.ts";
+// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
+import "#aui-css/copy.css";
 
 export const COPY_FAILED_TEXT = "复制失败，请手动选中复制";
 

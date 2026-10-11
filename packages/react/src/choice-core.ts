@@ -71,3 +71,103 @@ export function datePresetMs(key: DatePresetKey): number | null {
   const amount = Number.parseFloat(key);
   return key.endsWith("h") ? amount * 3_600_000 : amount * 86_400_000;
 }
+
+// ---------------------------------------------------------------- remote search (AsyncChoice)
+
+export type RemoteSearchStatus = "idle" | "loading" | "ready" | "error";
+export type RemoteSearchState<T> = {
+  /** What is in the search box (also while an IME is composing). */
+  query: string;
+  status: RemoteSearchStatus;
+  /** Results of the last finished request (kept on screen while the next one loads). */
+  items: readonly T[];
+  error: string | null;
+};
+/** The host's search: options matching `search` (trimmed; "" = the first page / suggestions). Honour `signal`. */
+export type RemoteSearchLoader<T> = (search: string, ctx: { signal: AbortSignal }) => Promise<readonly T[]>;
+export type RemoteSearchOptions<T> = {
+  load: RemoteSearchLoader<T>;
+  onChange: (state: RemoteSearchState<T>) => void;
+  /** Quiet time after the last keystroke before searching (default 250 ms). */
+  debounceMs?: number;
+  /** Fewer characters than this do not search (status "idle"); default 0 = search on open too. */
+  minLength?: number;
+};
+export type RemoteSearch = {
+  /** The popover opened: search the current query now (no debounce). */
+  open: () => void;
+  /** The search box changed. While an IME is composing only the text is kept: no request for half-typed pinyin. */
+  setQuery: (query: string) => void;
+  compositionStart: () => void;
+  /** Composition committed (or cancelled): search the final text. */
+  compositionEnd: (query: string) => void;
+  retry: () => void;
+  /** Cancel the timer and abort the running request (popover closed / unmounted). */
+  dispose: () => void;
+};
+
+const failureText = (error: unknown) => (error instanceof Error && error.message ? error.message : typeof error === "string" && error ? error : "没加载出来");
+
+/**
+ * Debounced, abortable remote search for a select box. A new query aborts the request still running (its late
+ * answer is ignored even if the loader ignores the signal), waits `debounceMs`, then calls `load`. Nothing is
+ * requested while an IME composes (compositionstart … compositionend). Framework-free; AsyncChoice wraps it.
+ */
+export function createRemoteSearch<T>({ load, onChange, debounceMs = 250, minLength = 0 }: RemoteSearchOptions<T>): RemoteSearch {
+  let state: RemoteSearchState<T> = { query: "", status: "idle", items: [], error: null };
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let running: AbortController | null = null;
+  let composing = false;
+  const emit = (patch: Partial<RemoteSearchState<T>>) => {
+    state = { ...state, ...patch };
+    onChange(state);
+  };
+  const stop = () => {
+    if (timer !== undefined) clearTimeout(timer);
+    timer = undefined;
+    running?.abort();
+    running = null;
+  };
+  const run = (query: string) => {
+    const ctrl = new AbortController();
+    running = ctrl;
+    const settle = (patch: Partial<RemoteSearchState<T>>) => {
+      if (ctrl.signal.aborted) return;
+      running = null;
+      emit(patch);
+    };
+    Promise.resolve()
+      .then(() => load(query.trim(), { signal: ctrl.signal }))
+      .then((items) => settle({ status: "ready", items: [...items], error: null }), (error: unknown) => settle({ status: "error", error: failureText(error) }));
+  };
+  const schedule = (query: string, delay: number) => {
+    stop();
+    if (query.trim().length < minLength) return emit({ status: "idle", items: [], error: null });
+    emit({ status: "loading", error: null });
+    if (delay <= 0) return run(query);
+    timer = setTimeout(() => {
+      timer = undefined;
+      run(query);
+    }, delay);
+  };
+  return {
+    open: () => schedule(state.query, 0),
+    setQuery: (query) => {
+      if (query === state.query) return;
+      emit({ query });
+      if (!composing) schedule(query, debounceMs);
+    },
+    compositionStart: () => {
+      composing = true;
+      if (timer !== undefined) clearTimeout(timer);
+      timer = undefined;
+    },
+    compositionEnd: (query) => {
+      composing = false;
+      emit({ query });
+      schedule(query, debounceMs);
+    },
+    retry: () => schedule(state.query, 0),
+    dispose: stop,
+  };
+}

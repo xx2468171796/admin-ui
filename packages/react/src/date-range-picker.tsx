@@ -16,8 +16,6 @@ import { useTypedValue, type DateFieldBaseProps, type DayRuleProps } from "./dat
 import { isCompleteDayText, isDayKey, matchingPreset, orderRange, outOfRange, parseDateText, todayKey, type DateRangePreset, type DateRangeValue, type DayKey } from "./date-picker-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dates.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dates.css";
 
 export type DateRangePickerProps = Omit<DateFieldBaseProps, "placeholder"> & DayRuleProps & {
   value: DateRangeValue;

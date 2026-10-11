@@ -26,6 +26,20 @@ const formatterFor = (timeZone: string) => {
   }
   return value;
 };
+const CALENDAR_DAY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+/**
+ * A plain calendar day `YYYY-MM-DD` (a date field's value: no time, no zone) as-is; null for anything else.
+ * Such a day is never time-zone converted — `Date.parse("2026-09-30")` is UTC midnight, which is the day
+ * before in every zone west of UTC.
+ */
+export function calendarDay(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const m = CALENDAR_DAY_RE.exec(value.trim());
+  if (!m) return null;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const check = new Date(Date.UTC(y, mo - 1, d));
+  return check.getUTCFullYear() === y && check.getUTCMonth() === mo - 1 && check.getUTCDate() === d ? `${m[1]}-${m[2]}-${m[3]}` : null;
+}
 /** Epoch milliseconds of a date input; null for empty or unparsable values. */
 export function toTime(value: DateInput | null | undefined): number | null {
   if (value === null || value === undefined || value === "") return null;
@@ -45,8 +59,13 @@ export type DateTimeFormatOptions = {
   seconds?: boolean;
   timeZone?: string;
 };
-/** `2026-09-30` / `2026-09-30 14:05` / `2026-09-30 14:05:09` in the time zone; null when empty or invalid. */
+/**
+ * `2026-09-30` / `2026-09-30 14:05` / `2026-09-30 14:05:09` in the time zone; null when empty or invalid. A plain
+ * calendar day (`"2026-09-30"`) is that day in every zone (never converted).
+ */
 export function formatDateTime(value: DateInput | null | undefined, options: DateTimeFormatOptions = {}): string | null {
+  const calendar = calendarDay(value);
+  if (calendar !== null) return !options.time && !options.seconds ? calendar : `${calendar} 00:00${options.seconds ? ":00" : ""}`;
   const t = toTime(value);
   if (t === null) return null;
   const p = partsOf(t, options.timeZone ?? runtimeTimeZone());

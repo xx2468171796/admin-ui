@@ -1,6 +1,6 @@
 "use client";
 import {
-  useEffect,
+  useCallback, useEffect,
   useId,
   useLayoutEffect,
   useRef,
@@ -15,6 +15,8 @@ import { useCellBudget } from "./cell-budget.ts";
 import { fitChips, type ChipFit } from "./table-rows.ts";
 import { safeDownloadUrl } from "./workflow-core.ts";
 import { colorTone, optionTone, type OptionTone } from "./option-tone.ts";
+import { useInnerTabIndex } from "./grid-tab-context.ts";
+import { observeSize } from "./grid-shared-resize.ts";
 
 
 const textOf = (node: ReactNode, explicit?: string) =>
@@ -109,17 +111,18 @@ type Position = { top: number; left: number };
 /** The `+N` chip: hover title lists the hidden items; click opens a popover (Provider portal) listing them. */
 function MoreChip({ hidden, noun }: { hidden: readonly ChipModel[]; noun: string }) {
   const { portal } = useAdminTheme();
+  const tabIndex = useInnerTabIndex(); // -1 inside a grid cell (one tab stop per grid)
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<Position | null>(null);
   const names = hidden.map((chip) => chip.label).join("、");
-  const close = (returnFocus: boolean) => {
+  const close = useCallback((returnFocus: boolean) => {
     setOpen(false);
     setPosition(null);
     if (returnFocus) trigger.current?.focus();
-  };
+  }, []);
   const place = () => {
     const button = trigger.current?.getBoundingClientRect();
     const box = panel.current?.getBoundingClientRect();
@@ -158,12 +161,13 @@ function MoreChip({ hidden, noun }: { hidden: readonly ChipModel[]; noun: string
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onResize);
     };
-  }, [open]);
+  }, [open, close]);
   return (
     <>
       <button
         ref={trigger}
         type="button"
+        tabIndex={tabIndex}
         className="aui-chip aui-chip-more"
         data-tip={names}
         aria-label={`另外 ${hidden.length} ${noun}：${names}`}
@@ -226,10 +230,8 @@ function ChipList({ chips, label, noun }: { chips: readonly ChipModel[]; label?:
       setFit((old) => (old.visible === next.visible && old.squeezeLast === next.squeezeLast && old.lastWidth === next.lastWidth ? old : next));
     };
     run();
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(run);
-    observer.observe(node);
-    return () => observer.disconnect();
+    // One ResizeObserver for all chip cells on the page (a grid shows hundreds), not one per cell.
+    return observeSize(node, run);
   }, [clamped, lines, signature]);
   if (!chips.length) return <span className="aui-cell-empty">—</span>;
   if (!clamped) {
@@ -302,13 +304,14 @@ const displayUrl = (href: string) => href.replace(/^https?:\/\//i, "").replace(/
  */
 export function CellLink({ href, children }: { href: string | null | undefined; children?: ReactNode }) {
   const budget = useCellBudget();
+  const tabIndex = useInnerTabIndex();
   const full = budget?.clamped ? undefined : "true";
   if (!href) return <span className="aui-cell-empty">—</span>;
   const safe = /^mailto:/i.test(href) ? href : safeDownloadUrl(href);
   const text = children ?? displayUrl(href);
   if (!safe) return <span className="aui-cell-link" data-full={full} data-tip={href}><span className="aui-cell-link-text">{text}</span></span>;
   return (
-    <a className="aui-cell-link" data-full={full} href={safe} target="_blank" rel="noopener noreferrer" data-tip={href}>
+    <a className="aui-cell-link" tabIndex={tabIndex} data-full={full} href={safe} target="_blank" rel="noopener noreferrer" data-tip={href}>
       <span className="aui-cell-link-text">{text}</span>
       <ExternalLink aria-hidden="true" />
       <span className="aui-sr-only">（在新标签页打开）</span>

@@ -11,6 +11,9 @@ import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { PopoverPanel } from "./popover-panel.tsx";
 import { Switch } from "./primitives.tsx";
 import { OPTION_HUES, OPTION_HUE_LABELS, OPTION_TONE_LABELS, isSolidTone, optionTone, toneHue, withSolid, type OptionHue, type OptionHueTone, type OptionTone } from "./option-tone.ts";
+// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
+import "#aui-css/fields.css";
+import "#aui-css/swatch.css";
 
 export type OptionSwatchPickerProps = {
   /** Current tone (old names are read as their new hue). */

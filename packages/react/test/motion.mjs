@@ -50,7 +50,9 @@ try {
     if (mode==='none') await page.getByRole('button',{name:'切换动效',exact:true}).click();
     else { await page.getByRole('button',{name:'切换动效',exact:true}).click(); await page.emulateMedia({reducedMotion:'reduce'}); }
     await page.waitForFunction(()=>getComputedStyle(document.querySelector('.aui-skeleton-line'),'::after').animationName==='none');
-    assert.deepEqual(await animationStyles(),{shimmer:'none',dots:'none',outside:'outside-spin'});
+    // 8.10: under the OS "reduce motion" setting busy indicators breathe (aui-busy-pulse) instead of freezing — a frozen
+    // spinner reads as a hang; the kit's own motion=none switch still stops everything.
+    assert.deepEqual(await animationStyles(),{shimmer:'none',dots:mode==='none'?'none':'aui-busy-pulse',outside:'outside-spin'});
     const runs=await page.evaluate(()=>window.motionCalls);
     await page.getByRole('button',{name:'重播',exact:true}).click(); await page.waitForTimeout(250);
     assert.equal(await page.evaluate(()=>window.motionCalls),runs,`${mode} must disable JS animations too`);

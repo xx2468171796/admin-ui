@@ -15,11 +15,13 @@ import {
   ViewManager,
   ViewSettingsFooter,
   ViewTabs,
+  DashboardTabs,
   copyName,
   countSettingChanges,
   newViewName,
   viewActions,
   type NewViewDraft,
+  type ScopeTab,
   type CalendarConfig,
   type CalendarEvent,
   type CalendarMode,
@@ -62,10 +64,14 @@ const RECORD_LAYOUT: RecordLayout<Customer> = {
   sections: [{ key: "fields", title: "客户资料", fields: FIELDS.filter((f) => f.key !== "name").map((f) => ({ key: f.key, label: f.title, value: (r: Customer) => renderGridCell(f, r) })) }],
 };
 
+const DASHBOARDS: readonly ScopeTab[] = [{ id: "biz", label: "经营看板", scope: "company" }, { id: "today", label: "我的今天", scope: "personal" }];
+
 export function ViewsShowcase() {
   const notify = useNotify();
   const [views, setViews] = useState<ViewSummary[]>(INITIAL_VIEWS);
   const [active, setActive] = useState("board");
+  // 手机上仪表盘组收进「视图」面板，点一个仪表盘面板自动关（和点视图一样）
+  const [dashboard, setDashboard] = useState<string | null>(null);
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [pages, setPages] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -129,7 +135,7 @@ export function ViewsShowcase() {
       views={views}
       activeId={active}
       tierNotes={{ standard: "林经理维护", shared: "一组 · 周组长建", mine: "只有你看得到 · 数量不限" }}
-      onSelect={setActive}
+      onSelect={(id) => { setDashboard(null); setActive(id); }}
       onReorder={(tier, ids) => setViews((list) => [...list.filter((v) => v.tier !== tier), ...ids.map((id) => list.find((v) => v.id === id)).filter((v): v is ViewSummary => Boolean(v))].sort((a, b) => ["standard", "shared", "mine"].indexOf(a.tier) - ["standard", "shared", "mine"].indexOf(b.tier)))}
       onHiddenChange={(id, hidden) => setViews((list) => list.map((v) => (v.id === id ? { ...v, hidden } : v)))}
       onRename={(id, name) => setViews((list) => list.map((v) => (v.id === id ? { ...v, name } : v)))}
@@ -364,15 +370,11 @@ export function ViewsShowcase() {
       <PageHeader title="视图" description="多维表格的视图：标签 + 视图管理（标准 / 必看 / 共享 / 我的）、看板、画册、日历、甘特和它们的设置面板。数据是演示的，真实项目由服务端保存并检查权限。" />
       <PageBody>
         <Panel flush>
-          <ViewTabs views={views.map((v) => (v.id === "board" ? { ...v, modified: cardChanges > 0 } : v))} activeId={active} onSelect={setActive} tabMenu={tabMenu}
+          <ViewTabs views={views.map((v) => (v.id === "board" ? { ...v, modified: cardChanges > 0 } : v))} activeId={dashboard ? "" : active} onSelect={(id) => { setDashboard(null); setActive(id); }} tabMenu={tabMenu}
             onCreateView={createView} createAudiences={["mine", "shared"]} createNote="建好后从当前视图带上筛选和排序"
             onRename={(id, name) => setViews((list) => list.map((v) => (v.id === id ? { ...v, name } : v)))} manager={manager}
-            trailing={<nav className="starter-dash-tabs" aria-label="仪表盘" style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
-              <span className="aui-note">仪表盘</span>
-              <Button size="sm" variant="ghost" onClick={() => undefined}>经营看板</Button>
-              <Button size="sm" variant="ghost" onClick={() => undefined}>我的今天</Button>
-              <Button size="sm" variant="ghost" aria-label="新建仪表盘" onClick={() => undefined}>+</Button>
-            </nav>} />
+            trailing={<DashboardTabs tabs={DASHBOARDS} activeId={dashboard} onSelect={(id) => { setDashboard(id); notify(`打开仪表盘「${DASHBOARDS.find((d) => d.id === id)?.label ?? id}」（演示）`, "info"); }}
+              createSections={[{ items: [{ key: "mine", label: "新建我的仪表盘…", onSelect: () => notify("新建我的仪表盘（演示）", "info") }] }]} />} />
           <div className="starter-view-toolbar" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: "1px solid var(--aui-line)" }}>
             {settingsTitle && (
               <Button ref={settingsButton} variant="ghost" size="sm" aria-expanded={settingsOpen} onClick={() => setSettingsOpen((o) => !o)}>

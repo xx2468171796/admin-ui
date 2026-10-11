@@ -10,7 +10,7 @@
 # npm 发布后
 npm install @adminui/react react@^19 react-dom@^19
 # 发布前：装 GitHub Release 附带的 tarball
-npm install https://github.com/xx2468171796/admin-ui/releases/download/v8.2.0/adminui-react-8.2.0.tgz react@^19 react-dom@^19
+npm install https://github.com/xx2468171796/admin-ui/releases/download/v8.11.2/adminui-react-8.11.2.tgz react@^19 react-dom@^19
 ```
 
 想用别的名字导入时用 npm 别名（`"my-ui": "npm:@adminui/react@^8"`），`admin-ui-audit` 会从 package.json 认出别名。

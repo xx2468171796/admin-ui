@@ -19,8 +19,6 @@ import { displayDateTime, parseDateText, parseDateTimeText, timeOptions, todayKe
 import type { GridCommitMove, GridEditorProps } from "./grid-editors.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grid.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grid.css";
 
 const MOVE = { commitDown: "down", commitUp: "up", commitRight: "right", commitLeft: "left" } as const;
 const TIMES = timeOptions(30);
@@ -36,9 +34,13 @@ export function normaliseDateCellText(text: string, withTime: boolean, now: Date
   return parseDateText(t, now) ?? t;
 }
 
-export function DateCellEditor<T>({ field, row, startText, onCommit, onCancel, error, variant = "cell" }: GridEditorProps<T>) {
+export function DateCellEditor<T>({ field, row, startText, onCommit, onCancel, error, variant = "cell", onDraft }: GridEditorProps<T>) {
   const withTime = field.type === "datetime";
-  const [text, setText] = useState(startText ?? editorText(field, readField(field, row)));
+  const [text, setTextState] = useState(startText ?? editorText(field, readField(field, row)));
+  const setText = (next: string) => {
+    setTextState(next);
+    onDraft?.(next);
+  };
   const [open, setOpen] = useState(true);
   const box = useRef<HTMLDivElement | null>(null);
   // The calendar hangs under the box: keep the element in state so the paint after mounting anchors it.
@@ -55,23 +57,26 @@ export function DateCellEditor<T>({ field, row, startText, onCommit, onCancel, e
     if (done.current) return;
     onCommit({ text: normaliseDateCellText(value, withTime) }, move);
   };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount only — focus once with the start text's caret / selection.
   useEffect(() => {
     const node = input.current;
     if (!node) return;
     node.focus({ preventScroll: true });
     if (startText === undefined) node.select();
     else node.setSelectionRange(node.value.length, node.value.length);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
   // Clicking outside the editor (and outside its calendar) commits.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one outside-click listener for the editor's life; commit reads the text through textRef, and the grid's onCommit forwards to its stable handlers (useStableHandlers).
   useEffect(() => {
     const onDown = (event: PointerEvent) => {
       if (event.target instanceof Node && !box.current?.contains(event.target) && !isInsideLayer(event.target)) commit("none");
     };
     document.addEventListener("pointerdown", onDown, true);
     return () => document.removeEventListener("pointerdown", onDown, true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
   const typed = normaliseDateCellText(text, withTime);
-  const today = todayKey();
+  // 「今天」 of the field's zone (AdminProvider `defaults.timeZone` fills it in), not the browser's.
+  const today = todayKey(new Date(), field.timeZone);
   const pickDay = (picked: string) => {
     if (!withTime) return commit("none", picked);
     setText(`${picked} ${time}`);

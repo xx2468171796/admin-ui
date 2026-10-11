@@ -13,8 +13,6 @@ import { NumberInput, PercentBar } from "./number-inputs.tsx";
 import { sliderKey, sliderMarks, sliderRatio, sliderValueAt } from "./number-input-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/numbers.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/numbers.css";
 
 export type SliderProps = {
   value: number | null;

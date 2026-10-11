@@ -18,8 +18,6 @@ import { futureIso } from "./console-core.ts";
 import { ErrorAlert, ExpiryField, ReadOnlyNote, StatusLine, inDialog, useAction, useConsole } from "./console-shared.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 type GroupForm = { group: GroupDto | null; name: string; description: string; kind: "group" | "team" };
 

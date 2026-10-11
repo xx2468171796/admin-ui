@@ -93,7 +93,10 @@ try {
   await page.goto(server.resolvedUrls.local[0]);
   await page.locator('tbody tr[data-row-key]').first().waitFor();
   assert.equal(await page.locator('tbody tr[data-row-key]').count(), 10);
-  assert.equal(await page.locator('.adminui').evaluate(node => getComputedStyle(node).getPropertyValue('--aui-primary')), '#357450');
+  // 8.10: the brand fill stays the palette colour; --aui-primary (brand TEXT) is darkened just enough for 4.5:1 on
+  // surface, canvas and surface-subtle.
+  assert.equal(await page.locator('.adminui').evaluate(node => getComputedStyle(node).getPropertyValue('--aui-primary-fill')), '#357450');
+  assert.equal(await page.locator('.adminui').evaluate(node => getComputedStyle(node).getPropertyValue('--aui-primary')), '#33704c');
   // 5.0 look by default: palette-tinted sidebar rail and 36px controls without opting in.
   assert.equal(await page.locator('.aui-sidebar').evaluate(node => getComputedStyle(node).backgroundColor), 'rgb(30, 58, 54)');
   assert.equal(await page.getByRole('button', { name: '新增用户' }).evaluate(node => getComputedStyle(node).height), '36px');

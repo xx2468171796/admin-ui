@@ -205,6 +205,68 @@ try {
   await dialog.waitFor({ state: 'detached' });
   await page.getByRole('group', { name: '打开的人' }).getByRole('button', { name: '小王 · 销售' }).click();
 
+  // ================================================================ hideUnselectable（8.11）：不能选的不列出来（不是灰着），人数 / 搜索 / 分页对得上
+  {
+    const assign = page.getByRole('dialog', { name: '指派跟进人 · 孙佳宁' });
+    const atree = assign.getByRole('tree', { name: '组织架构' });
+    const anode = (name) => atree.getByRole('treeitem', { name: new RegExp(`^${name}，`) });
+    const bar = () => assign.locator('.aui-orgp-members-bar b').innerText();
+    // 陈组长（只管一组）：管不着的部门不在树上，底下一句「N 个不在你的管理范围，已隐藏」
+    await page.getByRole('group', { name: '打开的人' }).getByRole('button', { name: '陈组长 · 只管一组' }).click();
+    await page.getByRole('button', { name: '指派跟进人（只列能选的人）' }).click();
+    await assign.waitFor();
+    await until(async () => (await anode('一组').count()) === 1 && (await anode('一组').getAttribute('aria-selected')) === 'true', '陈组长停在一组');
+    for (const name of ['运营部', '二组', '技术部', '新零售组']) assert.equal(await anode(name).count(), 0, `管不着的「${name}」不列出来`);
+    assert.equal(await atree.locator('[aria-disabled=true]').count(), 0, '树上没有灰着的部门');
+    assert.match(await assign.locator('.aui-orgp-tree-hidden').innerText(), /^\d+ 个不在你的管理范围，已隐藏$/);
+    // 销售部（只管一部分，能展开）含下级：只列一组的人；人数 = 服务端总数 − 不列的
+    await anode('销售部').click();
+    const sales = assign.getByRole('listbox', { name: '销售部 成员' });
+    // 直属只有林经理（管不着）：不说「还没有人」，说有几个被隐藏了
+    await assign.locator('.aui-orgp-empty').filter({ hasText: '1 个不在你的管理范围，已隐藏' }).waitFor();
+    assert.equal(await bar(), '成员 · 0');
+    await assign.locator('.aui-orgp-members-bar').getByRole('button', { name: '含下级' }).click();
+    await until(async () => (await sales.getByRole('option').count()) === 5, '含下级只列一组 5 个在职的人');
+    assert.equal(await bar(), '成员 · 5', '人数跟着列出来的走（10 − 林经理 − 二组 4 人）');
+    assert.equal(await sales.locator('[data-locked]').count(), 0, '没有带锁的行');
+    // 搜索：管不着的、已离职的都不出来；「共 N 个结果」= 列出来的
+    const asearch = assign.getByRole('searchbox').first();
+    const noHit = async (q, label) => {
+      await asearch.fill(q);
+      await assign.locator('.aui-orgp-noresult').filter({ hasText: q }).waitFor({ timeout: 3000 });
+      assert.equal(await assign.locator('.aui-orgp-results [role=option]').count(), 0, label);
+    };
+    await noHit('黄淑芬', '二组的人搜不出来');
+    await noHit('李俊杰', '已离职的搜不出来');
+    await asearch.fill('小');
+    await assign.getByText(/^共 \d+ 个结果$/).waitFor();
+    const shownHits = await assign.locator('.aui-orgp-results [role=option]').count();
+    assert.ok(shownHits > 0, '能选的照样搜得到');
+    assert.equal(await assign.getByText(/^共 \d+ 个结果$/).innerText(), `共 ${shownHits} 个结果`, '搜索计数 = 列出来的');
+    await asearch.fill('');
+    await page.keyboard.press('Escape');
+    await assign.waitFor({ state: 'detached' });
+    // 小王：客服中心 500 人里 149 个外包客服不能指派 → 不列出来；前两页几乎全被拿掉也会自己接着加载；人数 500 − 149 = 351，滚到底正好 351 行
+    await page.getByRole('group', { name: '打开的人' }).getByRole('button', { name: '小王 · 销售' }).click();
+    await page.getByRole('button', { name: '指派跟进人（只列能选的人）' }).click();
+    await assign.waitFor();
+    await anode('客服中心').waitFor();
+    await anode('客服中心').click();
+    const acs = assign.getByRole('listbox', { name: '客服中心 成员' });
+    await acs.waitFor();
+    await until(async () => (await bar()) === '成员 · 351' && (await acs.getByRole('option').count()) > 5, `短页自己接着加载、人数 351（现在 ${await bar()}）`);
+    assert.match(await acs.getByRole('option').first().innerText(), /陈怡君/);
+    assert.equal(await acs.locator('[data-locked]').count(), 0, '外包客服不出现');
+    await until(async () => {
+      await assign.locator('.aui-orgp-members-list').evaluate((el) => { el.scrollTop = el.scrollHeight; });
+      return (await acs.getByRole('option').last().getAttribute('id'))?.endsWith('-350');
+    }, '滚到底最后一行是第 351 个');
+    assert.equal(await bar(), '成员 · 351', '全部加载完人数不变');
+    await shot('hide-unselectable-1440');
+    await page.keyboard.press('Escape');
+    await assign.waitFor({ state: 'detached' });
+  }
+
   // ================================================================ F 单选转交、只选人最多 5 个
   await page.getByRole('button', { name: '转交负责人（单选）' }).click();
   const transfer = page.getByRole('dialog', { name: '转交客户 · 孙佳宁' });

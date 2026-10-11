@@ -16,8 +16,6 @@ import { groupHealth, healthSummary, rlsSummary } from "./governance-core.ts";
 import { GovLoad, StaleAlert, useGov, type GovPageBaseProps } from "./shared.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export type SecurityHealthPageProps = GovPageBaseProps & {
   /** tenant (default): `GET /health`; platform: `GET /platform/health` (cross-tenant). */

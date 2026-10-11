@@ -134,7 +134,8 @@
 .adminui .aui-grid-summary-cell:has(> .aui-grid-summary-total):not(.aui-grid-rownum-cell) { justify-content:flex-start; }
 .adminui .aui-grid-overlay { position:absolute; inset:var(--aui-grid-head-h) 0 0 0; display:grid; place-items:center; padding:16px; pointer-events:none; }
 .adminui .aui-grid-overlay > * { pointer-events:auto; }
-.adminui .aui-grid-popover { position:fixed; z-index:120; box-sizing:border-box; width:min(300px, calc(100vw - 16px)); max-height:min(70dvh, 480px); overflow-x:hidden; overflow-y:auto; padding:10px; border:1px solid var(--aui-line); border-radius:10px; background:var(--aui-surface); color:var(--aui-text); box-shadow:var(--aui-shadow-md); outline:none; font-size:calc(13px * var(--aui-font-scale)); }
+.adminui .aui-grid-loadbar { z-index:6; }
+.adminui .aui-grid-popover { position:fixed; z-index:var(--aui-z-popover); box-sizing:border-box; width:min(300px, calc(100vw - 16px)); max-height:min(70dvh, 480px); overflow-x:hidden; overflow-y:auto; padding:10px; border:1px solid var(--aui-line); border-radius:10px; background:var(--aui-surface); color:var(--aui-text); box-shadow:var(--aui-shadow-md); outline:none; font-size:calc(13px * var(--aui-font-scale)); }
 .adminui .aui-grid-popover[data-wide=true] { width:min(600px, calc(100vw - 16px)); }
 .adminui .aui-grid-pop { display:grid; gap:8px; min-width:0; }
 .adminui .aui-grid-pop-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
@@ -196,11 +197,6 @@
 .adminui .aui-grid-skeleton { display:block; width:min(70%, 140px); height:10px; border-radius:5px; background:linear-gradient(90deg, var(--aui-surface-subtle), var(--aui-line), var(--aui-surface-subtle)); background-size:200% 100%; animation:aui-grid-shimmer 1.2s ease-in-out infinite; }
 .adminui .aui-grid-load-error { color:var(--aui-danger); font-size:calc(12.5px * var(--aui-font-scale)); white-space:nowrap; }
 .adminui .aui-grid-cell[data-inside] { outline:2px dashed var(--aui-primary); outline-offset:-2px; }
-@media (prefers-reduced-motion: reduce) {
-  .adminui .aui-grid-cell[data-saving]::after,
-  .adminui .aui-grid-skeleton,
-  .adminui .aui-grid-status-spin { animation:none; }
-}
 
 /* —— grid-panels —— */
 .adminui .aui-grid-fpick { width:100%; min-width:0; }
@@ -218,7 +214,7 @@
 .adminui .aui-cond-empty-icon > svg { width:16px; height:16px; }
 .adminui .aui-cond-quick { display:inline-flex; align-items:center; gap:4px; height:26px; padding:0 9px; border:1px solid var(--aui-line); border-radius:var(--aui-radius-sm); background:var(--aui-surface); color:var(--aui-secondary); font:inherit; font-size:calc(12.5px * var(--aui-font-scale)); white-space:nowrap; cursor:pointer; }
 .adminui .aui-cond-quick:hover { border-color:var(--aui-control-border); color:var(--aui-text); }
-.adminui .aui-cond-quick:focus-visible { outline:none; box-shadow:var(--aui-focus-ring); }
+.adminui .aui-cond-quick:focus-visible { outline:2px solid transparent; box-shadow:var(--aui-focus-ring); }
 .adminui .aui-grid-panel-count { color:var(--aui-note); font-variant-numeric:tabular-nums; }
 .adminui .aui-grid-panel-foot { display:flex; flex:1 1 auto; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
 .adminui .aui-grid-panel-note { margin-left:auto; color:var(--aui-note); font-size:calc(12px * var(--aui-font-scale)); }
@@ -344,6 +340,11 @@
 .adminui .aui-grid-expand-inline > svg { width:12px; height:12px; }
 .adminui .aui-grid-body .aui-grid-row:is(:hover,[data-active]) .aui-grid-expand-inline { display:inline-grid; }
 .adminui .aui-grid-panel:not([data-row-height=short]) .aui-grid-expand-inline { top:6px; transform:none; }
+@media (pointer:coarse) {
+  .adminui .aui-grid-expand-inline::after { content:""; position:absolute; left:50%; top:50%; width:40px; height:40px; transform:translate(-50%, -50%); }
+  .adminui .aui-grid-toolbar .aui-button { position:relative; }
+  .adminui .aui-grid-toolbar .aui-button::after { content:""; position:absolute; inset:50% 0 auto; height:max(100%, 40px); transform:translateY(-50%); }
+}
 @media (hover:none) {
   .adminui .aui-grid-body .aui-grid-expand-inline { display:inline-grid; }
 }

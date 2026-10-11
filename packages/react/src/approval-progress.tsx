@@ -15,8 +15,6 @@ import { formatDateTime } from "./format.ts";
 import { approvalStatusMeta, currentLine, waitDays, modeText, pendingApprovers, stepStates, waitingSince, type ApprovalRequest, type ApprovalStepState } from "./approval-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/approval.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/approval.css";
 
 const defaultTime = (iso: string) => {
   const text = formatDateTime(iso, { time: true }) ?? "";

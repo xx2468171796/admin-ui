@@ -4,14 +4,14 @@
  * right page size + page numbers with the current page on the primary soft background. Cursor lists have no
  * total: left 「已显示 1–20 条」, right only ‹ › — never 「第 1 页」. Styles: styles/table.css (.aui-pagination).
  */
+import { useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button, Choice } from "./primitives.tsx";
 import { pageSizeOptions, pageWindow } from "./contracts.ts";
 import { cursorRange, footerCountText } from "./data-card-core.ts";
 import type { CursorPagination, DataTablePagination, PagePagination } from "./data.tsx";
 import { IconButton } from "./buttons.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/table.css";
+import { pageOverflow } from "./data-sources.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/table.css";
 
@@ -39,23 +39,40 @@ function SizeChoice({ sizes, value, disabled, onChange }: { sizes: readonly numb
   );
 }
 
+/**
+ * Pager buttons stay focusable while off (aria-disabled + ignored click): a `disabled` button under the
+ * keyboard focus drops the focus to <body> on every load / auto-refresh / reaching the last page.
+ */
+const pagerButton = (off: boolean, run: () => void) => ({
+  "aria-disabled": off || undefined,
+  onClick: () => {
+    if (!off) run();
+  },
+});
+
 function PagePager({ pagination, interactive }: { pagination: PagePagination; interactive: boolean }) {
   const pageCount = Math.max(1, Math.ceil(pagination.total / pagination.pageSize));
   const sizes = pageSizeOptions(pagination.pageSizes ?? [10, 20, 50], pagination.pageSize);
+  // Rows deleted on the last page: the page is past the end → move to the (new) last page instead of an empty table.
+  const overflow = interactive ? pageOverflow(pagination.page, pagination.total, pagination.pageSize) : null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only when the overflow appears; keyed on the host's (often inline) onPageChange it would ask again every render until the page arrives.
+  useEffect(() => {
+    if (overflow !== null) pagination.onPageChange(overflow);
+  }, [overflow]);
   return (
     <div className="aui-pager">
       <SizeChoice sizes={sizes} value={pagination.pageSize} disabled={!interactive} onChange={pagination.onPageSizeChange} />
-      <IconButton label="上一页" disabled={!interactive || pagination.page <= 1} onClick={() => pagination.onPageChange(pagination.page - 1)} icon={<ChevronLeft />} />
+      <IconButton label="上一页" {...pagerButton(!interactive || pagination.page <= 1, () => pagination.onPageChange(pagination.page - 1))} icon={<ChevronLeft />} />
       <span className="aui-page-numbers">
         {pageWindow(pagination.page, pageCount).map((n) => (
-          <Button key={n} variant="ghost" size="sm" className="aui-page-num" aria-label={`第 ${n} 页`} aria-current={pagination.page === n ? "page" : undefined} disabled={!interactive} onClick={() => pagination.onPageChange(n)}>{n}</Button>
+          <Button key={n} variant="ghost" size="sm" className="aui-page-num" aria-label={`第 ${n} 页`} aria-current={pagination.page === n ? "page" : undefined} {...pagerButton(!interactive, () => pagination.onPageChange(n))}>{n}</Button>
         ))}
       </span>
       {/* Narrow phones: 「3 / 9」 between ‹ › instead of five page buttons, so the footer never wraps. */}
       <span className="aui-page-compact">
         {pagination.page} / {pageCount}
       </span>
-      <IconButton label="下一页" disabled={!interactive || pagination.page >= pageCount} onClick={() => pagination.onPageChange(pagination.page + 1)} icon={<ChevronRight />} />
+      <IconButton label="下一页" {...pagerButton(!interactive || pagination.page >= pageCount, () => pagination.onPageChange(pagination.page + 1))} icon={<ChevronRight />} />
     </div>
   );
 }
@@ -66,8 +83,8 @@ function CursorPager({ pagination, interactive }: { pagination: CursorPagination
   return (
     <div className="aui-pager">
       <SizeChoice sizes={sizes} value={pagination.pageSize} disabled={!interactive} onChange={pagination.onPageSizeChange} />
-      <IconButton label="上一页" disabled={!interactive || !pagination.canPrev} onClick={pagination.onPrev} icon={<ChevronLeft />} />
-      <IconButton label="下一页" disabled={!interactive || !pagination.canNext} onClick={pagination.onNext} icon={<ChevronRight />} />
+      <IconButton label="上一页" {...pagerButton(!interactive || !pagination.canPrev, pagination.onPrev)} icon={<ChevronLeft />} />
+      <IconButton label="下一页" {...pagerButton(!interactive || !pagination.canNext, pagination.onNext)} icon={<ChevronRight />} />
     </div>
   );
 }

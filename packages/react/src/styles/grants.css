@@ -3,7 +3,7 @@
 /* —— kit —— */
 .adminui .aui-share { display:grid; gap:10px; }
 .adminui .aui-share-search { display:flex; align-items:center; gap:8px; height:var(--aui-control-height); padding:0 12px; border:1px solid var(--aui-line); border-radius:var(--aui-radius); background:var(--aui-surface); color:var(--aui-note); }
-.adminui .aui-share-search:focus-within { border-color:var(--aui-primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--aui-primary) 18%, transparent); }
+.adminui .aui-share-search:focus-within { border-color:var(--aui-primary); outline:2px solid transparent; box-shadow:var(--aui-focus-ring); }
 .adminui .aui-share-search svg { width:15px; height:15px; }
 .adminui .aui-share-search input { flex:1; min-width:0; border:0; outline:0; background:none; color:var(--aui-text); font:inherit; }
 .adminui .aui-share-list { margin:0; padding:0; list-style:none; border:1px solid var(--aui-line); border-radius:var(--aui-radius); overflow:auto; max-height:320px; }

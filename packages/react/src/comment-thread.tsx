@@ -30,8 +30,6 @@ import { CommentView, DEFAULT_REACTIONS, DeleteBubble, MoreReplies, ResolvedLine
 import { commentActions, commentCounts, filterComments, foldReplies, groupCommentsByDay, type CommentDraft, type CommentEditAttachments, type CommentFilter, type CommentItem, type CommentPerson } from "./comment-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/comments.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/comments.css";
 
 export type CommentThreadProps = {
   comments: readonly CommentItem[];
@@ -150,6 +148,7 @@ export function CommentThread({ comments, onSend, searchMentions, onReact, onRes
   const shown = useMemo(() => filterComments(comments, filter, viewerId), [comments, filter, viewerId]);
   const counts = commentCounts(comments, viewerId, { total, open: serverOpen, mine: mentionsMe });
   const segments = (filters ?? (viewerId ? ["all", "open", "mine"] : ["all", "open"])) as readonly CommentFilter[];
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `comments` is a trigger — focus moves once the list re-rendered with the edit / deletion applied.
   useEffect(() => {
     const target = refocus.current;
     if (!target || editingId || deleting) return;

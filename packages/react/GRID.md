@@ -145,7 +145,8 @@ const source: GridDataSource<AuditRow> = {
 ```
 
 - 每块默认 100 行（`blockSize`），只取看得见的块和后面 20 行；未加载的行显示骨架条；一块失败只那一段显示「加载失败，回车重试」。
-- 查询一变（搜索、筛选、排序）取消在途请求、清空缓存重新取；工具栏「刷新」保留总数，滚动条不跳。
+- 查询一变（搜索、筛选、排序、分组）取消在途请求、换一份新缓存去取；**旧的行一直留在屏幕上**（不出整块加载面板、表体不塌），顶部只有一条细进度条（`.aui-grid-loadbar[role=progressbar]`，面板 `aria-busy`），新查询的第一块到了才一起换掉并回到顶部。整块「加载中」面板只在第一次加载出现。
+- 「刷新」（工具栏、`onAddRow` 之后表格自己的重取、`handle.refresh()`）是**行级刷新**：屏幕上那几块留着、标成过期（行上 `data-stale`），新回包按 `getRowId` 原地替换（8.9.1：同一次刷新保留的块全部回来后一起换，跨块挪动的行不会闪；某块失败或 3 秒没回来，先换已到的）——没变的行还是原来的 DOM 节点，不出骨架行，滚动位置和总数不跳；屏幕外的块丢掉，滚回去再取。
 - 内存里最多保留 30 块，离得远的先丢，滚回去再取。
 - 统计栏：记录数用 `total`；其他统计由服务端按 `summaries` 算好返回显示文字。
 
@@ -201,6 +202,38 @@ return gridGroupsFromSql(results.map((r) => r.rows), plan, FIELDS);
 
 - 组键：空值是 `""` 并且永远在最后；日期按时区的天；勾选是 `'true' / 'false'`；单选按选项顺序；PostgreSQL 的 `text[]` 人员 / 多选列（`array: true`）按整个组合分组；别的情况给列 `group`（分组键表达式）。
 - 组头最多 2000 个（`gridGroupsFromSql` / `applyGridGroups` 的 `maxGroups`），超过时返回 `truncated`。
+- 改分组 / 筛选时旧组头和旧行一起留着，新查询的行和组头都到了才一起换（不会先出一个空框）；刷新时组头原地更新。
+
+### 7.2 宿主句柄 `handleRef`（8.9）
+
+宿主要在表格外面插入 / 复制 / 删除记录、实时推送改动、对话框里新建完要定位时，用句柄，不要点工具栏「刷新」或改 DOM：
+
+```tsx
+import { BitableGrid, type BitableGridHandle } from '@adminui/react/grid';
+
+const grid = useRef<BitableGridHandle<Deal>>(null);
+<BitableGrid handleRef={grid} dataSource={source} getRowId={(r) => r.id} fields={fields}
+  onRowsInsert={async (position, anchorId) => {
+    const row = await api.create({ near: anchorId, position });              // 服务端返回的新记录
+    grid.current?.insertRow(row, position === 'above' ? { before: anchorId } : { after: anchorId });
+    await grid.current?.revealRow(row.id, { edit: true });                   // 滚过去、第一格进入编辑
+  }}
+  onRowsDelete={async (ids) => { await api.remove(ids); grid.current?.removeRows(ids); }} />
+// 实时推送 / 详情弹框保存
+grid.current?.patchRows([updated]);
+```
+
+| 方法 | 做什么 |
+|---|---|
+| `refresh(): void` | 行级刷新（见上）：屏幕上的行原地替换，组头一起重取。 |
+| `patchRows(rows: readonly T[]): void` | 按 id 替换已加载的记录，位置不动（实时推送、详情弹框保存）。改了分组字段 / 排序字段的，之后调一次 `refresh()`。 |
+| `insertRow(row: T, at: { before: string } \| { after: string } \| "end"): void` | 把服务端刚建好的记录放进缓存：锚点行旁边或最后，总数 +1，后面的块原地后移（中间隔着没加载的块的丢掉重取）。锚点没加载、新查询正在加载时改成静默刷新。分组视图：只在锚点同组时原地放（组头条数 +1、组头随后静默重取），否则静默刷新。之后 `onAddRow` 返回同一个 id 时表格不再重取。 |
+| `removeRows(ids: readonly string[]): void` | 删掉已加载的这些记录，总数减去它们的条数（没加载的 id 不算，不确定时再 `refresh()`）；分组视图组头条数跟着减。 |
+| `revealRow(id: string, opts?: { edit?: boolean }): Promise<boolean>` | 滚到这条记录并聚焦它的第一格；`edit` 打开第一个能在格子里改的格子。还没加载到就等（刷新 / 插入回来为止），找不到（被筛选掉、在收起的组里）回答 `false`。 |
+
+- 只对服务端 `dataSource` 起作用；前端 `rows` 模式下 `refresh / patchRows / insertRow / removeRows` 什么都不做（改 `rows` 就行），`revealRow` 两种模式都能用。
+- `insertRow / removeRows` 的那段代码第一次用到才下载（给了 `handleRef` 时空闲预取），所以调用后行在下一帧出现；紧接着 `revealRow` 会等它。
+- 补充（8.9）：插入、删除、刷新后屏幕外被丢掉的块滚回去再取；当前选中的格子滚走了也只取它那一块，不会把整张表都取一遍（8.8 以前选中第 1 行再滚到很后面会把中间的块全部请求一遍）。
 
 ## 8. 视图（筛选 / 分组 / 排序 / 字段 / 填色）、选择、行操作、详情
 
@@ -280,7 +313,7 @@ const { view, onViewChange, reset, loading } = useGridView(fields, {
 - 行号列 48px（`GRID_ROW_NUMBER_WIDTH`），展开按钮在主字段格子右侧（悬停出）。
 - 空格子留白（不画「—」）；「—」只给只读的 DataTable、记录详情和键值列表。
 - 行操作：`rowActions={(row) => RowAction[]}` 固定在最右的「⋯」菜单。
-- 记录详情：`expandRecord={{ layout, level, url }}`，三档标准见 [TABLES.md](TABLES.md) §3。
+- 记录详情：`expandRecord={{ layout, level, url }}`，三档标准见 [TABLES.md](TABLES.md) §3。手机等触屏（`pointer: coarse`）上想点一下就打开：`expandRecord={{ openOnTap: "primary" }}`（点主字段格子）或 `"row"`（点任何格子；格子里的按钮、链接、勾选框照旧），默认关。触屏上展开按钮、工具栏按钮的可点范围至少 40 × 40（样子不变）。
 
 ## 9. 不要做
 

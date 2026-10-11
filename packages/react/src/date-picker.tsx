@@ -37,8 +37,6 @@ import {
 } from "./date-picker-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dates.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dates.css";
 
 export type { DatePickerSize };
 
@@ -93,10 +91,10 @@ export const boxAria = (p: DateFieldBaseProps) => ({
 /** Typed text that follows `value` and commits through `parse` (complete forms immediately). */
 export function useTypedValue(value: string, display: (v: string) => string, onCommit: (v: string) => void, parse: (text: string) => string | null, complete: (text: string) => boolean, accept: (v: string) => boolean) {
   const [text, setText] = useState(display(value));
-  // An outside change of the value (preset buttons, reset) rewrites the box unless it already says that.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: an outside change of `value` (preset buttons, reset) rewrites the box unless it already says that; keyed on `text` too, every keystroke would be rewritten.
   useEffect(() => {
     if (parse(text) !== value) setText(display(value));
-  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [value]);
   const emit = (v: string) => {
     if (v !== value) onCommit(v);
   };

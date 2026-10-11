@@ -16,6 +16,7 @@ export function useProviderSearch(open: boolean, q: string, ready: boolean, prov
   latest.current = providers;
   const retryCtrl = useRef<AbortController | null>(null);
   const providerKey = providers.map((p) => p.id).join("\n");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed by the provider ids (`providerKey`): an inline providers array is new each render; the providers are read through `latest`.
   useEffect(() => {
     retryCtrl.current?.abort();
     if (!open || !ready || !latest.current.length) {

@@ -15,8 +15,6 @@ import { PopoverPanel } from "./popover-panel.tsx";
 import { Count, IconBlock } from "./kit.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/record.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/record.css";
 
 export type SubTableColumn = { key: string; label: string; visible: boolean; /** Can't be hidden (the first / name column). */ locked?: boolean };
 export type SubTableSectionProps = {

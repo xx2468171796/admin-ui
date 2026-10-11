@@ -45,7 +45,7 @@
 }
 .adminui .aui-daterange:hover:not([data-disabled]) { border-color: var(--aui-control-border); }
 .adminui .aui-daterange:focus-within,
-.adminui .aui-daterange[data-state="open"] { border-color: var(--aui-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--aui-primary) 18%, transparent); }
+.adminui .aui-daterange[data-state="open"] { border-color: var(--aui-primary); box-shadow: var(--aui-selected-ring); }
 .adminui .aui-daterange:has([aria-invalid="true"]) { border-color: var(--aui-danger); }
 .adminui .aui-daterange[data-disabled] { background: var(--aui-surface-subtle); color: var(--aui-note); }
 .adminui .aui-daterange[data-size="sm"] { height: var(--aui-control-height-sm); font-size: calc(12.5px * var(--aui-font-scale)); }
@@ -80,7 +80,7 @@
 }
 .adminui .aui-dcal-day[data-weekend] { color: var(--aui-secondary); }
 .adminui .aui-dcal-day:hover:not([aria-disabled]):not([data-empty]) { background: var(--aui-hover); }
-.adminui .aui-dcal-day:focus-visible { box-shadow: inset 0 0 0 2px var(--aui-primary); }
+.adminui .aui-dcal-day:focus-visible { box-shadow: inset 0 0 0 2px var(--aui-focus); }
 .adminui .aui-dcal-day[data-outside] { color: var(--aui-note); }
 .adminui .aui-dcal-day[data-empty] { cursor: default; }
 .adminui .aui-dcal-day[aria-current="date"] { font-weight: 600; color: var(--aui-primary); }
@@ -90,7 +90,7 @@
 .adminui .aui-dcal-day[data-edge="start"] { border-radius: var(--aui-radius) 0 0 var(--aui-radius); }
 .adminui .aui-dcal-day[data-edge="end"] { border-radius: 0 var(--aui-radius) var(--aui-radius) 0; }
 .adminui .aui-dcal-day[aria-selected="true"] { background: var(--aui-primary-fill); color: var(--aui-on-primary); font-weight: 600; }
-.adminui .aui-dcal-day[aria-selected="true"]:focus-visible { box-shadow: 0 0 0 2px var(--aui-surface), 0 0 0 4px var(--aui-primary); }
+.adminui .aui-dcal-day[aria-selected="true"]:focus-visible { box-shadow: var(--aui-focus-ring); }
 .adminui .aui-dcal-day[aria-disabled] { color: var(--aui-note); opacity: .4; cursor: not-allowed; }
 .adminui .aui-dcal-day small { font-size: calc(9px * var(--aui-font-scale)); font-weight: 600; line-height: 1; color: var(--aui-note); }
 .adminui .aui-dcal-day[data-holiday="off"] small { color: var(--aui-primary); }
@@ -103,7 +103,7 @@
   color: var(--aui-text); font: inherit; cursor: pointer;
 }
 .adminui .aui-dcal-month:hover:not(:disabled) { background: var(--aui-hover); }
-.adminui .aui-dcal-month:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: -2px; }
+.adminui .aui-dcal-month:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: -2px; }
 .adminui .aui-dcal-month[aria-current="date"] { border-color: var(--aui-primary); color: var(--aui-primary); font-weight: 600; }
 .adminui .aui-dcal-month[aria-selected="true"] { background: var(--aui-primary-fill); border-color: var(--aui-primary-fill); color: var(--aui-on-primary); }
 .adminui .aui-dcal-month:disabled { color: var(--aui-note); opacity: .5; cursor: not-allowed; }
@@ -126,7 +126,7 @@
 .adminui .aui-dquick-btn:hover:not(:disabled) { border-color: var(--aui-control-border); color: var(--aui-text); }
 .adminui .aui-dquick-btn[aria-pressed=true] { border-color: var(--aui-primary); background: var(--aui-soft); color: var(--aui-ink); font-weight: 500; }
 .adminui .aui-dquick-btn:disabled { opacity: .45; cursor: not-allowed; }
-.adminui .aui-dquick-btn:focus-visible { outline: none; border-color: var(--aui-primary); box-shadow: var(--aui-focus-ring); }
+.adminui .aui-dquick-btn:focus-visible { outline: 2px solid transparent; border-color: var(--aui-primary); box-shadow: var(--aui-focus-ring); }
 .adminui .aui-dquick-btn[data-ghost] { margin-left: auto; border-color: transparent; color: var(--aui-note); }
 .adminui .aui-dquick-btn[data-ghost]:hover { border-color: transparent; background: var(--aui-danger-soft); color: var(--aui-danger); }
 .adminui .aui-datepop-body > .aui-dcal-foot { margin: 0 12px; padding: 8px 0 10px; }

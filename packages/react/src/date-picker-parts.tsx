@@ -4,10 +4,8 @@
  * (今天 / 明天 / 下周一 / 一周后 + 清空), the half-hour time column next to the calendar, the time list of
  * TimeInput, and the 「周四 · 明天」 note that follows a date in its box.
  */
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { quickDays, relativeDayText, dueState, dayPart, type DayKey } from "./date-picker-core.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dates.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dates.css";
 
@@ -38,16 +36,17 @@ export function TimeList({ options, value, nearest, onPick, label = "时间", cl
   const [active, setActive] = useState(nearest);
   const prefix = useId();
   const list = useRef<HTMLDivElement>(null);
-  const into = (time: string, center: boolean) => {
+  const into = useCallback((time: string, center: boolean) => {
     const box = list.current;
     const item = box?.querySelector<HTMLElement>(`[data-time="${time}"]`);
     if (!box || !item) return;
     if (center) box.scrollTop = item.offsetTop - box.clientHeight / 2 + item.offsetHeight / 2;
     else if (item.offsetTop < box.scrollTop) box.scrollTop = item.offsetTop;
     else if (item.offsetTop + item.offsetHeight > box.scrollTop + box.clientHeight) box.scrollTop = item.offsetTop + item.offsetHeight - box.clientHeight;
-  };
-  useEffect(() => into(active, false), [active]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => into(nearest, true), []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => into(active, false), [active, into]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on mount only — centre the time nearest to now once; later moves follow `active`.
+  useEffect(() => into(nearest, true), []);
   return (
     <div
       ref={list}

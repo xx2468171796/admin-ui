@@ -6,8 +6,6 @@ import { FileUp } from "lucide-react";
 import { Button, Textarea } from "./primitives.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/markdown.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/markdown.css";
 export function MarkdownEditor({
   value,
   onChange,

@@ -8,12 +8,16 @@ import { DataTable } from './data.tsx';
 import { AuditTimeline } from './operations.tsx';
 import { useAdminResource } from './workflow-hooks.ts';
 import { buildCsv, downloadCsv } from './reports.tsx';
+import { useAbortOwner } from './abort-owner.ts';
 import { effectivePermissions, type AccessAdapter, type AdminRole, type AdminMember, type AuditAdapter, type AuditQuery, type AuditRecord } from './governance-core.ts';
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
+/**
+ * @deprecated Use AccessConsole (`@adminui/react/access`): it pages on the server, handles scopes, field
+ * masks and audits. AccessManager loads every role and member at once and pages them in the browser; it stays
+ * only for compatibility and gets no new features.
+ */
 export function AccessManager({ scope, adapter, canManage = false, active = true }: { scope: string; adapter: AccessAdapter; canManage?: boolean; active?: boolean }) {
   return <AccessManagerScope key={scope} scope={scope} adapter={adapter} canManage={canManage} active={active} />;
 }
@@ -27,6 +31,8 @@ function AccessManagerScope({ scope, adapter, canManage, active }: { scope: stri
   const [rolePage, setRolePage] = useState(1);
   const [memberPage, setMemberPage] = useState(1);
   const [size, setSize] = useState(10);
+  // One real signal per save; closing a dialog or leaving the page aborts the running request.
+  const ops = useAbortOwner();
   const snapshot = resource.data;
   const editable = canManage && !resource.loading && !resource.error;
   const editRole = (value: AdminRole) => { setRole(value); setOriginal(JSON.stringify(value)); };
@@ -52,18 +58,18 @@ function AccessManagerScope({ scope, adapter, canManage, active }: { scope: stri
         { key: 'actions', title: '操作', kind: 'actions', render: m => <Button variant="ghost" disabled={!editable} onClick={() => setMember(m)}>授权 {m.name}</Button> },
       ]} />
     </ResourcePanel>
-    <FormDialog description="" open={role !== null} title={role?.id ? '编辑角色' : '新增角色'} dirty={!!role && JSON.stringify(role) !== original} onClose={() => setRole(null)} onSubmit={async () => {
+    <FormDialog description="" open={role !== null} title={role?.id ? '编辑角色' : '新增角色'} dirty={!!role && JSON.stringify(role) !== original} onClose={() => { ops.abort(); setRole(null); }} onSubmit={async () => {
       requireEdit(); if (!role?.name.trim()) throw Error('请填写角色名称');
-      await adapter.saveRole({ ...role, name: role.name.trim() }, new AbortController().signal); await resource.refresh();
+      await adapter.saveRole({ ...role, name: role.name.trim() }, ops.next()); await resource.refresh();
     }}>
       <FormField label="角色名称" htmlFor={fieldId} required><Input id={fieldId} value={role?.name ?? ''} onChange={e => setRole(r => r && ({ ...r, name: e.target.value }))} /></FormField>
       {[...new Set(snapshot?.permissions.map(p => p.group))].map(group => <fieldset className="aui-permission-group" key={group}><legend>{group}</legend><div className="aui-workflow-stack">{snapshot?.permissions.filter(p => p.group === group).map(p => <label className="aui-permission-option" key={p.id}><Checkbox aria-label={`${p.label} (${p.id})`} checked={role?.permissions.includes(p.id) ?? false} onCheckedChange={checked => setRole(r => r && ({ ...r, permissions: checked === true ? [...r.permissions, p.id] : r.permissions.filter(id => id !== p.id) }))} /><span>{p.label} ({p.id})</span></label>)}</div></fieldset>)}
     </FormDialog>
-    <FormDialog description="" open={member !== null} title={`成员授权：${member?.name ?? ''}`} dirty={!!member && JSON.stringify(member) !== JSON.stringify(snapshot?.members.find(m => m.id === member.id))} onClose={() => setMember(null)} onSubmit={async () => { requireEdit(); if (!member) return; await adapter.assignRoles(member, new AbortController().signal); await resource.refresh(); }}>
+    <FormDialog description="" open={member !== null} title={`成员授权：${member?.name ?? ''}`} dirty={!!member && JSON.stringify(member) !== JSON.stringify(snapshot?.members.find(m => m.id === member.id))} onClose={() => { ops.abort(); setMember(null); }} onSubmit={async () => { requireEdit(); if (!member) return; await adapter.assignRoles(member, ops.next()); await resource.refresh(); }}>
       <p>保存后将改变此成员的访问范围。请保留至少一名可管理权限的管理员。</p>
       {snapshot?.roles.map(r => <label className="aui-permission-option" key={r.id}><Checkbox aria-label={r.name} checked={member?.roleIds.includes(r.id) ?? false} onCheckedChange={checked => setMember(m => m && ({ ...m, roleIds: checked === true ? [...m.roleIds, r.id] : m.roleIds.filter(id => id !== r.id) }))} /><span>{r.name}</span></label>)}
     </FormDialog>
-    <FormDialog description="" open={removing !== null} title="删除角色" destructive submitLabel="确认删除角色" onClose={() => setRemoving(null)} onSubmit={async () => { requireEdit(); if (!removing) return; await adapter.deleteRole(removing, new AbortController().signal); await resource.refresh(); }}><p>确认删除「{removing?.name}」？已分配成员的角色必须先解除授权。</p></FormDialog>
+    <FormDialog description="" open={removing !== null} title="删除角色" destructive submitLabel="确认删除角色" onClose={() => { ops.abort(); setRemoving(null); }} onSubmit={async () => { requireEdit(); if (!removing) return; await adapter.deleteRole(removing, ops.next()); await resource.refresh(); }}><p>确认删除「{removing?.name}」？已分配成员的角色必须先解除授权。</p></FormDialog>
   </div>;
 }
 
@@ -75,6 +81,8 @@ function AuditLogScope({ scope, adapter, active }: { scope: string; adapter: Aud
   const [detail, setDetail] = useState<AuditRecord | null>(null);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
+  const exports = useAbortOwner();
+  const exportPage = adapter.exportPage;
   const invalid = !!query.from && !!query.until && query.from > query.until;
   const resource = useAdminResource(JSON.stringify([scope, query]), signal => adapter.list(query, signal), 0, active && !invalid);
   const change = (patch: Partial<AuditQuery>) => setQuery(q => ({ ...q, ...patch, page: 1 }));
@@ -89,9 +97,9 @@ function AuditLogScope({ scope, adapter, active }: { scope: string; adapter: Aud
       <label>结束日期（UTC）<DatePicker aria-label="日志结束日期" clearable value={query.until} min={query.from || undefined} onChange={until => change({ until })} /></label>
       <Button variant="outline" onClick={() => change({ search: '', result: '', from: '', until: '' })}>清空日志筛选</Button>
       <Button variant="outline" disabled={invalid || resource.loading} onClick={() => void resource.refresh()}>刷新日志</Button>
-      {adapter.exportPage && <Button disabled={invalid || exporting || resource.loading || !!resource.error} onClick={async () => {
+      {exportPage && <Button disabled={invalid || exporting || resource.loading || !!resource.error} onClick={async () => {
         if (exporting) return; setExporting(true); setError('');
-        try { const rows = await adapter.exportPage!(query, new AbortController().signal); downloadCsv('audit-page', buildCsv(rows, (['id', 'actor', 'action', 'target', 'at', 'result', 'requestId', 'detail'] as const).map(key => ({ title: key, value: r => r[key] ?? '' })))); }
+        try { const rows = await exportPage.call(adapter, query, exports.next()); downloadCsv('audit-page', buildCsv(rows, (['id', 'actor', 'action', 'target', 'at', 'result', 'requestId', 'detail'] as const).map(key => ({ title: key, value: r => r[key] ?? '' })))); }
         catch (e) { setError(e instanceof Error ? e.message : '导出失败'); } finally { setExporting(false); }
       }}>{exporting ? '导出中…' : '导出当前页日志'}</Button>}
     </div>}>

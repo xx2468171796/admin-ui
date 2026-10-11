@@ -12,8 +12,6 @@ import { ColorModeChoice } from "./appearance.tsx";
 import { avatarTone } from "./avatar-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/shell.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/shell.css";
 
 export type ShellAccount = {
   name: string;

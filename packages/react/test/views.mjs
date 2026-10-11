@@ -85,7 +85,7 @@ try {
   const vm = page.getByRole('dialog', { name: '视图管理' });
   await vm.waitFor();
   assert.match(await vm.innerText(), /11 个 · 隐藏 1/);
-  for (const tier of ['业务线标准视图', '共享视图', '我的视图']) assert.ok(await vm.getByRole('region', { name: tier, exact: true }).isVisible(), tier);
+  for (const tier of ['业务线标准视图', '共享视图', '我的视图']) await vm.getByRole('region', { name: tier, exact: true }).waitFor({ timeout: 5000 }); // 8.11.1: the body loads on first open
   assert.match(await vm.getByRole('region', { name: '业务线标准视图' }).innerText(), /林经理维护/);
   // 必看：眼睛不能点
   const mustSee = vm.getByRole('button', { name: '从标签栏隐藏「智能家居 · 全部客户」' });

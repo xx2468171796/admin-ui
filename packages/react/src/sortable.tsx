@@ -15,8 +15,6 @@ import { ChevronDown, ChevronRight, GripVertical, Lock } from "lucide-react";
 import { dropTarget, locate, moveNode, positionText, stepTarget, visibleRows, canPickUp, type SortableAllow, type SortableNode, type SortableTarget } from "./sortable-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/sortable.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/sortable.css";
 
 export type SortableMove = { id: string; from: SortableTarget; to: SortableTarget };
 export type SortableListProps<T extends SortableNode<T>> = {

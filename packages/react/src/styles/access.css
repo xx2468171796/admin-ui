@@ -39,7 +39,7 @@
 .adminui .aui-access-tree-body { position:relative; overflow-x:hidden; overflow-y:auto; padding:4px; }
 .adminui .aui-access-tree-row { display:flex; align-items:center; gap:6px; min-height:32px; padding:3px 8px 3px calc(4px + var(--aui-tree-depth, 0) * 20px); border-radius:var(--aui-radius); cursor:pointer; user-select:none; font-size:calc(13px * var(--aui-font-scale)); }
 .adminui .aui-access-tree-row:hover { background:var(--aui-hover); }
-.adminui .aui-access-tree-row:focus-visible { outline:2px solid var(--aui-primary); outline-offset:-2px; }
+.adminui .aui-access-tree-row:focus-visible { outline:2px solid var(--aui-focus); outline-offset:-2px; }
 .adminui .aui-access-tree-row[aria-disabled=true] { cursor:default; color:var(--aui-secondary); }
 .adminui .aui-access-tree-row[data-picked] { background:var(--aui-selected); color:var(--aui-text); font-weight:600; }
 .adminui .aui-access-tree-twist { display:inline-grid; place-items:center; flex:none; width:20px; height:20px; border-radius:var(--aui-radius-sm); color:var(--aui-note); }
@@ -95,13 +95,13 @@
 .adminui .aui-access-tier[data-checked] { border-color:var(--aui-primary); background:var(--aui-selected); }
 .adminui .aui-access-tier[data-disabled] { cursor:not-allowed; background:var(--aui-surface-subtle); }
 .adminui .aui-access-tier[data-disabled] strong { color:var(--aui-secondary); }
-.adminui .aui-access-tier:focus-within { outline:2px solid var(--aui-primary); outline-offset:1px; }
+.adminui .aui-access-tier:focus-within { outline:2px solid var(--aui-focus); outline-offset:1px; }
 .adminui .aui-access-tier-text { display:grid; gap:2px; min-width:0; }
 .adminui .aui-access-tier-text .aui-note { font-size:calc(12px * var(--aui-font-scale)); }
 .adminui .aui-access-scope-depts { margin-top:12px; }
 .adminui .aui-access-unassigned { margin-top:12px; align-items:flex-start; }
 .adminui .aui-access-picker { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; min-height:var(--aui-control-height); padding:3px 4px 3px 10px; border:1px solid var(--aui-control-border); border-radius:var(--aui-radius); background:var(--aui-surface); }
-.adminui .aui-access-picker:focus-within { border-color:var(--aui-primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--aui-primary) 18%, transparent); }
+.adminui .aui-access-picker:focus-within { border-color:var(--aui-primary); outline:2px solid transparent; box-shadow:var(--aui-focus-ring); }
 .adminui .aui-access-picker[data-disabled] { background:var(--aui-surface-subtle); }
 .adminui .aui-access-picker-values { display:flex; flex:1; flex-wrap:wrap; gap:6px; min-width:0; }
 .adminui .aui-access-picker-buttons { display:flex; gap:4px; margin-left:auto; }
@@ -278,7 +278,7 @@
 .adminui button.aui-access-profile-stat { cursor:pointer; }
 .adminui button.aui-access-profile-stat:hover { border-color:var(--aui-soft-strong); }
 .adminui .aui-access-profile-stats button.aui-access-profile-stat[aria-pressed=true] { border-color:var(--aui-primary); background:var(--aui-soft); }
-.adminui .aui-access-profile-stat:focus-visible { outline:2px solid var(--aui-primary); outline-offset:1px; }
+.adminui .aui-access-profile-stat:focus-visible { outline:2px solid var(--aui-focus); outline-offset:1px; }
 .adminui .aui-access-profile-stat > b { color:var(--aui-text); font-size:calc(14.5px * var(--aui-font-scale)); font-weight: 600; font-variant-numeric:tabular-nums; }
 .adminui .aui-access-profile-stats > li[data-tone=brand] b { color:var(--aui-primary); }
 .adminui .aui-access-profile-stats > li[data-tone=danger] b { color:var(--aui-danger); }
@@ -307,7 +307,7 @@
 .adminui .aui-taccess-role { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 34px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: var(--aui-text); font: inherit; font-size: calc(12.5px * var(--aui-font-scale)); text-align: left; cursor: pointer; }
 .adminui .aui-taccess-role > svg { width: 15px; height: 15px; flex: none; color: var(--aui-note); }
 .adminui .aui-taccess-role:hover { background: var(--aui-hover); }
-.adminui .aui-taccess-role:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: -2px; }
+.adminui .aui-taccess-role:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: -2px; }
 .adminui .aui-taccess-role[aria-current=true] { background: var(--aui-soft); color: var(--aui-ink); font-weight: 600; }
 .adminui .aui-taccess-role-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adminui .aui-taccess-role-n { margin-left: auto; color: var(--aui-note); font-size: calc(12px * var(--aui-font-scale)); font-weight: 400; white-space: nowrap; }
@@ -322,7 +322,7 @@
 .adminui .aui-taccess-tier { display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 0 10px; border-radius: 8px; cursor: pointer; font-size: calc(13px * var(--aui-font-scale)); }
 .adminui .aui-taccess-tier > input { flex: none; }
 .adminui .aui-taccess-tier:hover { background: var(--aui-hover); }
-.adminui .aui-taccess-tier:focus-within { outline: 2px solid var(--aui-primary); outline-offset: -2px; }
+.adminui .aui-taccess-tier:focus-within { outline: 2px solid var(--aui-focus); outline-offset: -2px; }
 .adminui .aui-taccess-tier[data-checked] { background: var(--aui-soft); font-weight: 600; }
 .adminui .aui-taccess-tier small { margin-left: auto; color: var(--aui-note); font-size: calc(12px * var(--aui-font-scale)); font-weight: 400; text-align: right; }
 .adminui .aui-taccess-cond { margin: 2px 0 2px 26px; min-width: 0; }
@@ -332,7 +332,7 @@
 .adminui .aui-taccess-acts { display: flex; flex-wrap: wrap; gap: 8px; }
 .adminui .aui-taccess-act { display: inline-flex; align-items: center; gap: 7px; height: var(--aui-control-height-sm); padding: 0 12px 0 8px; border: 1px solid var(--aui-line); border-radius: var(--aui-radius-sm); background: var(--aui-surface); font-size: calc(13px * var(--aui-font-scale)); cursor: pointer; }
 .adminui .aui-taccess-act[data-checked] { border-color: var(--aui-soft-strong); background: var(--aui-soft); font-weight: 600; }
-.adminui .aui-taccess-act:focus-within { outline: 2px solid var(--aui-primary); outline-offset: 1px; }
+.adminui .aui-taccess-act:focus-within { outline: 2px solid var(--aui-focus); outline-offset: 1px; }
 .adminui .aui-taccess-hint { margin: 0; font-size: calc(12px * var(--aui-font-scale)); }
 .adminui .aui-taccess-members { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; font-size: calc(13px * var(--aui-font-scale)); }
 .adminui .aui-taccess-members > .aui-button { margin-left: auto; }

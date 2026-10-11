@@ -19,8 +19,7 @@ import { DataTable, type Column } from "./data.tsx";
 import { RowActionBar } from "./row-actions.tsx";
 import { SearchField, StatStrip, type StatItem } from "./page-templates.tsx";
 import { ACCESS_KIND_LABELS, accessFilters, expiresSoon, filterAccess, relativeDay, remainingText, shortTime, type AccessFilter, type ShareAccessEvent, type ShareAudience } from "./share-core.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/share.css";
+import { errorText } from "./error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/share.css";
 
@@ -295,7 +294,7 @@ export function ShareAccessLog({ events, ipNote = "IP 中间两段已打码", on
     try {
       await onBlockIp(event);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     } finally {
       setPending(null);
     }

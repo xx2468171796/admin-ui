@@ -14,8 +14,6 @@ import { SCOPE_TIER_LABEL, SCOPE_TIER_ORDER, type MatrixResource } from "./contr
 import { OVERRIDE_TARGET_LABEL, type OverrideTargetDraft, type OverrideTargetKind } from "./override-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 const KIND_ICON = { action: MousePointerClick, scope: Filter, field: Columns3, record: Table2 } as const;
 

@@ -45,6 +45,7 @@ type Live = {
 };
 
 const TICK_MS = 80;
+const seconds = (session: Live) => (session.accumulated + (session.segmentStart == null ? 0 : performance.now() - session.segmentStart)) / 1000;
 
 function isSupported() {
   return typeof window !== "undefined" && typeof window.MediaRecorder === "function" && typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getUserMedia === "function";
@@ -82,8 +83,6 @@ export function useAudioRecorder({ mimeType, maxDuration, onDone, historySize = 
     void session.context?.close().catch(() => undefined);
     if (live.current === session) live.current = null;
   }, []);
-
-  const seconds = (session: Live) => (session.accumulated + (session.segmentStart == null ? 0 : performance.now() - session.segmentStart)) / 1000;
 
   const stop = useCallback(() => {
     const session = live.current;

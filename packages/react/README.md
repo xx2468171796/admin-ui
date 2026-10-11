@@ -9,7 +9,7 @@ npm install @adminui/react
 ```
 
 
-npm 包发布之前，可以安装 GitHub Release 里的 tarball：`npm install https://github.com/xx2468171796/admin-ui/releases/download/v8.2.0/adminui-react-8.2.0.tgz`，详见接入手册。新项目用最新版；已有项目可以继续钉着原来的版本，要升 8.0 先看 [MIGRATION-8.md](MIGRATION-8.md)。
+npm 包发布之前，可以安装 GitHub Release 里的 tarball：`npm install https://github.com/xx2468171796/admin-ui/releases/download/v8.11.2/adminui-react-8.11.2.tgz`，详见接入手册。新项目用最新版；已有项目可以继续钉着原来的版本，要升 8.0 先看 [MIGRATION-8.md](MIGRATION-8.md)。
 
 应用入口第一行 `import '@adminui/react/styles.css'`（只有 token、基础和核心组件），其它样式跟着组件自动进来；只从公开入口导入，重的子路径（grid / views / charts / dashboard-builder / form-builder / access / markdown / excel）懒加载。小 / 中 / 大项目分别从 `examples/small` / `examples/starter` / `examples/large` 起步（INTEGRATION.md §1.0，三档只是默认起点，任何子路径都能加）。
 

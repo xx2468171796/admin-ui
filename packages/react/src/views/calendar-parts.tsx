@@ -15,8 +15,6 @@ import { spanDays, type CalendarEventInput, type ResolvedEvent } from "./calenda
 import { IconButton } from "../buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 /** One record on the calendar. All-day: `start` / `end` are day keys (end inclusive); timed: ISO instants. */
 export type CalendarEvent = CalendarEventInput & {

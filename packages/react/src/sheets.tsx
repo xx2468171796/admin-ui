@@ -17,8 +17,6 @@ import { Dialog, type DialogProps, type SheetWidth } from "./forms.tsx";
 import { DiscardPrompt } from "./dialog-frame.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/sheets.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/sheets.css";
 
 export type SideSheetProps = Omit<DialogProps, "size" | "placement" | "sheetWidth"> & {
   /** md 480 (default) · lg 640 · xl 800 px; full width at ≤ 760px. */

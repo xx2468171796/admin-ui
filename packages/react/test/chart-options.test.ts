@@ -10,7 +10,7 @@ import {
   withGaps,
   resolveVizTokens,
 } from "../src/chart-options.ts";
-import { chartColors, VIZ_BRAND, VIZ_STATUS, vizCategory } from "../src/viz-palette.ts";
+import { chartColors, VIZ_BRAND, vizCategory, vizStatus } from "../src/viz-palette.ts";
 import { createPalette } from "../src/palette.ts";
 const brandColors = (hex: string) => chartColors(createPalette(hex, "light"));
 
@@ -78,9 +78,9 @@ test("容差带：样本不足不画带、点为灰色空心；越界点标红",
   assert.equal((lower.data[0] as [number, null])[1], null);
   const actual = series.find((s) => s.id === "actual")!;
   const colors = actual.data.map((d) => (d as { itemStyle: { color: string } }).itemStyle.color);
-  assert.equal(colors[0], VIZ_STATUS.light.neutral);
+  assert.equal(colors[0], vizStatus("neutral"), "status = palette token, not a fixed hex");
   assert.equal(colors[1], VIZ_BRAND);
-  assert.equal(colors[2], VIZ_STATUS.light.bad);
+  assert.equal(colors[2], vizStatus("bad"));
   assert.equal((actual.data[0] as { symbol: string }).symbol, "emptyCircle");
 });
 

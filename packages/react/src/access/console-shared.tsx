@@ -21,8 +21,6 @@ import { OrgTreePicker } from "./org-picker.tsx";
 import type { DimNamer } from "./matrix-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export type ConsoleShared = {
   api: AccessApi;
@@ -226,8 +224,7 @@ export function AssignRoleDialog({
   const [scopeDept, setScopeDept] = useState<string[]>([]);
   useEffect(() => {
     if (open) setDimValue((cur) => (cur === ANY && !places.allowAny ? firstPlace : cur));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, firstPlace]);
+  }, [open, firstPlace, places.allowAny]);
   const scopeOptions = [...(places.allowAny ? [{ value: ANY, label: "不限" }] : []), ...places.values.map((v) => ({ value: v.dim + SEP + v.value, label: v.label }))];
   const hasScope = dimValue !== ANY || scopeDept.length > 0;
   const options = c.roles.filter((r) => !r.disabled && (hasScope ? !r.superuser : !exclude.includes(r.id))).map((r) => ({ value: r.id, label: r.superuser ? `${r.name}（超级管理员）` : r.name }));

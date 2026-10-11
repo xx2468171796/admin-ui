@@ -35,13 +35,19 @@ const KB = 1024;
 /** Budgets in KB gzip (8.0.0 measured + ~10 % headroom). Probe JS excludes react / react-dom and the heavy peers; probe CSS = styles.css + the chunks the entry pulls in. */
 export const BUDGETS = {
   core: { js: 28, css: 26 }, // 8.6: page-flush rules for every page live in core (+0.6 KB gzip; 25.0 → 26 keeps the headroom)
-  root: { js: 330, css: 100 },
+  // 8.10 (audit fixes, measured 335.0): Note / useLocalPagination / LazyAdminChart / AsyncChoice / width props +2.4,
+  // data-hook fixes (host functions via ref, undo commits on pagehide, aria-disabled, GB18030 CSV, real abort) +1.3,
+  // first-paint theme (useSyncExternalStore + boot script) and errorText / isComposingEvent ≈ +2.0. Tight on purpose:
+  // the next growth needs an explicit raise here. 9.0 plan: move internal helpers out of the root (864 exported values).
+  root: { js: 336, css: 100 },
   charts: { js: 22, css: 31 },
   markdown: { js: 11, css: 26 },
   catalog: { js: 75, css: 26 },
   excel: { js: 2, css: 26 },
-  grid: { js: 165, css: 54 },
-  access: { js: 240, css: 64 },
+  // 8.10 (measured 170.3): IME capture layer, calendar-day dates, block dedupe, edit-follows-row, concurrent-save fixes
+  // (+3.5) and the 1994-line split into ~30 modules (+4.5). Follow-up: lazy-load keyboard / clipboard / context menu.
+  grid: { js: 171, css: 54 },
+  access: { js: 241, css: 65 }, // 8.9: touch hit areas + KpiCard onActivate pushed CSS to 64.0; 8.10: errorText / real abort signals (240.3)
   peizhi: { js: 96, css: 45 },
   // 8.2: neutral alias of /peizhi (same module, same size).
   settings: { js: 96, css: 45 },
@@ -54,7 +60,15 @@ export const BUDGETS = {
   // 8.1: own subpath + CSS chunk; GrantList / ShareDialog import it lazily (the root probe inlines lazy chunks, so root counts it too).
   "org-picker": { js: 50, css: 30 },
   // 8.3: first paint of a read-only BitableGrid (with @tanstack table / virtual; panels, editors, lightbox lazy).
-  "grid:read-only": { js: 120, css: 41 },
+  // 8.10: 125.5 — same fixes as grid; menus / status / bulk bar already moved after first paint (was 129.9).
+  "grid:read-only": { js: 126, css: 41 },
+  // 8.11.1 consumer first screens (scripts/size-budget.mjs APP_*, mirrored from a downstream app): the root entry +
+  // the subpaths it uses + their eager CSS, lazy chunks not counted. The metric downstream budgets feel; measured
+  // 8.9.1 / 8.11.0 / 8.11.1 (KB gzip JS · CSS): login 31.5·32.3 / 32.2·32.5 / 32.2·31.8, shell 67.2·37.1 / 68.1·37.4 /
+  // 65.8·36.7, home 189.2·64.1 / 196.5·64.3 / 183.4·61.4. Tight on purpose: any growth needs a raise here with a reason.
+  "app:login": { js: 32.5, css: 32 },
+  "app:shell": { js: 66.5, css: 37 },
+  "app:home": { js: 184, css: 62 },
   // Tiers: first screen only. js = without react / react-dom; jsTotal = with them (large hosts verify: ≤ 300 KB JS, ≤ 40 KB CSS).
   "tier:small": { js: 72, css: 32 },
   "tier:medium": { js: 130, jsTotal: 300, css: 40 },
@@ -101,9 +115,26 @@ function firstPaintOf(outputs) {
   return { js, css, lazy };
 }
 
+/**
+ * Files of the public subpath entries (source + compiled). 8.10: a lazy `import()` of one of them from the root
+ * (LazyAdminChart → ./charts) is that subpath's cost — measured by its own probe, downloaded only when rendered —
+ * so the root / core probes keep it external instead of inlining it (and its heavy peer) into the root number.
+ * A static import of a subpath entry is still inlined and still fails the heavy-peer check.
+ */
+const subpathEntryFiles = () =>
+  new Set(
+    Object.entries(pkg.exports)
+      .filter(([key]) => key !== "." && !key.endsWith(".css"))
+      .flatMap(([, value]) => (typeof value === "string" ? [value] : [value.source, value.default]))
+      .filter((file) => typeof file === "string")
+      .map((file) => resolve(pkgRoot, file).replace(/\\/g, "/")),
+  );
+
 async function measureProbe(name, spec) {
   const id = "\0aui-size-probe";
   const seenHeavy = new Set();
+  const lazySubpaths = new Set();
+  const entryFiles = spec.lazySubpathsElsewhere ? subpathEntryFiles() : new Set();
   const result = await build({
     root: pkgRoot,
     configFile: false,
@@ -117,6 +148,14 @@ async function measureProbe(name, spec) {
         },
         load(source) {
           return source === id ? probeSource(spec) : null;
+        },
+        async resolveDynamicImport(specifier, importer) {
+          if (!entryFiles.size || typeof specifier !== "string") return null;
+          const hit = await this.resolve(specifier, importer, { skipSelf: true });
+          const file = hit?.id.replace(/\\/g, "/");
+          if (!file || !entryFiles.has(file)) return null;
+          lazySubpaths.add(file.slice(file.lastIndexOf("/") + 1));
+          return { id: hit.id, external: true };
         },
       },
     ],
@@ -141,14 +180,14 @@ async function measureProbe(name, spec) {
     },
   });
   const outputs = (Array.isArray(result) ? result : [result]).flatMap((r) => r.output);
-  if (spec.firstPaint) return { name, ...firstPaintOf(outputs), heavy: [...seenHeavy].sort(), bundledHeavy: true };
+  if (spec.firstPaint) return { name, ...firstPaintOf(outputs), heavy: [...seenHeavy].sort(), bundledHeavy: true, lazySubpaths: [...lazySubpaths].sort() };
   let js = 0;
   let css = 0;
   for (const file of outputs) {
     if (file.type === "chunk") js += gz(file.code);
     else if (file.fileName.endsWith(".css")) css += gz(typeof file.source === "string" ? file.source : Buffer.from(file.source));
   }
-  return { name, js, css, heavy: [...seenHeavy].sort() };
+  return { name, js, css, heavy: [...seenHeavy].sort(), lazySubpaths: [...lazySubpaths].sort() };
 }
 
 /** Build a tier starter and sum the first screen (entry + static imports) from the Vite manifest. */
@@ -200,8 +239,8 @@ const NODE_ONLY = new Set(["vite"]);
 const subpaths = Object.keys(pkg.exports).filter((k) => k !== "." && !k.endsWith(".css")).map((k) => k.slice(2)).filter((k) => !NODE_ONLY.has(k));
 
 const probes = [
-  ["core", { from: self, names: ["AdminProvider", "Button", "Input", "Dialog"], css: `${self}/styles.css` }],
-  ["root", { from: self, css: `${self}/styles.css` }],
+  ["core", { from: self, names: ["AdminProvider", "Button", "Input", "Dialog"], css: `${self}/styles.css`, lazySubpathsElsewhere: true }],
+  ["root", { from: self, css: `${self}/styles.css`, lazySubpathsElsewhere: true }],
   ...subpaths.map((sub) => [sub, { from: `${self}/${sub}`, css: `${self}/styles.css` }]),
   [
     "grid:read-only",
@@ -217,6 +256,38 @@ createRoot(document.getElementById("root")).render(createElement(BitableGrid, { 
     },
   ],
 ];
+/**
+ * Consumer first screens (8.11.1): what a real Vite app downloads before its login page / workbench shell / first
+ * table tab — the root entry, the subpaths it uses and the eager CSS — mirrored from a downstream app's measured
+ * imports (its login, shell and bitable home closures). Lazy chunks (panels, editors, palette body, notification
+ * lists) are listed, never budgeted. Rolldown-built apps split chunks a little differently; these numbers move with them.
+ */
+const APP_LOGIN = { [self]: ["AdminProvider", "AuthLayout", "Button", "FormField", "InlineAlert", "LoginForm", "NotificationProvider", "Panel", "PasswordInput", "SelectList", "StatePanel", "useAdminTheme"] };
+const APP_SHELL = { [self]: [...APP_LOGIN[self], "AdminDefaultsProvider", "AdminShell", "AppearanceButton", "CommandPalette", "NotificationCenter", "PHONE_COUNTRIES", "navCommands"] };
+const APP_HOME = {
+  [self]: [...APP_SHELL[self], "ChipGroup", "ConfirmDialog", "FormDialog", "IconButton", "Input", "MenuButton", "MoreMenu", "Pane", "SearchField", "SplitButton", "Tabs", "WorkspaceLayout", "confirmOrUndo", "useIsMobile", "useNotify", "useUndoToast"],
+  [`${self}/grid`]: ["BitableGrid", "GridAttachments", "GridCellEditor", "GridToolbar", "ToolbarPanel", "ViewOverrideBar", "gridViewReducer", "normalizeGridView", "renderGridCell", "useGridView"],
+  [`${self}/views`]: ["DashboardTabs", "ViewManager", "ViewSettingsFooter", "ViewTabs", "canViewAction", "copyName", "newViewName", "viewActions"],
+  [`${self}/grid-query`]: ["deadlineState", "deadlineText", "gridQueryFilter", "isDateRange", "isDay", "isDynamicValue", "isRelativeDate"],
+  [`${self}/forms-public`]: ["checkFormAnswer", "isAnswerEmpty"],
+  [`${self}/record-detail-spec`]: ["RECORD_DETAIL_OTHER_SECTION", "RECORD_DETAIL_OTHER_TITLE", "normalizeRecordDetailSpec"],
+};
+const appSource = (imports) => {
+  const used = [];
+  const lines = [`import "${self}/styles.css";`];
+  for (const [from, names] of Object.entries(imports)) {
+    const aliased = [...new Set(names)].map((n) => `${n} as ${n}_${used.length}`);
+    used.push(...[...new Set(names)].map((n) => `${n}_${used.length}`));
+    lines.push(`import { ${aliased.join(", ")} } from "${from}";`);
+  }
+  return `${lines.join("\n")}\nconsole.log(${used.join(", ")});\n`;
+};
+probes.push(
+  ["app:login", { firstPaint: true, lazySubpathsElsewhere: true, source: appSource(APP_LOGIN) }],
+  ["app:shell", { firstPaint: true, lazySubpathsElsewhere: true, source: appSource(APP_SHELL) }],
+  ["app:home", { firstPaint: true, lazySubpathsElsewhere: true, source: appSource(APP_HOME) }],
+);
+
 const tiers = [
   ["tier:small", "examples/small"],
   ["tier:medium", "examples/starter"],
@@ -239,6 +310,7 @@ for (const row of rows) {
   const notes = [];
   if (row.missing) notes.push("missing");
   if (row.heavy?.length) notes.push(`${row.bundledHeavy ? "bundled heavy peers" : "heavy peers"}: ${row.heavy.join(" ")}`);
+  if (row.lazySubpaths?.length) notes.push(`lazy subpaths (own probe): ${row.lazySubpaths.join(" ")}`);
   if (row.jsWithReact) notes.push(`with react ${(row.jsWithReact / KB).toFixed(1)} KB`);
   if (row.lazy) notes.push(`lazy ${(row.lazy / KB).toFixed(1)} KB (not budgeted)`);
   if (budget && !row.missing) {
@@ -246,7 +318,7 @@ for (const row of rows) {
     if (row.css > budget.css * KB) failures.push(`${row.name} CSS ${(row.css / KB).toFixed(1)} KB > ${budget.css} KB`);
     if (budget.jsTotal && row.jsWithReact > budget.jsTotal * KB) failures.push(`${row.name} JS with react ${(row.jsWithReact / KB).toFixed(1)} KB > ${budget.jsTotal} KB`);
   } else if (!budget) notes.push("no budget");
-  if ((row.name === "core" || row.name === "root" || row.name === "tier:small") && row.heavy?.length) {
+  if ((row.name === "core" || row.name === "root" || row.name === "tier:small" || row.name === "app:login" || row.name === "app:shell") && row.heavy?.length) {
     failures.push(`${row.name} imports heavy peers (${row.heavy.join(", ")}) — heavy deps belong to their subpaths only`);
   }
   if (!asJson) {

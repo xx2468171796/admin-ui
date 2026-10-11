@@ -6,8 +6,6 @@ import { quotaPercent, quotaTone } from "./portal-core.ts";
 import { IconButton } from "./buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard.css";
 export { quotaTone, quotaPercent, type QuotaTone } from "./portal-core.ts";
 
 /**

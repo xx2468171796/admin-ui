@@ -42,8 +42,7 @@ import {
   zonedTime,
   type ConflictDecisions,
 } from "./history-core.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/history.css";
+import { errorText } from "./error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/history.css";
 
@@ -162,7 +161,7 @@ export function TimeMachineDialog({
   const [saveError, setSaveError] = useState<string | null>(null);
   const previewRef = useRef(onPreview);
   previewRef.current = onPreview;
-
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `retry` is the 「重试」 trigger; onPreview is read through previewRef.
   useEffect(() => {
     if (!open) return;
     setDecisions(DEFAULT_CONFLICT_DECISIONS);
@@ -172,7 +171,7 @@ export function TimeMachineDialog({
     const timer = setTimeout(() => {
       previewRef.current(target, ctrl.signal).then(
         (data) => !ctrl.signal.aborted && setPreview({ loading: false, error: null, data, target }),
-        (e: unknown) => !ctrl.signal.aborted && setPreview((p) => ({ ...p, loading: false, error: e instanceof Error ? e.message : String(e) })),
+        (e: unknown) => !ctrl.signal.aborted && setPreview((p) => ({ ...p, loading: false, error: errorText(e) })),
       );
     }, 200);
     return () => {
@@ -198,7 +197,7 @@ export function TimeMachineDialog({
       await onRestore(target, decisions);
       onClose();
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : String(e));
+      setSaveError(errorText(e));
     } finally {
       setSaving(false);
     }

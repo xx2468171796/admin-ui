@@ -1,0 +1,27 @@
+/* @adminui/react · swatch — moved out of core.css in 8.11.1 (only these components use them); edit here. */
+
+/* —— moved from core.css (8.11.1): rendered only by this chunk's components —— */
+.adminui .aui-swatch-button {
+  display: inline-grid; place-items: center; flex: none; width: var(--aui-control-height-sm); height: var(--aui-control-height-sm); padding: 0;
+  border: 1px solid var(--aui-line); border-radius: var(--aui-radius); background: var(--aui-surface); cursor: pointer;
+}
+.adminui .aui-swatch-button:hover:not(:disabled) { border-color: var(--aui-control-border); }
+.adminui .aui-swatch-button:disabled { opacity: .55; cursor: not-allowed; }
+.adminui .aui-swatch { display: block; width: 16px; height: 16px; border-radius: 4px; background: var(--aui-tone, var(--aui-option-gray)); }
+.adminui .aui-swatch:is([data-tone$=Solid], [data-tone=solid]) { background: var(--aui-tone-solid); box-shadow: inset 0 0 0 2px var(--aui-surface), 0 0 0 1px var(--aui-tone-solid); }
+.adminui .aui-swatch-pick { display: grid; align-content: start; justify-items: start; gap: 12px; min-width: 0; }
+.adminui .aui-swatch-grid { display: grid; grid-template-columns: repeat(5, 32px); align-content: start; gap: 6px; }
+.adminui .aui-swatch-choice {
+  display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--aui-radius);
+  background: var(--aui-tone-soft, var(--aui-option-gray-soft)); cursor: pointer;
+}
+.adminui .aui-swatch-choice::after { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--aui-tone, var(--aui-option-gray)); }
+.adminui .aui-swatch-choice:hover { box-shadow: 0 0 0 1px var(--aui-tone); }
+.adminui .aui-swatch-choice[aria-checked=true] { box-shadow: 0 0 0 2px var(--aui-surface), 0 0 0 4px var(--aui-tone); }
+.adminui .aui-swatch-choice:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: 3px; }
+.adminui .aui-swatch-side { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-width: 0; }
+.adminui .aui-swatch-solid { display: inline-flex; align-items: center; gap: 8px; color: var(--aui-secondary); font-size: calc(12.5px * var(--aui-font-scale)); cursor: pointer; }
+@media (max-width: 760px) {
+  .adminui .aui-swatch-grid { grid-template-columns: repeat(5, 40px); gap: 8px; }
+  .adminui .aui-swatch-choice { width: 40px; height: 40px; }
+}

@@ -12,8 +12,6 @@ import { SkeletonBlock } from "./loading.tsx";
 import { highlightParts } from "./timeline-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/templates.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/templates.css";
 
 export type SelectListItem = {
   key: string;

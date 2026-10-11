@@ -20,8 +20,7 @@ import type { CustomParamType, ParamDto } from "./contracts.ts";
 import type { PeizhiApi } from "./api.ts";
 import { checkParamKey, groupParams, paramChange, paramDraft, paramGroup, paramTypeLabel, paramValueText, parseParamDraft, type ParamDraft } from "./core.ts";
 import { ConfigHistoryDialog } from "./dict-manager.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
+import { errorText } from "../error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
 
@@ -74,7 +73,7 @@ function EditPreview({ param, draft }: { param: ParamDto; draft: ParamDraft }) {
   try {
     next = parseParamDraft(param, draft);
   } catch (e) {
-    return <p className="aui-note" role="status">{e instanceof Error ? e.message : String(e)}</p>;
+    return <p className="aui-note" role="status">{errorText(e)}</p>;
   }
   return <ChangeList caption="改动预览" items={paramChange(param, next)} />;
 }

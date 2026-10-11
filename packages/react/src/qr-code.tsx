@@ -9,8 +9,6 @@ import { useMemo, type ReactNode } from "react";
 import { encodeQr, qrPath, type QrEcc, type QrMatrix } from "./qr-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/share.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/share.css";
 
 export type QrCodeProps = {
   /** The text to encode (the share URL). */

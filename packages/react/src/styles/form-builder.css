@@ -20,9 +20,6 @@
 .adminui .aui-pform-q { grid-column:1 / -1; display:grid; align-content:start; gap:6px; min-width:0; scroll-margin:64px; }
 .adminui .aui-pform-q[data-short] { grid-column:auto / span 1; }
 .adminui .aui-pform-q[data-conditional] { animation:aui-pform-reveal var(--aui-duration-panel) var(--aui-ease); }
-@media (prefers-reduced-motion: reduce) {
-  .adminui .aui-pform-q[data-conditional] { animation:none; }
-}
 .adminui .aui-pform-qt { color:var(--aui-text); font-size:calc(13px * var(--aui-font-scale)); font-weight: 600; line-height:1.45; }
 .adminui .aui-pform-no { margin-right:4px; color:var(--aui-secondary); font-weight:500; }
 .adminui .aui-pform-qd { margin-top:-2px; color:var(--aui-note); font-size:calc(12px * var(--aui-font-scale)); line-height:1.5; }
@@ -36,7 +33,7 @@
 .adminui .aui-pform-tick { display:inline-flex; align-items:center; gap:7px; min-height:34px; padding:0 12px 0 10px; border:1px solid var(--aui-line); border-radius:var(--aui-radius); background:var(--aui-surface); color:var(--aui-text); font-size:calc(13px * var(--aui-font-scale)); cursor:pointer; }
 .adminui .aui-pform-tick:hover:not(:disabled) { border-color:var(--aui-primary-mid); }
 .adminui .aui-pform-tick[aria-checked=true] { border-color:var(--aui-primary); background:var(--aui-soft); color:var(--aui-ink); font-weight:600; }
-.adminui .aui-pform-tick:focus-visible { outline:2px solid var(--aui-primary); outline-offset:1px; }
+.adminui .aui-pform-tick:focus-visible { outline:2px solid var(--aui-focus); outline-offset:1px; }
 .adminui .aui-pform-tick:disabled { cursor:default; }
 .adminui .aui-pform-upload { display:grid; gap:10px; min-width:0; border-radius:var(--aui-radius); }
 .adminui .aui-pform-upload[data-dragging] { outline:2px dashed var(--aui-primary); outline-offset:3px; background:var(--aui-hover); }

@@ -25,8 +25,6 @@ import { SkeletonBlock } from "./loading.tsx";
 import type { TimelineDotTone, TimelineMarkerKind, TimelineResult } from "./timeline-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/collections.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/collections.css";
 
 export type { TimelineDotTone, TimelineMarkerKind, TimelineResult } from "./timeline-core.ts";
 

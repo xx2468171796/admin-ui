@@ -23,8 +23,6 @@ import { assignmentActions, baseRoleOptions, errorView, fieldCondChangeItems, ma
 import { ErrorAlert, LockedNote, ReadOnlyNote, StatusLine, inDialog, useAction, useConsole, revealDetail } from "./console-shared.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 function RoleBadges({ role }: { role: RoleDto }) {
   return (
@@ -141,8 +139,7 @@ export function RoleSection() {
   useEffect(() => {
     c.setDirty("roles", dirty);
     return () => c.setDirty("roles", false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dirty]);
+  }, [dirty, c.setDirty]);
 
   const changes = useMemo(() => {
     if (!role || !c.catalog) return [];
@@ -406,8 +403,7 @@ export function FieldSection() {
   useEffect(() => {
     c.setDirty("fields", dirty);
     return () => c.setDirty("fields", false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dirty]);
+  }, [dirty, c.setDirty]);
   if (!c.catalog) return <StatePanel kind="loading" message="正在加载权限目录…" />;
   if (!withFields.length) return <StatePanel kind="empty" message="权限目录里没有声明字段策略的资源" />;
   const savedFields = matrixOf(role);

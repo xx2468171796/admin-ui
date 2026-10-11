@@ -34,8 +34,6 @@ import {
 import { IconButton } from "./buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dates.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dates.css";
 
 export type DatePickerSize = "sm" | "md" | "touch";
 
@@ -83,11 +81,11 @@ export function Calendar({ value = "", range, rangeAnchor = null, onSelect, min,
   const root = useRef<HTMLDivElement>(null);
   const moved = useRef(false);
   const lastView = addMonths(view, months - 1);
-  // Follow an outside change of the starting day (typing in the box while the panel is open).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: follows an outside change of the starting day (typing in the box while the panel is open); a `months` change alone must not move the focus.
   useEffect(() => {
     setFocus(start);
     setView((v) => (start < v || start > lastDayOf(addMonths(v, months - 1)) ? startOfMonth(start) : v));
-  }, [start]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [start]);
   useLayoutEffect(() => {
     if (!moved.current) return;
     moved.current = false;

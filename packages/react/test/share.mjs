@@ -94,15 +94,15 @@ try {
   await dialog.locator('.aui-share-saved[data-kind=saving]').filter({ hasText: '保存中…' }).waitFor();
   await saved();
   const pin = (await pwRow.locator('.aui-share-code').getAttribute('aria-label')).replace('分享密码 ', '');
-  assert.match(pin, /^[2-9A-HJKMNP-Z]{4}$/, `新密码 ${pin}`);
+  assert.match(pin, /^[2-9A-HJKMNP-Z]{6}$/, `新密码 ${pin}`);
   assert.notEqual(pin, '8K3F');
   assert.match(await dialog.locator('.aui-share-pw').innerText(), new RegExp(`密码 ${pin}`), '链接行跟着变');
   await pwRow.getByRole('button', { name: '自己填' }).click();
   await page.keyboard.type('ab');
-  assert.match(await pwRow.locator('.aui-code-error').innerText(), /还差 2 位/);
-  await page.keyboard.type('12');
+  assert.match(await pwRow.locator('.aui-code-error').innerText(), /还差 4 位/);
+  await page.keyboard.type('1234');
   await saved();
-  assert.equal(await pwRow.locator('.aui-share-code').getAttribute('aria-label'), '分享密码 AB12');
+  assert.equal(await pwRow.locator('.aui-share-code').getAttribute('aria-label'), '分享密码 AB1234');
   // 有效期（已通过的分段）：永久被策略锁住（锁 + 原因、点了没用）；第一次选 30 天演示保存失败 → 改回原值、底栏原因 + 重试（不弹框）
   const expiry = dialog.getByRole('group', { name: '有效期', exact: true });
   const forever = expiry.getByRole('button', { name: /永久/ });

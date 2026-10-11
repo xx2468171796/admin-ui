@@ -11,8 +11,6 @@ import { newViewName, VIEW_AUDIENCE_LABELS, VIEW_KIND_HINTS, VIEW_KIND_LABELS, V
 import { ViewKindIcon } from "./view-parts.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 export type NewViewPanelProps = {
   /** Kinds offered (default all six), in this order. */

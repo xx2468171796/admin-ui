@@ -17,8 +17,6 @@ import { SegmentedControl } from "./choices.tsx";
 import { DEFAULT_PASSWORD_RULES, PASSWORD_LEVEL_TEXT, generatePassword, passwordStrength, passwordsMatch, type PasswordRule, type PasswordStrengthOptions } from "./password-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/password.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/password.css";
 
 // ---------------------------------------------------------------- PasswordInput
 

@@ -38,8 +38,6 @@ import {
 import { IconButton } from "../buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export type TableAccessRole = { id: string; name: string; members: number; /** Shield icon (admins). */ admin?: boolean; /** Unsaved changes on another role (the selected one is computed). */ dirty?: boolean };
 

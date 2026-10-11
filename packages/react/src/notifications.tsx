@@ -15,6 +15,8 @@ import { sharedContext } from "./context.ts";
 import { Button } from "./primitives.tsx";
 import { Spinner, IconButton } from "./buttons.tsx";
 import { createCountdown, secondsLeft, stackToasts, toastDuration, type ToastCountdown, type ToastTone } from "./overlay-core.ts";
+import { createUndoCommits, type UndoCommitInfo } from "./undo-commits.ts";
+export type { UndoCommitInfo, UndoCommitReason } from "./undo-commits.ts";
 
 export type NoticeTone = ToastTone;
 export type NoticeOptions = {
@@ -46,8 +48,17 @@ export type UndoNoticeOptions = {
   /** Seconds to undo (default 8). */
   seconds?: number;
   undoLabel?: string;
-  /** Time ran out / × without undoing (commit a deferred delete here). */
-  onExpire?: () => void;
+  /**
+   * Time ran out / × without undoing (commit a deferred delete here). Also runs at once — never lost — when
+   * the page is being left (`reason: "pagehide"`: use `fetch(…, { keepalive: true })` / sendBeacon there) or
+   * the NotificationProvider unmounts (`"unmount"`). While one is pending, leaving the page asks first.
+   */
+  onExpire?: (info?: UndoCommitInfo) => void;
+  /**
+   * 8.9: the same key replaces the previous undo toast (a second stage change on the same record) — the
+   * replaced one counts as expired (its `onExpire` runs).
+   */
+  key?: string;
 };
 /** `useNotify()`: call it like before (`notify("已保存")`, `notify("失败", "error")`) or use the methods. */
 export type Notify = ((message: string, tone?: "success" | "error" | "info") => void) & {
@@ -69,6 +80,11 @@ const ICONS: Record<NoticeTone, ReactNode> = {
   error: <CircleAlert aria-hidden="true" />,
   loading: <Spinner size={16} tone="brand" />,
 };
+const build = (id: number, options: NoticeOptions): Toast => {
+  const tone = options.tone ?? "success";
+  const ms = toastDuration({ tone, action: Boolean(options.action), duration: options.duration });
+  return { ...options, id, tone, clock: ms === null ? null : createCountdown(ms, Date.now()) };
+};
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<Toast[]>([]);
@@ -76,16 +92,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const next = useRef(0);
   const live = useRef<Toast[]>([]);
   live.current = items;
+  const [commits] = useState(() => createUndoCommits());
   const remove = useCallback((id: number, how?: "timeout" | "close") => {
     const toast = live.current.find((t) => t.id === id);
     if (toast && how) toast.onDismiss?.(how);
     setItems((list) => list.filter((t) => t.id !== id));
   }, []);
-  const build = (id: number, options: NoticeOptions): Toast => {
-    const tone = options.tone ?? "success";
-    const ms = toastDuration({ tone, action: Boolean(options.action), duration: options.duration });
-    return { ...options, id, tone, clock: ms === null ? null : createCountdown(ms, Date.now()) };
-  };
   const notify = useMemo<Notify>(() => {
     const show = (options: NoticeOptions): NoticeHandle => {
       const id = ++next.current;
@@ -100,7 +112,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return {
         id,
         close: () => remove(id),
-        update: (changed) => setItems((list) => list.map((t) => (t.id === id ? build(id, changed) : t))),
+        update: (changed) => {
+          setItems((list) => list.map((t) => (t.id === id ? build(id, changed) : t)));
+        },
       };
     };
     const legacy = (message: string, tone: "success" | "error" | "info" = "success") => {
@@ -112,8 +126,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       progress: (options: { title: string; description?: string }) => show({ ...options, tone: "loading" }),
       undo: (options: UndoNoticeOptions) => {
         const ms = (options.seconds ?? 8) * 1000;
+        let id = 0;
         const handle = show({
-          key: `undo:${next.current + 1}`,
+          key: options.key !== undefined ? `undo:key:${options.key}` : `undo:${next.current + 1}`,
           title: options.title,
           description: options.description,
           tone: "success",
@@ -121,6 +136,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           action: {
             label: options.undoLabel ?? "撤销",
             onClick: async () => {
+              commits.cancel(id);
               try {
                 await options.onUndo();
                 show({ title: "已撤销", description: options.title, tone: "info" });
@@ -129,12 +145,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               }
             },
           },
-          onDismiss: () => options.onExpire?.(),
+          onDismiss: (how) => void commits.settle(id, how),
         });
+        id = handle.id;
+        commits.add(id, (info) => options.onExpire?.(info));
         return handle;
       },
     });
-  }, [remove]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [remove, commits]);
   // One ticker while a timed toast is showing: re-render the countdowns and drop the expired ones.
   const timed = items.some((t) => t.clock);
   useEffect(() => {
@@ -147,47 +165,72 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const timer = setInterval(tick, 250);
     return () => clearInterval(timer);
   }, [timed, remove]);
+  // Pending undo commits are never lost: leaving the page (pagehide) or unmounting runs them at once, and
+  // while one is pending the browser asks before the tab closes.
+  useEffect(() => {
+    const hide = () => commits.flush("pagehide");
+    const ask = (event: BeforeUnloadEvent) => {
+      if (commits.size) event.preventDefault();
+    };
+    addEventListener("pagehide", hide);
+    addEventListener("beforeunload", ask);
+    return () => {
+      removeEventListener("pagehide", hide);
+      removeEventListener("beforeunload", ask);
+      commits.flush("unmount");
+    };
+  }, [commits]);
   return (
     <Context.Provider value={notify}>
       {children}
-      <div className="aui-notices" aria-label="操作通知">
-        {items.map((t) => {
-          const left = t.clock ? t.clock.remaining(now) : null;
-          return (
-            <div
-              key={t.id}
-              className={`aui-notice aui-notice-${t.tone}`}
-              role={t.tone === "error" ? "alert" : "status"}
-              onPointerEnter={() => t.clock?.pause(Date.now())}
-              onPointerLeave={() => t.clock?.resume(Date.now())}
-            >
-              <span className="aui-notice-icon">{ICONS[t.tone]}</span>
-              <div className="aui-notice-text">
-                <strong>{t.title}</strong>
-                {t.description && <small>{t.description}</small>}
-              </div>
-              {t.action && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="aui-notice-action"
-                  onClick={() => {
-                    const action = t.action;
-                    remove(t.id);
-                    void action?.onClick();
-                  }}
-                >
-                  {t.action.label}
-                  {left !== null && <span className="aui-notice-seconds">{secondsLeft(left)}</span>}
-                </Button>
-              )}
-              <IconButton label="关闭通知" className="aui-notice-close" onClick={() => remove(t.id, "close")} icon={<X />} />
-              {t.clock && t.action && <span className="aui-notice-bar" aria-hidden="true" style={{ transform: `scaleX(${left === null ? 0 : left / t.clock.total})` }} />}
-            </div>
-          );
-        })}
+      {/* The stack itself is the persistent live region (it exists before any toast, so an added toast is read out;
+          a role=status mounted per toast often is not). Error cards are role=alert (read on insertion). The text is
+          rendered once — 8.10's first cut repeated it in hidden spans, which doubled every toast for getByText. */}
+      <div className="aui-notices" role="status" aria-live="polite" aria-label="操作通知">
+        {items.map((t) => (
+          <NoticeCard key={t.id} toast={t} now={now} onClose={(how) => remove(t.id, how)} />
+        ))}
       </div>
     </Context.Provider>
+  );
+}
+
+/** One toast. The countdown pauses while the pointer is over it or the keyboard focus is inside it. */
+function NoticeCard({ toast: t, now, onClose }: { toast: Toast; now: number; onClose: (how?: "close") => void }) {
+  const left = t.clock ? t.clock.remaining(now) : null;
+  const pause = () => t.clock?.pause(Date.now());
+  return (
+    <div
+      className={`aui-notice aui-notice-${t.tone}`}
+      role={t.tone === "error" ? "alert" : undefined}
+      onPointerEnter={pause}
+      onPointerLeave={(e) => e.currentTarget.contains(document.activeElement) || t.clock?.resume(Date.now())}
+      onFocus={pause}
+      onBlur={(e) => e.currentTarget.contains(e.relatedTarget as Node | null) || t.clock?.resume(Date.now())}
+    >
+      <span className="aui-notice-icon">{ICONS[t.tone]}</span>
+      <div className="aui-notice-text">
+        <strong>{t.title}</strong>
+        {t.description && <small>{t.description}</small>}
+      </div>
+      {t.action && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="aui-notice-action"
+          onClick={() => {
+            const action = t.action;
+            onClose();
+            void action?.onClick();
+          }}
+        >
+          {t.action.label}
+          {left !== null && <span className="aui-notice-seconds">{secondsLeft(left)}</span>}
+        </Button>
+      )}
+      <IconButton label="关闭通知" className="aui-notice-close" onClick={() => onClose("close")} icon={<X />} />
+      {t.clock && t.action && <span className="aui-notice-bar" aria-hidden="true" style={{ transform: `scaleX(${left === null ? 0 : left / t.clock.total})` }} />}
+    </div>
   );
 }
 export function useNotify(): Notify {
@@ -208,8 +251,11 @@ export type UndoableOptions = {
   run?: () => void | Promise<void>;
   /** Put it back. */
   undo: () => void | Promise<void>;
-  /** Deferred mode: really commit when the undo time runs out (e.g. the server delete). */
-  commit?: () => void | Promise<void>;
+  /**
+   * Deferred mode: really commit when the undo time runs out (e.g. the server delete). Also runs at once with
+   * `reason: "pagehide"` when the tab is closed / left (send it with `keepalive` / sendBeacon) or `"unmount"`.
+   */
+  commit?: (info?: UndoCommitInfo) => void | Promise<void>;
   seconds?: number;
   /** Failure toast title (default `${title}失败`… shortened to 「操作失败」). */
   failTitle?: string;
@@ -244,8 +290,8 @@ export function useUndoToast() {
               throw err;
             }
           },
-          onExpire: () => {
-            void Promise.resolve(options.commit?.()).catch((err: unknown) =>
+          onExpire: (info) => {
+            void Promise.resolve(options.commit?.(info)).catch((err: unknown) =>
               notify.show({ title: "保存失败", description: err instanceof Error && err.message ? err.message : options.title, tone: "error" }),
             );
             resolve("done");

@@ -96,3 +96,11 @@ export function markReadLocal<T extends { id: string; read: boolean }>(items: re
   });
   return changed ? next : (items as T[]);
 }
+
+/** Tab-list keys (←/→ wrap, Home, End): the index to move to, or null for any other key. */
+export function tabKeyIndex(key: string, at: number, count: number): number | null {
+  if (key === "Home") return 0;
+  if (key === "End") return count - 1;
+  if (key !== "ArrowLeft" && key !== "ArrowRight") return null;
+  return (at + (key === "ArrowRight" ? 1 : -1) + count) % count;
+}

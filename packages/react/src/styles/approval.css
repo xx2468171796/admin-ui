@@ -8,7 +8,7 @@
 .adminui .aui-approval-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; gap: 0 12px; width: 100%; min-height: 64px; padding: 10px 12px 10px 16px; border: 0; border-bottom: 1px solid var(--aui-line); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .adminui .aui-approval-row:hover { background: var(--aui-hover); }
 .adminui .aui-approval-row[aria-current=true] { background: var(--aui-selected); }
-.adminui .aui-approval-row:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: -2px; }
+.adminui .aui-approval-row:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: -2px; }
 .adminui .aui-approval-row-main { display: grid; gap: 4px; min-width: 0; }
 .adminui .aui-approval-row-l1 { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: calc(13px * var(--aui-font-scale)); }
 .adminui .aui-approval-row-l1 b { font-weight: 600; white-space: nowrap; }
@@ -48,7 +48,7 @@
 .adminui .aui-approval-subject { padding: 10px 12px; border-radius: 10px; background: var(--aui-surface-subtle); font-size: calc(13px * var(--aui-font-scale)); line-height: 1.6; }
 .adminui .aui-approval-decide { flex: none; display: grid; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--aui-line); }
 .adminui .aui-approval-decide > textarea.aui-textarea { min-height: 64px; }
-.adminui .aui-approval-decide > textarea.aui-textarea[data-invalid] { border-color: var(--aui-danger); box-shadow: var(--aui-focus-ring-danger); }
+.adminui .aui-approval-decide > textarea.aui-textarea[data-invalid] { border-color: var(--aui-danger); box-shadow: 0 0 0 3px color-mix(in srgb, var(--aui-danger) 16%, transparent); }
 .adminui .aui-approval-error { margin: 0; color: var(--aui-danger); font-size: calc(12px * var(--aui-font-scale)); }
 .adminui .aui-approval-decide-bar { display: flex; align-items: center; gap: 8px; }
 .adminui .aui-approval-decide-bar > .aui-note { flex: 1; min-width: 0; font-size: calc(12px * var(--aui-font-scale)); }
@@ -95,7 +95,7 @@
 .adminui .aui-approval-card-open { flex: none; display: inline-flex; align-items: center; gap: 2px; height: 28px; padding: 0 4px; border: 0; border-radius: 6px; background: none; color: var(--aui-primary); font: inherit; font-size: calc(12.5px * var(--aui-font-scale)); font-weight: 500; cursor: pointer; }
 .adminui .aui-approval-card-open > svg { width: 14px; height: 14px; }
 .adminui .aui-approval-card-open:hover { background: var(--aui-soft); }
-.adminui .aui-approval-card-open:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 1px; }
+.adminui .aui-approval-card-open:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: 1px; }
 .adminui .aui-dcard .aui-approval-card { padding: 0; border: 0; border-radius: 0; background: transparent; }
 @media (max-width: 760px) {
   .adminui .aui-approval-row { grid-template-columns: 32px minmax(0, 1fr); }

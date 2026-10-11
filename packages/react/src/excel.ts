@@ -1,6 +1,7 @@
 /** Optional subpath: no spreadsheet parser enters the root bundle. Reads cached values, never evaluates formulas. */
 import { readSheet } from "read-excel-file/universal";
 import { parseCsv, type ImportRow } from "./workflow-core.ts";
+import { readTextFile } from "./text-decode.ts";
 export async function parseSpreadsheet(
   file: File,
   signal: AbortSignal,
@@ -9,7 +10,7 @@ export async function parseSpreadsheet(
   if (file.size > 2 * 1024 * 1024)
     throw Error("文件超过 2 MB，请使用服务端导入任务");
   if (/\.csv$/i.test(file.name)) {
-    const text = await file.text();
+    const text = await readTextFile(file);
     signal.throwIfAborted();
     return parseCsv(text);
   }

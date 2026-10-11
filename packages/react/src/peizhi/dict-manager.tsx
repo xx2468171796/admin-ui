@@ -24,8 +24,6 @@ import type { PeizhiApi } from "./api.ts";
 import { checkDictCode, checkItemValue, sortItems } from "./core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 const TONE_OPTIONS = DICT_TONES.map((t) => ({ value: t, label: DICT_TONE_LABEL[t] }));
 

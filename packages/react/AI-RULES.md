@@ -111,7 +111,13 @@
 - **点开一行看详情走记录详情三档（[TABLES.md](TABLES.md) §3）**：表格 `expandRecord={{ layout, url: true }}`，其他入口 `useRecordDetail` / `RecordDetailDialog`，独立页面 `RecordPage`。字段少用小弹框，多的用大弹框（手机全屏），图表和大关联表放整页（`pageOnly` / `overview`）。不给 `cards` 是字段行：字段名在左、值在右，按钮悬停才出，能改的字段给 `edit` 点值就地编辑（不要再自己开浮层编辑器、不要自己画字段方块）；只读的空字段收进「未填写」。**详情不从侧边滑出，不自己拼详情弹框的头部、上一条下一条、复制按钮**。
 - 批量操作传 `DataTable bulkActions`（勾选后底部浮出 `BulkActionBar`，不挤表格），操作列标 `kind: 'actions'`；只读行用 `isRowSelectable` 禁选；全选只含当前页可选项；跨页全选用服务端查询快照。
 - 搜索 / 筛选 / 排序 / 页大小变化回第 1 页并清理失效选择。服务端分页交给 adapter，禁止只排序当前页冒充全量。有真实总数用 `mode: 'page'`，游标接口用 `mode: 'cursor'`；未知总数不伪造。
-- 列表和图表覆盖 loading / empty / no-results / error，错误给重试。请求过期不能覆盖新结果（`useDataSource`）；不在每次 render 新建 adapter 函数。定时 / 保存后刷新用 `refresh()`，失败显示 `staleError`。
+- 列表和图表覆盖 loading / empty / no-results / error，错误给重试。请求过期不能覆盖新结果（`useDataSource`）；adapter / loader / `source` 写成内联函数或内联对象也只请求一次（SDK 内部按 ref 读，8.10 起），「数据变了要重取」用 `reload()` / `refresh()`，别靠换函数触发。定时 / 保存后刷新用 `refresh()`，失败显示 `staleError`。
+- **中文输入法**：自己写的 `onKeyDown` 里处理 Enter / Escape，第一句写 `if (isComposingEvent(e)) return;`（根入口导出）——选字的回车、取消候选的 Esc 不能保存 / 提交 / 关闭弹窗。按输入实时查询的要防抖、组字期间不发请求；能用 SDK 的 `SearchBox` / `AsyncChoice` / 网格搜索就别自己写（它们已处理）。
+- **错误文案**：给人看的错误一律 `errorText(error, "兜底文案")`，不写 `String(e)`、不直出 `e.message` 到登录框（「账号不存在」会泄露账号是否注册；`LoginForm` 默认就是固定文案，审核过的文案传 `errorMessage`）。
+- **取消要真的能取消**：SDK 传给 adapter 的 `signal` 接到 `fetch`；自己发请求时组件持有 `AbortController`，卸载 / 关闭 / 换参数时 `abort()`。不写 `new AbortController().signal` 这种谁也中止不了的假信号。
+- **别再自己造这几样**（各站重复写过 3 次以上）：说明文字 `<Note>`（不是 `<p className="aui-note">`）；内存数组分页 `useLocalPagination`；根入口直接用的懒加载图表 `LazyAdminChart`；控件定宽 `width` 属性（不是 `.x > .aui-select { width }`）；服务端搜索下拉 `AsyncChoice`；图表点击下钻 `onPointClick` / `onEvents`。
+- **日期**：只有日期的字段（生日、截止日）值是 `YYYY-MM-DD` 字符串，SDK 当日历日处理、不做时区换算；不要转成 `Date` 再存回去（负时区会差一天）。带时刻的才用时间戳 / ISO 加时区。
+- **图表类型**：`./charts` 默认注册常用系列（折线、柱、饼、散点、热力、漏斗、仪表、雷达、箱线、K 线、桑基、矩形树、关系、自定义）和常用组件；用到别的（旭日、地图、极坐标、工具箱等）在入口调一次 `registerAdminCharts(...)`，开发环境控制台会点名缺哪个。
 - `FormDialog.onSubmit`：校验失败 throw / reject；await 真正保存；resolve 才关并提示成功。填写变更传 `dirty`。
 - 删除 / 封禁 / 不可逆动作用 `ConfirmDialog`（`impact` 写对象与后果，审计要 `reason`，影响大的加 `typeToConfirm`）；改配置先 `changedFields + ChangeList` 再保存；只显示一次的密钥用 `OneTimeSecretDialog`。
 - 切换工作标签保留筛选、页码和未保存输入；关闭脏标签先确认；隐藏的工作页传 `active={false}`，暂停轮询和动画。
@@ -488,7 +494,7 @@ starter「系统 → 表单」（D08），公开页 `#form-public=fill`（加 `&
 - **菜单**：一律 `Menu` / `ContextMenu` / `MenuButton` / `MoreMenu` / `RowActions`（同一外观，手机自动变 `ActionSheet`）；多选菜单用 `header` 写对象、`label` 里写 `{count}`；不要自己写下拉菜单。
 - **提示条**：`notify("已保存")` 仍可用；要对象 / 操作用 `notify.show({ title, description, action })`，长任务 `notify.progress(...)` 再 `update(...)`；失败不会自动消失，不要用提示条做表单校验。
 - **空 / 错状态**：`StatePanel` 给 `title` + `message`（原因），出错给 `onRetry`（和 `details` 请求编号），搜不到给 `query` + `onClearSearch`，没权限用 `kind="forbidden"`、记录不在了 / 打错网址用 `kind="not-found"`（整页 `size="page"`），不要都写「暂无数据」。
-- **通知中心**：`NotificationCenter` 是通用组件，宿主传 `loadNotifications / markRead / markAllRead / loadInbox / onInboxAction / onOpen`；「待我处理」只列当前用户能处理的，动作执行时服务端再判权限、写审计。
+- **通知中心**：`NotificationCenter` 是通用组件，宿主传 `loadNotifications / markRead / markAllRead / loadInbox / onInboxAction / onOpen`；「待我处理」只列当前用户能处理的，动作执行时服务端再判权限、写审计。面板里的列表（通知 / 待我处理）在悬停 / 聚焦铃铛、打开面板或空闲时才下载，不占首屏。
 - **命令面板**：`CommandPalette` 的 `providers` 每个模块一个（按当前用户权限查、只回显示用的最少信息）；800ms 超时的组显示「较慢，回车看全部」（`onSearchAll`），每组 ≤ 5、总数 ≤ 30。
 - **编辑冲突**：默认保留别人较新的值；表格 `onCellsChange` 对撞车的格子返回 `rejected: [{ rowId, field, error, conflict: { by, at, value } }]`，表格自动显示「重新填入我的 / 用我的覆盖」（覆盖时 `context.overwrite === true`）；详情多项保存用 `SaveConflictDialog`，打开期间被改用 `StaleRecordNotice`。
 - **浮层定位**：任何浮起来的东西都走 `PopoverLayer` / `useLayerPosition`（`fixedOrigin` 实测包含块），不要手算减去弹框位置。
@@ -521,7 +527,7 @@ starter「系统 → 表单」（D08），公开页 `#form-public=fill`（加 `&
 
 - **所有「选人 / 部门 / 角色 / 业务线 / 公司」都用它**：分享给谁、字段 / 表 / 记录授权、知识库页面权限与协作者、培训指派、审批人、CRM 转交 / 分配、角色 → 成员。大场合 `OrgPicker`（弹框），小场合 `OrgPickerField`（行内，找不到点「组织架构」）；`GrantList mode="picked"` / `ShareDialog people` 给 `orgSource` 就自动换成它（懒加载）。不要再自己写「搜索框 + 平铺列表」，不要让人输 id / 编号。`OrgTreePicker` / `UserTransfer` 已弃用。
 - **数据只走 `OrgDataSource`**（`@adminui/react/org-picker`）：`roots()`、`loadChildren(id)`（展开时）、`loadMembers(id, { deep, cursor })`（分页，`hiddenDeparted` = 不显示的离职人数）、`search(q, { kinds, limit })`（**服务端搜**：拼音首字母、职务、公司名，回 `path` + `ancestors`）、`resolve(refs)`（回显：标签、路径、离职状态）、`pathOf?(id)`（定位）。服务端按「看的人」的可授权范围过滤；组件不认识 quanxian。
-- **范围由宿主说**：`availability(ref)` → `ok` / `locked`（灰 + 锁 + 原因「找谁开」）/ `partial`（能展开不能整选）/ `hidden`（不显示）。默认做法：本公司内超出范围的灰掉带锁写原因，别的公司对没有跨集团授权的人隐藏；`lockedHint` 写「跨公司分享要集团管理员开通」，只接在没有原因的锁定提示后面（`availability` 给的原因原样显示，里面写清找谁）。
+- **范围由宿主说**：`availability(ref)` → `ok` / `locked`（灰 + 锁 + 原因「找谁开」）/ `partial`（能展开不能整选）/ `hidden`（不显示）。默认做法：本公司内超出范围的灰掉带锁写原因，别的公司对没有跨集团授权的人隐藏；`lockedHint` 写「跨公司分享要集团管理员开通」，只接在没有原因的锁定提示后面（`availability` 给的原因原样显示，里面写清找谁）。**只列能选的**：`hideUnselectable`（默认 false）= 不能选的不灰着、直接不列——`locked` 按 `hidden` 处理（树、成员、搜索、额外分页、快捷、行内建议都不出现），已离职 / 停用的人不出现；树底「N 个不在你的管理范围，已隐藏」、成员数 = 服务端总数 − 已加载页里拿掉的（全部加载完就准），短页自动接着加载；`existing`（已授权）、被部门盖住、已满的照样显示（它们说明了原因）。给组长指派 / 转交这类「看到灰的人只会添堵」的场合用；授权 / 分享要让人知道找谁开的，保持默认。
 - **打开位置 `defaultFocus`**：宿主按「我」算（多部门的人用主部门 = 第一个隶属，或宿主指定），**只定位不勾选**；预选跟场景走（分享不预选、审批人默认直属主管、培训默认上次那批）由宿主传 `value`。
 - **已在名单里的**：`existing`（`subjectKey` `person:u1` 或 id → 「已授权 · 可读写」）灰掉、下拉里不出现，改档位回名单里改。**已离职但还在授权里的**：`value` 里带 `status: "left"`（或 `resolve` 回来），右栏划掉写「已离职」，只能手动 × 去掉——**确定时不悄悄丢掉**（权限变化必须显式）；GrantList 的行用 `GrantEntry.status`。
 - **模式**：`mode="single"`（圆点、760 宽、点一行就选上，底栏写选了谁）、`selectable`（`["person"]` = 只选人，树上没有勾选框；默认人 + 部门 + 公司 + 额外分页的种类）、`max`、`includeSubDefault`（默认 true）、`extraSources`（角色 / 业务线 / 公司 / 最近，`PickerSource.list({ query })`）、`shortcuts`、`emptyAction`。

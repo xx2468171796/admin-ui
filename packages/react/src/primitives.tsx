@@ -10,6 +10,7 @@ import { ScrollStrip } from "./scroll-strip.tsx";
 import { MenuButton } from "./menu.tsx";
 import { tipProps } from "./tooltip.tsx";
 import { usePageFlow } from "./page-lead.ts";
+import { withWidth } from "./control-width.ts";
 export const cn = clsx;
 
 /**
@@ -124,9 +125,11 @@ function stripIcon(children: React.ReactNode): React.ReactNode {
   if (React.isValidElement(first) && first.type === "svg" && list.length > 1) return list.slice(1);
   return children;
 }
-export type InputProps = Omit<React.ComponentProps<"input">, "size" | "prefix"> & {
+export type InputProps = Omit<React.ComponentProps<"input">, "size" | "prefix" | "width"> & {
   /** sm 28 (filters, cells) · md 36 (default; 40 on phones, 44 on public pages). */
   size?: "sm" | "md";
+  /** Box width (inline-size): a number = px, or any CSS length (`"12em"`, `"40%"`). Default: the layout decides. */
+  width?: number | string;
   /** Inside the box on the left: an icon or a unit in the note colour (「https://」 is a `segment`). */
   prefix?: React.ReactNode;
   /** Inside the box on the right: a unit (「元」「%」), an icon or a small button. */
@@ -155,7 +158,7 @@ export function countLevel(length: number, max: number | undefined): "warn" | "o
  * `clearable` / `showCount` wrap it in one box (the input stays the element that gets the ref, id and aria props).
  */
 export const Input = /* @__PURE__ */ named(/* @__PURE__ */ React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, size, prefix, suffix, segment, clearable, onClear, showCount, mono, boxClassName, ...props }, ref) => {
+  ({ className, size, prefix, suffix, segment, clearable, onClear, showCount, mono, boxClassName, width, ...props }, ref) => {
     const own = React.useRef<HTMLInputElement | null>(null);
     const setRef = (node: HTMLInputElement | null) => {
       own.current = node;
@@ -164,7 +167,7 @@ export const Input = /* @__PURE__ */ named(/* @__PURE__ */ React.forwardRef<HTML
     };
     const boxed = prefix !== undefined || suffix !== undefined || segment !== undefined || clearable || showCount;
     if (!boxed)
-      return <input ref={setRef} className={cn("aui-input", className)} data-size={size === "sm" ? "sm" : undefined} data-mono={mono || undefined} {...props} />;
+      return <input ref={setRef} className={cn("aui-input", className)} data-size={size === "sm" ? "sm" : undefined} data-mono={mono || undefined} {...props} style={withWidth(props.style, width)} />;
     const text = props.value === undefined || props.value === null ? "" : String(props.value);
     const filled = text.length > 0;
     const invalid = props["aria-invalid"] === true || props["aria-invalid"] === "true";
@@ -189,6 +192,7 @@ export const Input = /* @__PURE__ */ named(/* @__PURE__ */ React.forwardRef<HTML
         data-disabled={props.disabled || undefined}
         data-readonly={props.readOnly || undefined}
         data-mono={mono || undefined}
+        style={withWidth(undefined, width)}
         onPointerDown={(event) => {
           if (event.target === event.currentTarget) {
             event.preventDefault();

@@ -30,7 +30,7 @@
 .adminui .aui-cite { display:inline-flex; align-items:center; gap:4px; min-width:0; max-width:100%; height:22px; padding:0 8px; border:1px solid var(--aui-line); border-radius:6px; background:var(--aui-surface-subtle); color:var(--aui-secondary); font:inherit; font-size:calc(12px * var(--aui-font-scale)); text-decoration:none; white-space:nowrap; cursor:pointer; }
 .adminui .aui-cite:hover:not(:disabled) { border-color:var(--aui-soft-strong); color:var(--aui-primary); background:var(--aui-soft); }
 .adminui .aui-cite:disabled { cursor:default; }
-.adminui .aui-cite:focus-visible { outline:2px solid var(--aui-primary); outline-offset:1px; }
+.adminui .aui-cite:focus-visible { outline:2px solid var(--aui-focus); outline-offset:1px; }
 .adminui .aui-cite-icon { display:inline-flex; color:var(--aui-primary); }
 .adminui .aui-cite-icon > svg { width:12px; height:12px; }
 .adminui .aui-cite-label { min-width:0; overflow:hidden; text-overflow:ellipsis; }
@@ -50,7 +50,7 @@
 .adminui .aui-answer-cite { display:inline-grid; place-items:center; min-width:16px; height:16px; padding:0 3px; border:1px solid var(--aui-soft-strong); border-radius:4px; background:var(--aui-soft); color:var(--aui-ink); font:inherit; font-size:calc(12px * var(--aui-font-scale)); font-weight: 600; line-height:1; cursor:pointer; }
 .adminui .aui-answer-cite:hover:not(:disabled) { background:var(--aui-primary-fill); border-color:var(--aui-primary); color:#fff; }
 .adminui .aui-answer-cite:disabled { border-color:var(--aui-danger-line); background:var(--aui-danger-soft); color:var(--aui-danger); cursor:not-allowed; }
-.adminui .aui-answer-cite:focus-visible { outline:2px solid var(--aui-primary); outline-offset:1px; }
+.adminui .aui-answer-cite:focus-visible { outline:2px solid var(--aui-focus); outline-offset:1px; }
 .adminui .aui-answer-footer { color:var(--aui-note); font-size:calc(12px * var(--aui-font-scale)); }
 .adminui .aui-prompt { display:flex; flex-direction:column; min-width:0; border:1px solid var(--aui-line); border-radius:var(--aui-radius-lg); background:var(--aui-surface); overflow:hidden; }
 .adminui .aui-prompt-head { display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-height:44px; padding:6px 12px; border-bottom:1px solid var(--aui-line); }
@@ -78,7 +78,7 @@
 .adminui .aui-prompt-input { position:absolute; top:0; bottom:0; left:56px; right:0; width:calc(100% - 56px); height:100%; margin:0; padding:6px 12px 6px 0; border:0; border-radius:0; background:transparent; color:transparent; caret-color:var(--aui-text); resize:none; overflow:hidden; outline:none; }
 .adminui .aui-prompt-input::selection { background:color-mix(in srgb, var(--aui-primary) 22%, transparent); color:transparent; }
 .adminui .aui-prompt-input::placeholder { color:var(--aui-note); }
-.adminui .aui-prompt:focus-within { border-color:var(--aui-primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--aui-primary) 14%, transparent); }
+.adminui .aui-prompt:focus-within { border-color:var(--aui-primary); outline:2px solid transparent; box-shadow:var(--aui-focus-ring); }
 .adminui .aui-prompt-foot { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; padding:7px 12px; border-top:1px solid var(--aui-line); background:var(--aui-tile); color:var(--aui-note); font-size:calc(12px * var(--aui-font-scale)); }
 .adminui .aui-prompt-foot b { color:var(--aui-secondary); font-weight:600; font-variant-numeric:tabular-nums; }
 .adminui .aui-prompt-used { margin-left:auto; display:inline-flex; align-items:center; flex-wrap:wrap; gap:6px; }
@@ -121,7 +121,7 @@
 .adminui .aui-compare-tally { margin-left:auto; color:var(--aui-note); font-variant-numeric:tabular-nums; }
 
 /* —— records —— */
-.adminui .aui-suggest { position: fixed; z-index: 135; max-height: min(300px, 50dvh); overflow-x: hidden; overflow-y: auto; padding: 4px; background: var(--aui-surface); color: var(--aui-text); border: 1px solid var(--aui-line); border-radius: 10px; box-shadow: var(--aui-shadow-lg); font-size: calc(13px * var(--aui-font-scale)); }
+.adminui .aui-suggest { position: fixed; z-index: calc(var(--aui-z-popover) + 5); max-height: min(300px, 50dvh); overflow-x: hidden; overflow-y: auto; padding: 4px; background: var(--aui-surface); color: var(--aui-text); border: 1px solid var(--aui-line); border-radius: 10px; box-shadow: var(--aui-shadow-lg); font-size: calc(13px * var(--aui-font-scale)); }
 .adminui .aui-suggest-list { margin: 0; padding: 0; list-style: none; }
 .adminui .aui-suggest-option { display: flex; align-items: center; gap: 9px; min-height: 36px; padding: 4px 8px; border-radius: 7px; cursor: pointer; }
 .adminui .aui-suggest-option[aria-selected=true] { background: var(--aui-hover); }

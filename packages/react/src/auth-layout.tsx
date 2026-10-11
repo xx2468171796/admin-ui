@@ -16,8 +16,6 @@ import { PasswordInput } from "./password-input.tsx";
 import { InlineAlert } from "./layout.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/navigation.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/navigation.css";
 
 export type AuthLayoutProps = {
   /** Logo square content (「安」, an svg); default none. */
@@ -56,8 +54,17 @@ export function AuthLayout({ logo, title, description, children, footer, width =
 
 export type LoginValues = { account: string; password: string; remember: boolean };
 export type LoginFormProps = {
-  /** Sign in; throw an Error whose message is shown at the top of the card (「账号或密码不对，还能试 3 次」). */
+  /**
+   * Sign in; throwing shows one alert at the top of the card. Its text is LOGIN_FAILED_TEXT — never the raw
+   * error message, which can tell an attacker 「账号不存在」 or show 「Failed to fetch」 — unless `errorMessage`
+   * returns a vetted text for it.
+   */
   onSubmit: (values: LoginValues) => Promise<void> | void;
+  /**
+   * The vetted alert text for a failed sign-in (「账号或密码不对，还能试 3 次」), e.g.
+   * `(e) => (e instanceof LoginRejected ? e.message : undefined)`; undefined → LOGIN_FAILED_TEXT.
+   */
+  errorMessage?: (error: unknown) => string | undefined;
   accountLabel?: string;
   accountPlaceholder?: string;
   passwordLabel?: string;
@@ -75,8 +82,12 @@ export type LoginFormProps = {
   accountId?: string;
   passwordId?: string;
 };
+/** The alert after a failed sign-in when `errorMessage` gives no vetted text: says nothing about which part was wrong. */
+export const LOGIN_FAILED_TEXT = "账号或密码不对，或暂时无法登录，请稍后再试";
+/** The alert text for a failed sign-in: the vetted `errorMessage` text, else LOGIN_FAILED_TEXT. */
+export const loginFailureText = (error: unknown, vet?: (error: unknown) => string | undefined): string => vet?.(error) || LOGIN_FAILED_TEXT;
 /** See the module comment. */
-export function LoginForm({ onSubmit, accountLabel = "账号", accountPlaceholder = "输入账号", passwordLabel = "密码", passwordPlaceholder = "输入密码", remember, forgot, submitLabel = "登录", defaultAccount = "", extra, accountId, passwordId }: LoginFormProps) {
+export function LoginForm({ onSubmit, errorMessage, accountLabel = "账号", accountPlaceholder = "输入账号", passwordLabel = "密码", passwordPlaceholder = "输入密码", remember, forgot, submitLabel = "登录", defaultAccount = "", extra, accountId, passwordId }: LoginFormProps) {
   const base = useId();
   const accountInput = accountId ?? `${base}-account`;
   const passwordInput = passwordId ?? `${base}-password`;
@@ -105,7 +116,7 @@ export function LoginForm({ onSubmit, accountLabel = "账号", accountPlaceholde
     try {
       await onSubmit({ account: account.trim(), password, remember: keep });
     } catch (error) {
-      setFailure(error instanceof Error ? error.message : String(error));
+      setFailure(loginFailureText(error, errorMessage));
       passwordRef.current?.select();
     } finally {
       setBusy(false);

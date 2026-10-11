@@ -25,6 +25,8 @@ import { spaceBelow, workspaceHeights, type WorkspaceHeights } from "./workspace
 import { useNotify } from "./notifications.tsx";
 import { SearchBox } from "./search.tsx";
 import { avatarTone } from "./avatar-core.ts";
+import { errorText } from "./error-text.ts";
+import { isComposingEvent } from "./ime.ts";
 
 const cssVars = (vars: Record<string, string>) => vars as CSSProperties;
 const letterOf = (name: ReactNode) => (typeof name === "string" ? name.trim().slice(0, 1) : "");
@@ -419,16 +421,22 @@ export function ChangeMark({ changed, children, label = "改过、还没保存" 
 
 // ---------------------------------------------------------------- SaveBar (T08 / T09)
 
-export type SaveBarProps = {
+export type SaveBarProps<T = unknown> = {
   /** Number of unsaved changes; with 0 changes and 0 errors the bar is not shown. */
   count: number;
-  /** Which fields: 「更新通道 · 语音播报」. */
+  /** Which fields: 「更新通道 · 语音播报」; an array is joined with 「、」. */
   summary?: ReactNode;
+  /**
+   * The draft (`tracker.values`). Its value when 保存 is pressed is handed to `onSave` as the snapshot to send
+   * and to `tracker.commit(snapshot)` — edits made while the request runs then stay unsaved instead of being
+   * marked saved.
+   */
+  values?: T;
   /** Fields with an invalid value. */
   errors?: number;
   onDiscard: () => void;
-  /** Await the real save; a rejection keeps the bar and shows the message. */
-  onSave: () => void | Promise<void>;
+  /** Await the real save; a rejection keeps the bar and shows the message. Gets the `values` snapshot taken at the click. */
+  onSave: (snapshot: T | undefined) => void | Promise<void>;
   /**
    * sticky = floats at the bottom of a settings page (T08); inline = a soft bar under a matrix (T09);
    * footer = the fixed bottom row of a settings sheet (SettingsSheet): always shown — 「改了 N 处」 on
@@ -444,7 +452,7 @@ export type SaveBarProps = {
  * `useChangeTracker`). Switches that take effect at once are not counted. `sticky` floats at the bottom centre
  * (phones: full width at the bottom); `inline` is the soft bar under a matrix (T09).
  */
-export function SaveBar({ count, summary, errors = 0, onDiscard, onSave, placement = "sticky", saveLabel = "保存", discardLabel }: SaveBarProps) {
+export function SaveBar<T = unknown>({ count, summary, values, errors = 0, onDiscard, onSave, placement = "sticky", saveLabel = "保存", discardLabel }: SaveBarProps<T>) {
   const notify = useNotify();
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -454,19 +462,21 @@ export function SaveBar({ count, summary, errors = 0, onDiscard, onSave, placeme
   const idle = count <= 0 && errors <= 0;
   const save = async () => {
     if (saving) return;
+    const snapshot = values;
     setSaving(true);
     setFailed(false);
     try {
-      await onSave();
+      await onSave(snapshot);
     } catch (error) {
       setFailed(true);
-      notify(error instanceof Error ? error.message : String(error), "error");
+      notify(errorText(error), "error");
     } finally {
       setSaving(false);
     }
   };
   const extra = errors > 0 ? `另有 ${errors} 处填写有误` : "";
-  const names = Array.isArray(summary) ? (summary as readonly ReactNode[]).join("、") : summary;
+  // ReactNode[].join() would print 「[object Object]」 for elements: render the items with separators instead.
+  const names = Array.isArray(summary) ? (summary as readonly ReactNode[]).map((item, i) => <Fragment key={i}>{i > 0 && "、"}{item}</Fragment>) : summary;
   return (
     <div className="aui-savebar" data-placement={placement} data-idle={footer && idle ? true : undefined} data-state={saving ? "saving" : failed ? "error" : undefined} role="region" aria-label={footer ? "保存" : "未保存的改动"}>
       <span className="aui-savebar-msg" aria-live="polite">
@@ -605,8 +615,6 @@ import { NarrowBackBar } from "./nav-layouts.tsx";
 import { IconButton } from "./buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/templates.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/templates.css";
 
 // ---------------------------------------------------------------- WorkspaceLayout (T10)
 
@@ -712,7 +720,7 @@ export function Composer({ value, onChange, onSend, placeholder = "输入消息�
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+          if (e.key === "Enter" && !e.shiftKey && !isComposingEvent(e)) {
             e.preventDefault();
             send();
           }

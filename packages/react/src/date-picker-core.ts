@@ -52,8 +52,22 @@ const fromUtc = (ms: number): DayKey => {
   return dayKeyOf(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
 };
 
-/** Local-time day of `now`. */
-export const todayKey = (now: Date = new Date()): DayKey => dayKeyOf(now.getFullYear(), now.getMonth() + 1, now.getDate());
+const ZONE_DAY = new Map<string, Intl.DateTimeFormat>();
+/**
+ * The day of `now`: in `timeZone` when given (a grid field's / AdminProvider's zone — 「今天」 of a user in
+ * Beijing looking at a Los Angeles field is Los Angeles' day), else the browser's local day.
+ */
+export function todayKey(now: Date = new Date(), timeZone?: string): DayKey {
+  if (!timeZone) return dayKeyOf(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  let format = ZONE_DAY.get(timeZone);
+  if (!format) {
+    format = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
+    ZONE_DAY.set(timeZone, format);
+  }
+  const parts = format.formatToParts(now);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return dayKeyOf(get("year"), get("month"), get("day"));
+}
 /** Local-time `HH:mm` of `now`. */
 export const nowTime = (now: Date = new Date()) => `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
@@ -188,6 +202,32 @@ export function parseDateTimeText(text: string, now: Date = new Date(), fallback
   }
   const day = parseDateText(t, now);
   return day && isTimeText(fallbackTime) ? `${day}T${fallbackTime}` : null;
+}
+
+/** A typed day with an optional wall-clock time (seconds kept): what parseDateParts reads. */
+export type DateTextParts = { day: DayKey; hh: number; mm: number; ss: number; time: boolean };
+const SECONDS_RE = /^(\d{1,2})\s*[:点时]\s*(\d{1,2})\s*[:分]\s*(\d{1,2})\s*秒?$/;
+/**
+ * The one parser of typed / pasted dates (date pickers and BitableGrid cells alike): any parseDateText day
+ * (`2026-10-05`, `2026/10/5`, `2026年10月5日`, `20261005`, `10/5`, full-width digits), optionally followed by `T`
+ * or spaces and a time (any parseTimeText form, or with seconds `14:05:09`). null when it is not a date.
+ */
+export function parseDateParts(text: string, now: Date = new Date()): DateTextParts | null {
+  const t = normaliseDigits(text);
+  if (!t) return null;
+  const day = parseDateText(t, now);
+  if (day) return { day, hh: 0, mm: 0, ss: 0, time: false };
+  const m = /^(.+?)(?:\s*T\s*|\s+)([^\sT]+(?:\s*[点时]\s*\d{0,2}\s*分?)?)$/.exec(t);
+  const [, dayText = "", timeText = ""] = m ?? [];
+  const head = m ? parseDateText(dayText, now) : null;
+  if (!head) return null;
+  const withSeconds = SECONDS_RE.exec(timeText);
+  if (withSeconds) {
+    const [hh, mm, ss] = [Number(withSeconds[1]), Number(withSeconds[2]), Number(withSeconds[3])];
+    return hh > 23 || mm > 59 || ss > 59 ? null : { day: head, hh, mm, ss, time: true };
+  }
+  const time = parseTimeText(timeText);
+  return time ? { day: head, hh: Number(time.slice(0, 2)), mm: Number(time.slice(3)), ss: 0, time: true } : null;
 }
 
 /** Text shown in a picker's box: days as-is, moments with a space (`2026-10-05 14:30`). */

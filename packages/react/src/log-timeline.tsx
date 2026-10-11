@@ -33,8 +33,6 @@ import { avatarTone } from "./avatar-core.ts";
 import { countByKind, filterByKind, inlineChange, type ConflictDecisions } from "./history-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/history.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/history.css";
 
 // 审阅 05: readable audit details (labels, folded technical keys) for the host's `detail` renderer.
 export { detailValueText, readableDetail, type LogDetailEntry, type ReadableDetailOptions } from "./log-detail-core.ts";

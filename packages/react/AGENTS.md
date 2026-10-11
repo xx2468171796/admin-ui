@@ -12,9 +12,40 @@
 - 文档只写当前行为，不写版本历史标签（历史只在 CHANGELOG）；中文、具体、可复制。
 - 版本 tag 前缀 `adminUI-v`，包名 `@adminui/react`；改版本号时同步 README / INTEGRATION 里的固定版本。
 
+## 红线：这些写法出过真问题，每条都有门禁盯着（2026-10-11 审计）
+
+| 别这样写 | 为什么 | 改成 | 门禁（改回旧写法即红） |
+|---|---|---|---|
+| 宿主传进来的函数 / 对象（adapter、loader、`load`、`source`、subscribe）放进 effect 依赖 | 宿主写内联箭头 / 内联对象时每次渲染都是新的：请求 → setState → 重渲染 → 再请求，打爆后端；选人组件是重置 → 重渲染 → 再重置，页面卡死 | `useHostFunction(fn)`（`src/host-function.ts`）：按 ref 读，只有真换了才动 generation | `quality` 的 `host-callback-dep`；`test/data-hooks.test.ts`、`test/host-callbacks.test.ts` |
+| 加载中给可聚焦控件（排序、全选、翻页）写 `disabled` | 禁用的按钮会把键盘焦点扔回 `<body>`，3 秒自动刷新就每 3 秒丢一次 | `aria-disabled` + 点击时忽略；样式只给 `cursor: progress`，不灰显（否则每次刷新闪一下） | `test/hardening-ssr.test.ts` |
+| 处理 Enter / Escape 不先判输入法组字 | 中文选字的回车把拼音存成名字，取消候选的 Esc 关掉弹窗 | `if (isComposingEvent(e)) return;`（`src/ime.ts`，根入口导出）；实时搜索防抖且组字期间不发 | `quality` 的 `ime-unguarded-key` |
+| `String(e)` 给人看 | 显示「Error: …」「[object Object]」；登录框直出会泄露账号是否存在 | `errorText(e, 兜底)` | `quality` 的 `raw-error-string` |
+| `new AbortController().signal` 传给宿主 | 谁也中止不了，宿主以为能取消 | 组件持有 controller（`src/abort-owner.ts`），卸载 / 关闭 / 换参数时 abort | `quality` 的 `fake-abort-signal` |
+| 纯日期（`YYYY-MM-DD`）按时区换算 | `Date.parse` 是 UTC 零点，负时区显示前一天，编辑一次就往前写一天 | 日历日不参与时区，只有 datetime 走时区 | 网格日期往返测试（洛杉矶 / 奥克兰） |
+| 根入口的模块 type-import 了 `./charts` 或 `echarts` | ECharts 是可选 peer，没装它又关了 skipLibCheck 的宿主类型检查失败 | 属性类型放 `chart-props.ts` 这类不点名 ECharts 的文件 | `contracts.test`「root entry's type graph never reaches echarts」 |
+| 导出了没登记 `catalog.ts` | AI 把 catalog 当全集会重造；内部助手外泄让每次重构都成破坏性变更 | 登记，或别导出 | `contracts.test` 反向对账（存量名单 `test/fixtures/unregistered-exports.json` 只许缩小） |
+| 文件变长 / 函数超 80 行 / 新的 hooks 依赖问题 / 非空断言 / `eslint-disable` | 包里以前没有行数和 lint 门禁：`grid.tsx` 长到 1994 行，53 条 eslint-disable 从没被执行、背后 173 处 hooks 依赖问题 | 拆文件；按 Biome 规则改；确属例外写 `// biome-ignore lint/<组>/<规则>: <理由>` 或 `// quality-ok: <规则> <理由>` | `npm run quality`（`scripts/quality-ratchet.mjs` + `quality-baseline.json`：只许减少；修好一些后跑 `--update` 降基线） |
+| 改了 `src/styles` 不重生成分层副本 | 用 `aui-layered` 条件的宿主拿到旧样式 | `node scripts/css-layered.mjs --write` | `css-layered`（`npm run check` 里） |
+| 生成的 `// aui-css` 引入块出现两份 | `--fix` 的正则少了 `g`，193 个模块各两份，检查模式还不报 | 跑 `node scripts/css-chunks.mjs --fix` | `css-chunks` 现在把多块 / 重复导入判为问题 |
+| 控件边框、焦点环、开关的非文字对比度 < 3:1 | 审计时焦点环只有 1.2:1，深色开关 1.64:1 | 颜色由 `palette.ts` `ensure` 出来，不在 CSS 里写死 | 对比度测试（6 色卡 × 浅深） |
+| 首屏（登录页 / 外壳 / 第一个表格页）静态引入只有交互后才用的东西，或为一个小上下文 / 小工具单开模块被各处共用 | 8.10–8.11 下游同样的应用代码首屏 JS +11.6 KB、CSS +0.2 KB 超预算：表格拆分 + 修复 +7.3，`ViewTabsContext` 单开模块让下游打包器把表格页多拆 12 个块（+1.5，代码几乎没变） | 交互后才用的（面板列表、编辑器、对话框主体）用 `lazyPart` + 空闲 / 悬停预取；共用的小东西放回它的主模块；只给懒加载组件用的样式不放 core.css | `size` 的 `app:login / app:shell / app:home`（照下游实测的引入，紧预算）；`test/first-paint-graph.test.ts` |
+| 文档里的安装版本过期 | 照抄装到旧版，全程不报错（审计时停在 8.6.0 / 8.2.0） | 发版后在仓库根跑 `npm run sync-doc-pins` | `test/docs-pins.test.ts` |
+
+**写新门禁的纪律**：写完故意把代码改回旧写法，确认它真的变红，再恢复。零对零是空断言，不是通过。
+
+## 版本号规则（8.10 起）
+
+审计时 12 天出了 6 个大版本，8.6.0 还在次版本里删了 `WorkspaceLayout narrow="card"`；结果是各站停在 1.10 / 2.x / 7.x 升不动——每升一次要跨好几次破坏。所以：
+
+- **次版本 / 补丁版只做「加、修、标废弃」**：不删导出、不改名、不改默认行为让宿主代码或测试失效。要淘汰的先 `@deprecated` + CHANGELOG 写替代。
+- **破坏性改动攒到下一个大版本**，大版本附：迁移表（`MIGRATION-<n>.md`）、`admin-ui-audit` 能报出旧写法的规则、能机械改的出 codemod；废弃的 API 至少活过一个大版本。
+- **不改 API 的行为变化也写进 CHANGELOG**（默认值、视觉、渲染结果、注册范围），在「同事会注意到 / 风险」里写清宿主要不要动。
+- **公开 API = `catalog.ts` 登记的**；没登记的导出不受版本承诺保护。
+
+
 ## 门禁：改哪里跑哪个
 
-所有改动都跑本包 `npm run check`（= `typecheck` 类型 + `test` 单测（含 catalog 导出核对）+ `audit:access` + `css-chunks`（每个模块引的样式块和它渲染的类一致）+ dist 核对 + `size`（体积预算，含三档首屏）；starter / small / large 样板改了另跑 `audit:starter`、`audit:examples`）和 `npm run test:packed`（独立打包消费）。另按改动范围加跑：
+所有改动都跑本包 `npm run check`（= `typecheck` 类型 + `test` 单测（含 catalog 导出核对）+ `audit:access` + `css-chunks`（每个模块引的样式块和它渲染的类一致）+ `css-layered`（分层副本是最新的）+ dist 核对 + `size`（体积预算，含三档首屏）+ `guard`（不泄露内部名称）+ `quality`（行数 / lint / 坏写法棘轮）；starter / small / large 样板改了另跑 `audit:starter`、`audit:examples`）和 `npm run test:packed`（独立打包消费）。另按改动范围加跑：
 
 | 改了什么 | 另跑 | 覆盖 |
 |---|---|---|
@@ -54,7 +85,7 @@
 | 页面贴边 8.6（各样式文件的「page flush」一节、`page-lead.ts`（单块不重复标题、页面流位置）、`TabbedPage` 单分区、页面流里的 `Tabs`、starter `PageFlushShowcase` / `AccessConsoleShowcase`、`test/page-flush-checks.mjs`） | `test:page-templates`、`test:dashboards`、`test:access`（权限控制台）、`test:access-governance`（权限申请），再跑 `test:design`、`test:components`、`test:views`、`test:records` | 「系统 → 页面贴边（含包装层）/ 租户成员 / 单块数量 / 权限控制台」、卡片流、T01 / T05 / T06 / T08 / T12：第一块紧贴标签行、顶层块平且贴满、块之间零缝一条线、表格贴两边、单块不重复页名、单分区不出标签行、分栏一条竖线撑到底，截图像素里块之间没有画布色；看板卡片照旧是卡片；1440 浅 / 深色 + 390；截图 `test/artifacts/page-flush/` |
 | 界面文字繁体转换（`locale-core.ts`、`vite.ts`、词表 `HANT_UI_PHRASES`） | `npm test`（`test/locale.test.ts`）、`npm run test:packed`（starter 用插件 zh-Hant 构建） | 只改汉字、`\uXXXX` 转义的 JSX 文字、幂等、词表、overrides、文件匹配（含 pnpm 布局）、宿主文字不动；改词表或新增大量组件文字后，把全库可见文字转一遍逐条看 |
 | `examples/single-service` | `prepare:single-service`，构建 Go 与 Rust 两种后端，`test:single-service` | 真实 SQLite 接线；`test:packed` 必须验证安装包能独立准备案例 |
-| 视图（`src/views/`、`styles/views*.css`、starter `ViewsShowcase`） | `test:views` | 看板拖动 / 键盘 / 回滚、月历跨周与 +N、周历重叠与拖动、甘特拖动与刻度、视图管理三档、深色、390 不溢出 |
+| 视图（`src/views/`、`styles/views*.css`、starter `ViewsShowcase`） | `test:views`、`test:views-phone`（视图标签 / 仪表盘组 / 「视图」面板） | 看板拖动 / 键盘 / 回滚、月历跨周与 +N、周历重叠与拖动、甘特拖动与刻度、视图管理三档、深色、390 不溢出 |
 | 条件编辑器（`condition-editor`）、表单（`src/form-builder/`、`styles/builders.css`、`styles/forms.css`、starter `FormsShowcase` / `FormPublicDemo`）（bt/builders-a） | `test:form-builder`，条件编辑器另跑 `test:grid-panels`、`test:access-governance`、`test:records` | D08 拖动加题 / 显示条件 / 设置；D18 条件显示、上传、录音、验证、成功页；390 吸顶条 + 触屏尺寸；浅深色不溢出 |
 | 录音文字稿（`transcript-*`）、规则列表（`rule-list`、`condition-describe`）、看板搭建器（`dashboard-builder*`）（bt/builders-b） | `test:transcript`、`test:dashboard-builder`（改了 `media-audio` 另跑 `test:media`，改了看板部件另跑 `test:dashboards-kit`） | D27t / D26 / D32：跟着播放滚动、打码留痕、搜索、导出；规则拖动 / 键盘 / 兜底 / 修改弹层；搭建器拖放 / 改大小 / 键盘 / 撤销重做 / 设置 / 预览 / 手机只读、浅深色、390 不溢出 |
 | 权限按模块（`src/access/module-*`、`data-scope-select`、`permission-diff`、`effective-access-view`、`styles/access-modules.css`、starter `AccessModulesShowcase`）（bt/access-modules） | `test:access-modules`，改了已有权限部件另跑 `test:access`；截图看 `test/artifacts/access-modules/`（和已审定的演示并排看） | A1–A6：档位下拉说明 / 授不出 / 缺档说明、自定义、改动点 + 改动条、细调 加 / 去掉 / 待确认 / 锁住 / 字段三态 / 恢复默认、只看自己的固定本人、集团只读、保存前改动 + 影响 + 原因必填、诊断来源 + 明细；1440 浅 / 深色、390 卡片 + 全屏细调（每行 ≥ 48px）不溢出 |

@@ -1,0 +1,15 @@
+/* @adminui/react · copy — moved out of core.css in 8.11.1 (only these components use them); edit here. */
+
+/* —— moved from core.css (8.11.1): rendered only by this chunk's components —— */
+.adminui .aui-copy-btn[data-reveal]:not([data-result]) { opacity: 0; transition: opacity var(--aui-duration-fast); }
+.adminui :is(.aui-copy-host, .aui-rfield, tr, .aui-copy-inline):is(:hover, :focus-within) .aui-copy-btn[data-reveal],
+.adminui .aui-copy-btn[data-reveal]:focus-visible { opacity: 1; }
+.adminui .aui-copy-field-wrap { min-width: 0; max-width: 100%; }
+.adminui .aui-copy-field { display: flex; align-items: center; gap: 4px; min-width: 0; height: var(--aui-control-height); padding: 0 4px 0 12px; border: 1px solid var(--aui-field-border); border-radius: var(--aui-radius); background: var(--aui-wash); }
+.adminui .aui-copy-field > code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--aui-text); font: calc(12.5px * var(--aui-font-scale))/1 var(--aui-font-mono); }
+.adminui .aui-copy-field > code[data-masked] { letter-spacing: .08em; color: var(--aui-secondary); }
+.adminui .aui-copy-field-note { margin-top: 4px; color: var(--aui-note); font-size: calc(12px * var(--aui-font-scale)); }
+.adminui .aui-copy-inline > .aui-copy-btn { margin-block: -2px; }
+@media (hover: none) {
+  .adminui .aui-copy-btn[data-reveal] { opacity: 1 !important; }
+}

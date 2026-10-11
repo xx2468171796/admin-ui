@@ -18,8 +18,6 @@ import { descendants, fullPath, indexTree } from "./tree-core.ts";
 import { IconButton } from "../buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 /** @deprecated 8.1：改用 `@adminui/react/org-picker` 的 `OrgPickerField` / `OrgPicker`（selectable={["dept"]}），下个大版本删除。 */
 export type OrgTreePickerProps = {
@@ -76,9 +74,9 @@ export function OrgTreePicker({
   const textId = useId();
   const [draft, setDraft] = useState<string[]>([...value]);
   const [draftLinked, setDraftLinked] = useState(linked);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the draft starts from `value` when the dialog opens; a value change while it is open must not wipe the user's draft.
   useEffect(() => {
     if (open) setDraft([...value]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
   const path = (dept: string) => (index.byId.has(dept) ? fullPath(index, dept, separator) : `${dept}（已不存在）`);
   const draftPaths = draft.map(path);

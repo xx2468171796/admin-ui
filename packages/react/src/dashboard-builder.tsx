@@ -27,8 +27,7 @@ import { WidgetConfig, type DashboardDataSource, type DashboardMetricDef, type D
 import type { LoadWidgetData } from "./dashboard-builder-widget.tsx";
 import { addWidget, countSchemaChanges, historyPush, historyRedo, historyStart, historyUndo, nextWidgetId, WIDGET_KINDS, WIDGET_KIND_LABELS, WIDGET_SIZES, type DashboardSchema, type DashboardWidget, type WidgetKind } from "./dashboard-builder-core.ts";
 import { IconButton } from "./buttons.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard-builder.css";
+import { isComposingEvent } from "./ime.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard-builder.css";
 
@@ -123,7 +122,7 @@ export function DashboardBuilder(props: DashboardBuilderProps) {
   const rail = libraryCollapsed || (widget !== null && width > 0 && width < 1100);
   const decor: WidgetDecor = useMemo(() => ({ metrics, dimensions, sourceLabel: (id: string) => { const s = sources.find((x) => x.id === id); return s ? `${s.group ? `${s.group} · ` : ""}${s.label}` : undefined; }, onSetTarget: (w: DashboardWidget) => setSelected(w.id) }), [metrics, dimensions, sources]);
 
-  const announce = (text: string) => setAnnouncement((old) => (old === text ? `${text} ` : text));
+  const announce = useCallback((text: string) => setAnnouncement((old) => (old === text ? `${text} ` : text)), []);
   const lastMerge = useRef<string | null>(null);
   const commit = useCallback((next: DashboardSchema, text?: string, mergeKey?: string) => {
     const merge = Boolean(mergeKey) && mergeKey === lastMerge.current;
@@ -131,7 +130,7 @@ export function DashboardBuilder(props: DashboardBuilderProps) {
     setHistory((h) => historyPush(h, next, 100, merge));
     onChange?.(next);
     if (text) announce(text);
-  }, [onChange]);
+  }, [onChange, announce]);
   const setWidgets = (widgets: DashboardWidget[], text?: string, mergeKey?: string) => commit({ ...schema, widgets }, text, mergeKey);
   const undo = () => {
     if (!history.past.length) return;
@@ -218,13 +217,14 @@ export function DashboardBuilder(props: DashboardBuilderProps) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [rootRef]);
-  const run = async (fn: ((s: DashboardSchema) => void | Promise<void>) | undefined, done: string) => {
+  // `markSaved` false for 「另存为我的」: saving a personal copy does not save this (company) dashboard.
+  const run = async (fn: ((s: DashboardSchema) => void | Promise<void>) | undefined, done: string, markSaved = true) => {
     if (!fn) return;
     setBusy(true);
     setError("");
     try {
       await fn(schema);
-      setSaved(schema);
+      if (markSaved) setSaved(schema);
       announce(done);
     } catch (caught) {
       setError(caught instanceof Error && caught.message ? caught.message : "保存失败，请重试");
@@ -242,7 +242,7 @@ export function DashboardBuilder(props: DashboardBuilderProps) {
         <span className="aui-dbb-name">
           <LayoutDashboard aria-hidden="true" />
           {renaming && !phone ? (
-            <Input autoFocus aria-label="看板名称" defaultValue={schema.title} onBlur={(e) => { setRenaming(false); const t = e.target.value.trim(); if (t && t !== schema.title) commit({ ...schema, title: t }, "已改名"); }} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") setRenaming(false); }} />
+            <Input autoFocus aria-label="看板名称" defaultValue={schema.title} onBlur={(e) => { setRenaming(false); const t = e.target.value.trim(); if (t && t !== schema.title) commit({ ...schema, title: t }, "已改名"); }} onKeyDown={(e) => { if (isComposingEvent(e)) return; if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") setRenaming(false); }} />
           ) : (
             <>
               <b>{schema.title}</b>
@@ -260,7 +260,7 @@ export function DashboardBuilder(props: DashboardBuilderProps) {
             <span className="aui-dbb-bar-sep" aria-hidden="true" />
             <Button variant="outline" size="sm" aria-pressed={preview} onClick={() => { setPreview((v) => !v); setSelected(null); }}>{preview ? <><Pencil />继续编辑</> : <><Eye />预览</>}</Button>
             {onCancel && <Button variant="outline" size="sm" disabled={busy} onClick={onCancel}>取消</Button>}
-            {onSaveAsMine && <Button variant="outline" size="sm" disabled={busy} onClick={() => void run(onSaveAsMine, "已另存为我的看板")}>另存为我的</Button>}
+            {onSaveAsMine && <Button variant="outline" size="sm" disabled={busy} onClick={() => void run(onSaveAsMine, "已另存为我的看板", false)}>另存为我的</Button>}
             {onSave && <Button size="sm" disabled={busy || !dirty} loading={busy} onClick={() => void run(onSave, "已保存")}><Check />{busy ? "保存中…" : "保存"}</Button>}
           </span>
         )}

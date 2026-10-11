@@ -15,8 +15,6 @@ import { EffectiveAccessTable } from "./effective-access.tsx";
 import { CUSTOM_LEVEL_LABEL, ACCESS_LEVEL_LABEL, MODULE_SOURCE_TONE, scopeText, type AccessLevelId, type ModuleSource } from "./module-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export type EffectiveModule = {
   id: string;

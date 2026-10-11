@@ -14,8 +14,6 @@ import { dayOffset, barBox, barTextPlace, barTextWidth, nonWorkRuns, spanText, t
 import type { DayKey, WorkCalendar } from "./date-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 export type GanttMilestone = { day: DayKey; label: string };
 

@@ -23,7 +23,7 @@
 }
 .adminui .aui-ncenter-tab:hover { background: var(--aui-option-hover); color: var(--aui-text); }
 .adminui .aui-ncenter-tab[aria-selected=true] { background: var(--aui-soft); color: var(--aui-ink); font-weight: 600; }
-.adminui .aui-ncenter-tab:focus-visible { outline: none; box-shadow: var(--aui-focus-ring); }
+.adminui .aui-ncenter-tab:focus-visible { outline: 2px solid transparent; box-shadow: var(--aui-focus-ring); }
 .adminui .aui-ncenter-tab-n { color: var(--aui-note); font-size: calc(11.5px * var(--aui-font-scale)); font-weight: 500; font-variant-numeric: tabular-nums; }
 .adminui .aui-ncenter-tab[aria-selected=true] .aui-ncenter-tab-n { color: var(--aui-ink); }
 .adminui .aui-ncenter-filter { margin-left: auto; flex-wrap: nowrap; }
@@ -40,7 +40,7 @@
   background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
 }
 .adminui .aui-ncenter-main[data-static] { cursor: default; }
-.adminui .aui-ncenter-main:focus-visible { outline: none; box-shadow: var(--aui-focus-ring); }
+.adminui .aui-ncenter-main:focus-visible { outline: 2px solid transparent; box-shadow: var(--aui-focus-ring); }
 .adminui .aui-ncenter-item[data-inbox] .aui-ncenter-main { padding-right: 12px; }
 .adminui .aui-ncenter-who { position: relative; display: block; align-self: start; width: 32px; height: 32px; }
 .adminui .aui-ncenter-kind {

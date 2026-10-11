@@ -17,8 +17,6 @@ import { detectMediaKind, fileTypeLabel, formatBytes } from "./media-core.ts";
 import { isEdited, isViewerMention, reactionTip, splitMentions, type CommentItem } from "./comment-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/comments.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/comments.css";
 
 export type CommentReactionKind = { key: string; label: string; icon: ReactNode };
 /** The four reactions (icons + words, no emoji): 赞 / 收到 / 看过 / 有疑问. */

@@ -11,10 +11,10 @@ import { Input } from "./primitives.tsx";
 import { entryFromPick, grantedNotes, type GrantEntry, type GrantLevel, type GrantSubjectKind } from "./grant-list-core.ts";
 import type { OrgDataSource } from "./org-picker/org-picker-core.ts";
 import type { OrgPickerFieldProps } from "./org-picker/org-picker-field.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grants.css";
 
 import { lazyPart, whenIdle } from "./lazy-part.ts";
+// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
+import "#aui-css/grants.css";
 
 const fieldPart = lazyPart(() => import("./org-picker/org-picker-field.tsx").then((m) => m.OrgPickerField));
 const OrgPickerField = fieldPart.Part as (props: OrgPickerFieldProps) => ReactNode;

@@ -5,16 +5,16 @@
  * icon — company default = building, personal = person (a company dashboard that counts per viewer,
  * 「我的今天」, is still a building) — the first `shown` tabs are in the bar (the active one always),
  * the rest go into 「更多 N」, the active tab has a ⋯ menu, 「+」 opens the create menu
- * (新建我的 / 复制当前为我的 / 新建团队仪表盘). Tabs and their order come from the host.
+ * (新建我的 / 复制当前为我的 / 新建团队仪表盘). Tabs and their order come from the host. Inside a ViewTabs, picking a
+ * dashboard also closes the 「视图」 panel (phones show the group there), like picking a view.
  */
 import type { KeyboardEvent, ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { Building2, ChevronDown, LayoutDashboard, Plus, UserRound } from "lucide-react";
 import { MenuButton, type MenuSection } from "../menu.tsx";
 import { MoreMenu } from "../buttons.tsx";
 import { revealInline } from "../scroll-reveal.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
+import { ViewTabsContext } from "./view-tabs.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
 
@@ -53,6 +53,11 @@ export type DashboardTabsProps = {
 export function DashboardTabs({ tabs, activeId, onSelect, groupLabel = "仪表盘", shown: limit = 3, tabMenu, createSections, createLabel = "新建仪表盘", trailing, scopeLabels }: DashboardTabsProps) {
   const scopeWord = (scope: TabScope) => scopeLabels?.[scope] ?? TAB_SCOPE_LABELS[scope];
   const buttons = useRef(new Map<string, HTMLButtonElement>());
+  const viewTabs = useContext(ViewTabsContext);
+  const pick = (id: string) => {
+    onSelect(id);
+    viewTabs?.closeManager?.();
+  };
   const shown = tabs.slice(0, limit);
   const active = tabs.find((t) => t.id === activeId);
   if (active && !shown.some((t) => t.id === active.id)) shown.push(active);
@@ -90,7 +95,7 @@ export function DashboardTabs({ tabs, activeId, onSelect, groupLabel = "仪表�
               aria-current={current ? "page" : undefined}
               data-tip={tab.scope ? `${scopeWord(tab.scope)}仪表盘` : undefined}
               tabIndex={current || (!active && index === 0) ? 0 : -1}
-              onClick={() => onSelect(tab.id)}
+              onClick={() => pick(tab.id)}
               onKeyDown={(e) => onKeyDown(e, index)}
             >
               {tab.scope && <TabScopeIcon scope={tab.scope} />}
@@ -110,7 +115,7 @@ export function DashboardTabs({ tabs, activeId, onSelect, groupLabel = "仪表�
           className="aui-vtabs-overflow"
           label={`更多${groupLabel}（${rest.length} 个）`}
           align="start"
-          sections={[{ items: rest.map((t) => ({ key: t.id, label: t.label, ...(t.scope ? { icon: <TabScopeIcon scope={t.scope} />, hint: scopeWord(t.scope) } : {}), onSelect: () => onSelect(t.id) })) }]}
+          sections={[{ items: rest.map((t) => ({ key: t.id, label: t.label, ...(t.scope ? { icon: <TabScopeIcon scope={t.scope} />, hint: scopeWord(t.scope) } : {}), onSelect: () => pick(t.id) })) }]}
         >
           更多 {rest.length}
           <ChevronDown size={14} aria-hidden="true" />

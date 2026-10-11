@@ -33,7 +33,7 @@
 .adminui .aui-sortable-grip[data-lifted] { background: var(--aui-primary); color: var(--aui-surface); cursor: grabbing; }
 .adminui .aui-sortable[data-dragging] .aui-sortable-grip { cursor: grabbing; }
 .adminui .aui-sortable-grip:focus-visible,
-.adminui .aui-sortable-toggle:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: -2px; }
+.adminui .aui-sortable-toggle:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: -2px; }
 .adminui .aui-sortable-toggle { cursor: pointer; }
 .adminui :is(.aui-sortable-grip, .aui-sortable-lock, .aui-sortable-toggle) svg { width: 14px; height: 14px; }
 .adminui .aui-sortable-lock svg { width: 13px; height: 13px; }

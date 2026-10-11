@@ -22,7 +22,7 @@
   text-align: center;
   caret-color: var(--aui-primary);
 }
-.adminui .aui-code-box:focus { outline: none; border-color: var(--aui-primary); box-shadow: 0 0 0 3px var(--aui-soft-strong); }
+.adminui .aui-code-box:focus { outline: 2px solid transparent; border-color: var(--aui-primary); box-shadow: var(--aui-focus-ring); }
 .adminui .aui-code-box:disabled { opacity: .55; }
 .adminui .aui-code-boxes[data-invalid] .aui-code-box { border-color: var(--aui-danger-line); background: var(--aui-danger-soft); color: var(--aui-danger); }
 .adminui .aui-code-boxes[data-invalid] .aui-code-box:focus { border-color: var(--aui-danger); box-shadow: 0 0 0 3px var(--aui-danger-line); }
@@ -31,7 +31,7 @@
 .adminui .aui-stepper[data-size=default] .aui-stepper-button { width: 34px; }
 .adminui .aui-stepper-button:hover:not(:disabled) { background: var(--aui-soft); color: var(--aui-ink); }
 .adminui .aui-stepper-button:disabled { color: var(--aui-note); opacity: .5; cursor: not-allowed; }
-.adminui .aui-stepper-button:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: -2px; }
+.adminui .aui-stepper-button:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: -2px; }
 .adminui .aui-stepper-button svg { width: 14px; height: 14px; }
 .adminui .aui-stepper-field { display: inline-flex; align-items: center; gap: 3px; padding: 0 6px; border-inline: 1px solid var(--aui-line); }
 .adminui .aui-stepper-input { width: auto; min-width: 2ch; max-width: 8ch; padding: 0; border: 0; background: none; color: var(--aui-text); font: inherit; font-size: calc(13px * var(--aui-font-scale)); font-weight: 600; font-variant-numeric: tabular-nums; text-align: center; outline: none; }
@@ -70,7 +70,7 @@
 .adminui .aui-stepper[role=group][data-size=sm] .aui-stepper-button { width: 22px; height: 22px; border-radius: 5px; }
 .adminui .aui-stepper[role=group] .aui-stepper-button:hover:not(:disabled) { background: var(--aui-surface-subtle); color: var(--aui-text); }
 .adminui .aui-stepper[role=group] .aui-stepper-button:disabled { background: none; color: var(--aui-neutral-4); opacity: 1; cursor: not-allowed; }
-.adminui .aui-stepper[role=group] .aui-stepper-button:focus-visible { outline: none; box-shadow: var(--aui-focus-ring); }
+.adminui .aui-stepper[role=group] .aui-stepper-button:focus-visible { outline: 2px solid transparent; box-shadow: var(--aui-focus-ring); }
 .adminui .aui-stepper[role=group] .aui-stepper-button svg { width: 14px; height: 14px; }
 .adminui .aui-stepper[role=group][data-size=sm] .aui-stepper-button svg { width: 13px; height: 13px; }
 .adminui .aui-stepper[role=group] .aui-stepper-field { display: inline-flex; align-items: center; gap: 2px; align-self: stretch; padding: 0 4px; border: 0; }

@@ -7,8 +7,6 @@ import { DeltaBadge } from "./delta-badge.tsx";
 import { BulletBar, type BulletBarProps } from "./bullet-bar.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard.css";
 
 const percent = (ratio: number, digits = 1) => `${(Math.round(ratio * 100 * 10 ** digits) / 10 ** digits).toFixed(digits)}%`;
 const cssVars = (vars: Record<string, string>) => vars as CSSProperties;

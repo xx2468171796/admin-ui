@@ -135,10 +135,10 @@ function MenuList({ rootId, sections, label, target, placement, host, depth, ini
   useEffect(() => () => {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
   }, []);
-  // A submenu opened by hover (no active item) and then entered with → / Enter: land on its first item.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a submenu opened by hover (no active item) and then entered with → / Enter lands on its first item — on that `initialFocus` change only, not on every move.
   useEffect(() => {
     if ((initialFocus === "first" || initialFocus === "last") && active < 0) setActive(nextMenuIndex(skip, -1, initialFocus));
-  }, [initialFocus]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialFocus]);
   const hasIcons = entries.some((entry) => entry.item.icon || entry.item.checked !== undefined);
 
   const activate = (index: number, via: "key" | "pointer") => {

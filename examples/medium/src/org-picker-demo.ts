@@ -124,6 +124,19 @@ export function demoAvailability(viewer: DemoViewer) {
   };
 }
 
+/**
+ * 指派跟进人: the viewer's scope plus outsourced 客服 (cs2 … cs150) who can't take customers — with
+ * `hideUnselectable` the picker leaves them all out instead of greying them.
+ */
+export function demoAssignAvailability(viewer: DemoViewer) {
+  const base = demoAvailability(viewer);
+  return (ref: SubjectRef): Availability | undefined => {
+    const n = ref.kind === "person" ? /^cs(\d+)$/.exec(ref.id)?.[1] : undefined;
+    if (n && Number(n) >= 2 && Number(n) <= 150) return { state: "locked", reason: "外包客服，不能指派客户" };
+    return base(ref);
+  };
+}
+
 /** Quick picks per viewer: 我 / 我的部门 / 上级 · 整个华南子公司 · 整个集团. */
 export function demoShortcuts(viewer: DemoViewer) {
   const unitPick = (id: string): PickedSubject => {

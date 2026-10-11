@@ -16,8 +16,6 @@ import { formFieldLists, formFieldUnsupported, type FormDefinition, type FormFie
 import { IconButton } from "../buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/form-builder.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/form-builder.css";
 
 type Row = { id: string; field?: FormField; locked?: boolean; children?: Row[] };
 const ADDED = "__added";

@@ -16,8 +16,6 @@ import { tipProps } from "./tooltip.tsx";
 import { fieldTypeInfo, filterTypeTiles, groupTypeTiles, isTypeTileEnabled, type FieldTypeTile } from "./field-dialog-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/fields.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/fields.css";
 
 export type FieldTypePickerProps<V extends string = string> = {
   types: readonly FieldTypeTile<V>[];

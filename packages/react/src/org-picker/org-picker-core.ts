@@ -83,7 +83,7 @@ export type PickedSubject = {
 /** A search result: a subject plus a second line and the matched ranges of the label. */
 export type OrgSearchHit = PickedSubject & { sub?: string; title?: string; matched?: readonly (readonly [number, number])[]; badges?: readonly string[]; availability?: Availability };
 
-/** The host's adapter: platform directory, quanxian, a bastion's staff table, any backend. */
+/** The host's adapter: platform directory, a permission service, a staff table, any backend. */
 export interface OrgDataSource {
   /** Top nodes: usually the group, or the company. */
   roots(): Promise<readonly OrgUnit[]>;

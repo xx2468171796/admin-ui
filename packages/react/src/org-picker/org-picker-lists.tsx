@@ -83,7 +83,8 @@ export type SearchPaneProps = {
 export function SearchPane({ model, query, hits: all, loading, error, onLocate }: SearchPaneProps) {
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   // Hidden = not shown at all (another company the viewer can't grant to), even if the server returned it.
-  const hits = all.filter((h) => model.avail(h, h.availability).state !== "hidden");
+  // hideUnselectable also leaves out locked and departed hits; the counts below are of what is shown.
+  const hits = all.filter((h) => model.avail(h, h.availability).state !== "hidden" && !model.omits(h, h.availability, h.status));
   const groups = groupHits(hits, 6, expanded);
   const flat = groups.flatMap((g) => g.items);
   const toggle = (h: OrgSearchHit | undefined) => {
@@ -157,7 +158,8 @@ export function SearchPane({ model, query, hits: all, loading, error, onLocate }
 export type SourcePaneProps = { model: PickerModel; label: string; items: readonly PickedSubject[]; loading: boolean; error: string | null; query: string };
 
 /** A pluggable tab's list: tick to pick a role / line / company. */
-export function SourcePane({ model, label, items, loading, error, query }: SourcePaneProps) {
+export function SourcePane({ model, label, items: all, loading, error, query }: SourcePaneProps) {
+  const items = model.hideUnselectable ? all.filter((s) => !model.omits(s, "availability" in s ? (s as OrgSearchHit).availability : undefined, s.status)) : all;
   const toggle = (s: PickedSubject | undefined) => {
     if (!s) return;
     if (model.isPicked(s)) return model.remove(s);

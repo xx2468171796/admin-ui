@@ -14,8 +14,6 @@ import { isDynamicValue, type ConditionValue, type DynamicToken } from "./condit
 import type { CellTagTone } from "./cells.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/conditions.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/conditions.css";
 
 export type ConditionChoice = { value: string; label: string; tone?: CellTagTone; color?: string };
 export type ConditionValuePickerProps = {

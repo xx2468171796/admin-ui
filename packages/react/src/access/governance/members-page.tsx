@@ -27,8 +27,6 @@ import { lazyPart } from "../../lazy-part.ts";
 import { GovLoad, feedbackOf, staleAlert, ReadOnlyNote, StaleAlert, defaultNow, optionLabeler, toChoice, useGov, useNotice, type GovPageBaseProps } from "./shared.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 /** OrgPickerField options the add-member box passes through (wording, availability, defaultFocus, suggestions …). */
 export type MemberOrgPickerOptions = Omit<OrgPickerFieldProps, "source" | "value" | "onChange" | "mode" | "selectable" | "commit" | "chips" | "existing">;

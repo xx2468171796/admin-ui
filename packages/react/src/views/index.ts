@@ -8,7 +8,10 @@
 export * from "./view-tabs.tsx";
 export * from "./view-create.tsx";
 export * from "./dashboard-tabs.tsx";
-export * from "./view-manager.tsx";
+// The panel body loads when the panel opens (view-manager-lazy.tsx); its types and the lock notice stay here.
+export type * from "./view-manager.tsx";
+export { ViewManager } from "./view-manager-lazy.tsx";
+export * from "./view-lock-notice.tsx";
 export * from "./record-card.tsx";
 export { dueState, defaultCoverField, cardTags, cardKeyline, cardFieldEmpty, CARD_MAX_TAGS, NO_COVER, type DueState, type CardChip, type CardKeyPart } from "./record-card-core.ts";
 export * from "./kanban-board.tsx";

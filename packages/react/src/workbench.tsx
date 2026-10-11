@@ -6,8 +6,6 @@ import { MenuButton } from "./menu.tsx";
 import { FormDialog } from "./forms.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/workflows.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/workflows.css";
 export { useAdminShortcuts } from "./admin-shortcuts.ts";
 // 命令面板搬到 command-palette.tsx，公开名不变。
 export { CommandPalette } from "./command-palette.tsx";

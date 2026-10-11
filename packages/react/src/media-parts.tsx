@@ -23,8 +23,6 @@ import { cn } from "./primitives.tsx";
 import { detectMediaKind, fileFamily, formatBytes, formatDuration, mediaThumbBox, splitFileName, type FileFamily, type MediaKind } from "./media-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/media.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/media.css";
 
 /** Restricted file: who can see it (grey lock note on the second line); `denied` = this viewer cannot open or download it. */
 export type MediaLock = { label: string; hint?: string; denied?: boolean };

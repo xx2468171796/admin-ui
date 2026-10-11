@@ -43,7 +43,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  z-index: 30;
+  z-index: var(--aui-z-sticky);
 }
 .adminui[data-aui-mode="dark"] .aui-sidebar {
   border-right-color: var(--aui-rail-line);
@@ -242,7 +242,7 @@
   color: #fff;
 }
 .adminui .aui-sidebar :is(button, a):focus-visible {
-  outline: 0;
+  outline: 2px solid transparent;
   box-shadow: inset 0 0 0 2px var(--aui-on-rail);
 }
 .adminui .aui-account-slot {
@@ -439,7 +439,7 @@
       transform: translateX(-105%);
       top: 0;
       transition: transform var(--aui-duration-panel) var(--aui-ease);
-      z-index: 60;
+      z-index: var(--aui-z-rail);
       --aui-nav-row: 44px;
     }
   .adminui .aui-mobile-open .aui-sidebar {
@@ -452,7 +452,7 @@
       inset: 0;
       border: 0;
       background: var(--aui-overlay);
-      z-index: 50;
+      z-index: calc(var(--aui-z-rail) - 10);
     }
   .adminui .aui-icon-btn.aui-drawer-close {
       display: inline-grid;
@@ -643,8 +643,8 @@
   text-overflow: ellipsis;
 }
 .adminui .aui-tab > button:focus-visible {
-  outline: 0;
-  box-shadow: inset 0 0 0 2px var(--aui-primary);
+  outline: 2px solid transparent;
+  box-shadow: inset 0 0 0 2px var(--aui-focus);
 }
 .adminui .aui-tab > .aui-tab-close {
   display: inline-grid;
@@ -721,8 +721,8 @@
   color: var(--aui-ink);
 }
 .adminui :is(.aui-tabs-more, .aui-tabs-count):focus-visible {
-  outline: 0;
-  box-shadow: inset 0 0 0 2px var(--aui-primary);
+  outline: 2px solid transparent;
+  box-shadow: inset 0 0 0 2px var(--aui-focus);
 }
 .adminui .aui-tabs-count {
   width: 36px;
@@ -827,8 +827,8 @@
   background: var(--aui-surface-subtle);
 }
 .adminui .aui-acct-item:focus-visible {
-  outline: 0;
-  box-shadow: inset 0 0 0 2px var(--aui-primary);
+  outline: 2px solid transparent;
+  box-shadow: inset 0 0 0 2px var(--aui-focus);
 }
 .adminui .aui-acct-item:disabled {
   color: var(--aui-note);
@@ -958,7 +958,7 @@
   box-shadow: inset 0 0 0 1.5px var(--aui-surface);
 }
 .adminui .aui-appearance-swatch:focus-visible {
-  outline: 2px solid var(--aui-primary);
+  outline: 2px solid var(--aui-focus);
   outline-offset: 1px;
 }
 .adminui .aui-appearance-swatch svg {

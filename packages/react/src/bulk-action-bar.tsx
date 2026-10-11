@@ -14,8 +14,7 @@ import { RowActions, type RowAction } from "./row-actions.tsx";
 import { useIsMobile } from "./media-query.ts";
 import { splitBulkActions } from "./data-card-core.ts";
 import { IconButton } from "./buttons.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/table.css";
+import { useBulkActionRunner } from "./bulk-action-runner.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/table.css";
 
@@ -23,7 +22,8 @@ export type BulkAction = {
   key: string;
   label: string;
   icon?: ReactNode;
-  onSelect: () => void;
+  /** Return a Promise to keep the bar busy (this button spinning, every click ignored) until it settles. */
+  onSelect: () => void | Promise<unknown>;
   danger?: boolean;
   disabled?: boolean;
   disabledReason?: string;
@@ -39,16 +39,21 @@ export type BulkActionBarProps = {
   maxVisible?: number;
   label?: string;
   className?: string;
+  /**
+   * Where the keyboard focus goes when the bar disappears from under it (✕, Esc, an action that clears the
+   * selection). Default: the element that had the focus when the bar appeared (the row checkbox).
+   */
+  returnFocus?: () => HTMLElement | null | undefined;
 };
 
-const toRowAction = (action: BulkAction): RowAction => ({
+const toRowAction = (action: BulkAction, busy: boolean, run: (key: string, fn: () => unknown) => void): RowAction => ({
   key: action.key,
   label: action.label,
   icon: action.icon,
   destructive: action.danger,
-  disabled: action.disabled,
+  disabled: action.disabled || busy,
   disabledReason: action.disabledReason,
-  onSelect: action.onSelect,
+  onSelect: () => run(action.key, action.onSelect),
 });
 
 /** Left / Right / Home / End move between the bar's buttons (role="toolbar"); Esc clears the selection. */
@@ -69,14 +74,16 @@ function onToolbarKey(event: KeyboardEvent<HTMLDivElement>, onClear: () => void)
 }
 
 /** The shared bottom floating bulk-action bar; renders nothing when `count` is 0. */
-export function BulkActionBar({ count, total, note, actions, onClear, maxVisible, label = "批量操作", className }: BulkActionBarProps) {
+export function BulkActionBar({ count, total, note, actions, onClear, maxVisible, label = "批量操作", className, returnFocus }: BulkActionBarProps) {
   const phone = useIsMobile();
+  const runner = useBulkActionRunner(count, returnFocus);
   if (!(count > 0)) return null;
+  const clear = () => runner.clear(onClear);
   const { visible, overflow } = splitBulkActions(actions, maxVisible ?? (phone ? 2 : 4));
   const small = note ?? (total !== undefined ? `共 ${total.toLocaleString("zh-CN")} 条` : null);
   return (
-    <div className={className ? `aui-bulkbar-dock ${className}` : "aui-bulkbar-dock"}>
-      <div className="aui-bulkbar" role="toolbar" aria-label={label} onKeyDown={(event) => onToolbarKey(event, onClear)}>
+    <div ref={runner.dock} className={className ? `aui-bulkbar-dock ${className}` : "aui-bulkbar-dock"}>
+      <div className="aui-bulkbar" role="toolbar" aria-label={label} aria-busy={runner.busy !== null || undefined} onKeyDown={(event) => onToolbarKey(event, clear)}>
         <span className="aui-bulkbar-count" aria-live="polite">
           已选 <b>{count.toLocaleString("zh-CN")}</b> 条{small !== null && <small>{small}</small>}
         </span>
@@ -89,15 +96,17 @@ export function BulkActionBar({ count, total, note, actions, onClear, maxVisible
             data-danger={action.danger || undefined}
             disabled={action.disabled}
             disabledReason={action.disabled ? action.disabledReason : undefined}
-            onClick={action.onSelect}
+            loading={runner.busy === action.key}
+            aria-disabled={(runner.busy !== null && runner.busy !== action.key) || undefined}
+            onClick={() => runner.run(action.key, action.onSelect)}
           >
             {action.icon}
             {action.label}
           </Button>
         ))}
-        {overflow.length > 0 && <RowActions label="更多批量操作" actions={overflow.map(toRowAction)} />}
+        {overflow.length > 0 && <RowActions label="更多批量操作" actions={overflow.map((a) => toRowAction(a, runner.busy !== null, runner.run))} />}
         <span className="aui-bulkbar-sep" aria-hidden="true" />
-        <IconButton label="清除选择" className="aui-bulkbar-clear" onClick={onClear} icon={<X aria-hidden="true" />} />
+        <IconButton label="清除选择" className="aui-bulkbar-clear" onClick={clear} icon={<X aria-hidden="true" />} />
       </div>
     </div>
   );

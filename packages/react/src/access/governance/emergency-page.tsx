@@ -22,8 +22,6 @@ import { govErrorMessage, type GovernanceApi } from "./api.ts";
 import { GovLoad, feedbackOf, staleAlert, ReadOnlyNote, defaultNow, optionLabeler, toChoice, useGov, useNotice, useTicker, type GovPageBaseProps } from "./shared.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export type EmergencyTarget = GovOption & { kind: "role" | "permission" };
 export type EmergencyAccessPageProps = GovPageBaseProps & {

@@ -36,8 +36,6 @@ import { govErrorMessage, type GovernanceApi } from "./api.ts";
 import { GovLoad, feedbackOf, staleAlert, defaultNow, toChoice, useGov, useNotice, type GovPageBaseProps } from "./shared.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export type AccessRequestsView = "mine" | "todo" | "all";
 export type AccessRequestsPageProps = GovPageBaseProps & {

@@ -42,6 +42,8 @@
 .adminui .aui-query-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .adminui .aui-query-search { position: relative; flex: 0 1 320px; min-width: 200px; }
 .adminui .aui-sort { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; font: inherit; color: inherit; }
+/* While the table loads the sort control stays focusable (aria-disabled, not disabled — disabled drops keyboard focus to <body>). */
+.adminui .aui-sort[aria-disabled=true] { cursor: progress; }
 .adminui .aui-sort-priority {
   display: inline-flex;
   justify-content: center;
@@ -212,7 +214,7 @@
 .adminui .aui-bulkbar-action[data-danger] > svg { color:var(--aui-danger); }
 .adminui .aui-bulkbar-sep { flex:none; width:1px; height:20px; margin:0 4px; background:var(--aui-line); }
 @media (max-width:760px) {
-  .adminui .aui-bulkbar { position:fixed; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom, 0px)); max-width:none; transform:none; min-height:52px; padding:0 6px 0 14px; z-index:60; animation:aui-bulkbar-rise-phone var(--aui-duration-normal) var(--aui-ease); }
+  .adminui .aui-bulkbar { position:fixed; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom, 0px)); max-width:none; transform:none; min-height:52px; padding:0 6px 0 14px; z-index:var(--aui-z-rail); animation:aui-bulkbar-rise-phone var(--aui-duration-normal) var(--aui-ease); }
   .adminui .aui-bulkbar-count { margin-right:auto; }
   .adminui .aui-bulkbar-count > small { display:none; }
   .adminui .aui-table-panel:has(.aui-bulkbar) { padding-bottom:64px; }

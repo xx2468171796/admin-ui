@@ -1,6 +1,9 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { StoreAdapter } from "./workflow-core.ts";
+import { useHostFunction } from "./host-function.ts";
+import { useAbortOwner } from "./abort-owner.ts";
+import { errorText } from "./error-text.ts";
 /** Interval refresh that skips hidden tabs; the caller owns visible errors. */
 function useAutoRefresh(
   refresh: () => void | Promise<unknown>,
@@ -81,11 +84,17 @@ export function useAdminResource<T>(
   useAutoRefresh(refresh, intervalMs, enabled);
   return { ...(state.key === key ? state : { key, loading: true }), refresh };
 }
+/**
+ * A value stored through `adapter` under `key`. The adapter may be an inline object: it is read through a ref,
+ * only a new `key` (or a memoized adapter that changed) loads again. Saves get a signal aborted on unmount.
+ */
 export function usePersistentState<T>(
   key: string,
   initial: T,
   adapter: StoreAdapter<T>,
 ) {
+  const [host, adapterGeneration] = useHostFunction(adapter);
+  const saves = useAbortOwner();
   const initialRef = useRef(initial);
   initialRef.current = initial;
   const [state, setState] = useState({
@@ -96,12 +105,13 @@ export function usePersistentState<T>(
   });
   const queue = useRef(Promise.resolve());
   const generation = useRef(0);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `adapterGeneration` re-loads when a memoized adapter is swapped; the adapter itself is read through its ref.
   useEffect(() => {
     const n = ++generation.current,
       controller = new AbortController();
     setState({ key, value: initialRef.current, ready: false, error: "" });
-    void adapter
-      .load(key, controller.signal)
+    void Promise.resolve()
+      .then(() => host.current.load(key, controller.signal))
       .then((value) => {
         if (!controller.signal.aborted)
           setState({
@@ -117,14 +127,14 @@ export function usePersistentState<T>(
             key,
             value: initialRef.current,
             ready: true,
-            error: String(error),
+            error: errorText(error),
           });
       });
     return () => {
       controller.abort();
       if (n === generation.current) generation.current++;
     };
-  }, [key, adapter]);
+  }, [key, adapterGeneration]);
   const setValue = (value: T) => {
     if (state.key !== key || !state.ready) return;
     const n = generation.current;
@@ -132,11 +142,11 @@ export function usePersistentState<T>(
     queue.current = queue.current
       .catch(() => {})
       .then(async () => {
-        await adapter.save(key, value, new AbortController().signal);
+        await host.current.save(key, value, saves.next());
       })
       .catch((error) => {
         if (n === generation.current)
-          setState((s) => ({ ...s, error: String(error) }));
+          setState((s) => ({ ...s, error: errorText(error) }));
       });
   };
   return {
@@ -158,13 +168,14 @@ export function useFormDraft<T>(
   const [error, setError] = useState("");
   const busy = useRef(false);
   const [saving, setSaving] = useState(false);
+  const owner = useAbortOwner();
   const mutate = async (value?: T) => {
     if (busy.current) return false;
     busy.current = true;
     setSaving(true);
     setError("");
     try {
-      const signal = new AbortController().signal;
+      const signal = owner.next();
       if (value === undefined) await adapter.remove(key, signal);
       else
         await adapter.save(
@@ -175,7 +186,7 @@ export function useFormDraft<T>(
       await resource.refresh();
       return true;
     } catch (e) {
-      setError(String(e));
+      setError(errorText(e));
       return false;
     } finally {
       busy.current = false;
@@ -227,8 +238,12 @@ export function useAdminEvents(
 ) {
   const callback = useRef(receive);
   callback.current = receive;
+  const [host, generation] = useHostFunction(subscribe);
   const [error, setError] = useState("");
+  const subscribed = Boolean(subscribe);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `generation` (a memoized subscribe swapped) and `subscribed` (adapter added / removed) re-subscribe; the adapter is read through its ref.
   useEffect(() => {
+    const subscribe = host.current;
     if (!subscribe || !enabled) return;
     const controller = new AbortController();
     setError("");
@@ -240,16 +255,16 @@ export function useAdminEvents(
         },
         controller.signal,
         (e) => {
-          if (!controller.signal.aborted) setError(e.message);
+          if (!controller.signal.aborted) setError(errorText(e));
         },
       );
     } catch (e) {
-      setError(String(e));
+      setError(errorText(e));
     }
     return () => {
       controller.abort();
       stop?.();
     };
-  }, [subscribe, enabled]);
+  }, [generation, subscribed, enabled]);
   return { error };
 }

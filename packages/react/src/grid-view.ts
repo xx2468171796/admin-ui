@@ -54,6 +54,7 @@ export function useGridView<T>(fields: readonly GridField<T>[], options: UseGrid
   const [state, setState] = useState<ViewState>(() => read(storageKey));
   if (state.key !== storageKey) setState(read(storageKey));
   // Async load: apply the answer unless the user already changed the view.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one subscription per pending load; fromStored (new each render) only normalizes the answer.
   useEffect(() => {
     const pending = state.pending;
     if (!pending) return;
@@ -63,7 +64,7 @@ export function useGridView<T>(fields: readonly GridField<T>[], options: UseGrid
       (error: unknown) => { if (live) setState((old) => (old.pending !== pending ? old : { ...old, pending: null, error: error instanceof Error ? error.message : "视图设置加载失败" })); },
     );
     return () => { live = false; };
-  }, [state.pending]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [state.pending]);
   const view = useMemo(() => normalizeGridView(state.view, fields, { rowHeight }), [state.view, fields, rowHeight]);
   const save = useRef(options.save);
   save.current = options.save;
@@ -88,12 +89,13 @@ export function useGridView<T>(fields: readonly GridField<T>[], options: UseGrid
       flush();
     };
   }, [flush]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `version` moves on each user change only (not on a host reload / fields change); view / key are read from that render.
   useEffect(() => {
     if (!state.version) return;
     pending.current = { key: storageKey, view: persistSearch ? view : { ...view, search: "" } };
     const timer = setTimeout(flush, 150);
     return () => clearTimeout(timer);
-  }, [state.version]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [state.version]);
   const onViewChange = useCallback((next: GridView) => setState((old) => ({ ...old, view: next, touched: true, version: old.version + 1 })), []);
   const reset = () => setState((old) => ({ ...old, view: fallback(), touched: true, version: old.version + 1 }));
   return { view, onViewChange, reset, loading: state.pending !== null, error: state.error };

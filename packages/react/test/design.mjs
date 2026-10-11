@@ -12,7 +12,7 @@ const output = resolve(root, 'test/artifacts/cloudscape');
 mkdirSync(output, { recursive: true });
 const server = await createServer({ root: resolve(root, 'examples/starter'), configFile: false, plugins: [react()], server: { host: '127.0.0.1', port: 7100 + Math.floor(Math.random() * 600), hmr: false, watch: null } });
 await server.listen();
-const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || chromium.executablePath() });
+const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || process.env.CHROMIUM_PATH || chromium.executablePath() });
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const errors = [];
@@ -39,7 +39,9 @@ try {
   for (const width of [1440, 390, 360]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.waitForTimeout(300); // Let the mobile drawer's existing resize transition settle.
-    if (width < 760) assert.ok(await page.locator('.aui-sidebar').evaluate(el => el.getBoundingClientRect().right <= 0), '关闭的手机菜单不得遮住页面');
+    // Poll (≤ 2 s) instead of trusting the 300 ms sleep: under load the drawer's transition can still be running,
+    // and a flaky gate teaches people to ignore red.
+    if (width < 760) await page.waitForFunction(() => document.querySelector('.adminui .aui-sidebar')?.getBoundingClientRect().right <= 0, null, { timeout: 2000 }).catch(() => assert.fail('关闭的手机菜单不得遮住页面'));
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${width}px 页面溢出`);
     await page.screenshot({ path: resolve(output, `users-${width}.png`), fullPage: true, animations: 'disabled' });
     await click('切换到深色模式');

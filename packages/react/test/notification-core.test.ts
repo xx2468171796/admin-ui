@@ -88,3 +88,13 @@ test("本地标为已读：只改指定的，all 全改，没变化返回同一�
   assert.equal(markReadLocal(items, ["c"]), items);
   assert.equal(markReadLocal(items, ["zzz"]), items);
 });
+
+test("tabKeyIndex: ←/→ wrap, Home / End jump, other keys are not the tab list's", async () => {
+  const { tabKeyIndex } = await import("../src/notification-core.ts");
+  assert.equal(tabKeyIndex("ArrowRight", 0, 2), 1);
+  assert.equal(tabKeyIndex("ArrowRight", 1, 2), 0);
+  assert.equal(tabKeyIndex("ArrowLeft", 0, 2), 1);
+  assert.equal(tabKeyIndex("Home", 1, 2), 0);
+  assert.equal(tabKeyIndex("End", 0, 2), 1);
+  assert.equal(tabKeyIndex("Enter", 0, 2), null);
+});

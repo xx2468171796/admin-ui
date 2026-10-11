@@ -5,19 +5,35 @@
  * row: the host's tools on the left (录音, 附件 as icon buttons), then 「下次跟进」 + a small date picker
  * + 1 / 3 / 7 天 and the submit button right-aligned. Panels the tools open (recorder, drop zone, upload
  * list) go in `panel`, between the text and the bottom row. Phones: the bottom row wraps, submit stays
- * right. Styles: styles/record-cards.css (`.aui-acomposer`).
+ * right. A kind may carry a colour (`tone`, or a stored `color` mapped to the nearest hue): its icon (or, without an
+ * icon, a small dot) takes the colour, and the chosen chip is filled with the soft hue. Styles: styles/record.css (`.aui-acomposer`).
  */
 import { useId, useRef, type KeyboardEvent, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Button, cn } from "./primitives.tsx";
 import { DatePicker } from "./date-picker.tsx";
 import { QuickDatePresets } from "./choices.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/record.css";
+import { colorTone, optionTone, type OptionTone } from "./option-tone.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/record.css";
 
-export type ActivityKind<V extends string = string> = { value: V; label: string; icon?: LucideIcon };
+export type ActivityKind<V extends string = string> = {
+  value: V;
+  label: string;
+  icon?: LucideIcon;
+  /** Colour of the chip: one of the twenty option tones (the same as a select option's tag). Default: none (neutral). */
+  tone?: OptionTone;
+  /**
+   * Stored colour (a colour name or hex, like a bitable select option's `color`): used only when `tone` is missing,
+   * mapped to the nearest of the ten hues (`colorTone`) — raw colours are never painted.
+   */
+  color?: string;
+};
+
+/** The tone a kind chip is painted in (its `tone`, else its `color` mapped to a hue), or undefined = neutral. */
+export function activityKindTone(kind: Pick<ActivityKind, "tone" | "color">): OptionTone | undefined {
+  return optionTone(kind.tone) ?? colorTone(kind.color);
+}
 
 export type ActivityComposerDue = {
   /** `YYYY-MM-DD` or "". */
@@ -91,10 +107,11 @@ function KindChips<V extends string>({ kinds, kind, onKindChange, label, disable
       {kinds.map((item, index) => {
         const Icon = item.icon;
         const pressed = item.value === kind;
+        const tone = activityKindTone(item);
         return (
-          <button key={item.value} ref={(el) => { refs.current[index] = el; }} type="button" className="aui-acomposer-kind" aria-pressed={pressed} disabled={disabled}
+          <button key={item.value} ref={(el) => { refs.current[index] = el; }} type="button" className="aui-acomposer-kind" aria-pressed={pressed} disabled={disabled} data-tone={tone}
             tabIndex={index === tabStop ? 0 : -1} onKeyDown={(event) => move(event, index)} onClick={() => { if (!pressed) onKindChange?.(item.value); }}>
-            {Icon && <Icon aria-hidden="true" />}{item.label}
+            {Icon ? <Icon aria-hidden="true" /> : tone ? <span className="aui-tone-dot" aria-hidden="true" /> : null}{item.label}
           </button>
         );
       })}

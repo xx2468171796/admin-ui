@@ -15,7 +15,7 @@
 .adminui .aui-sidenav > a > span:first-of-type { flex:1 1 auto; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .adminui .aui-sidenav > a:hover { background:var(--aui-hover); color:var(--aui-text); }
 .adminui .aui-sidenav > a[aria-current] { background:var(--aui-soft); color:var(--aui-primary); font-weight: 600; }
-.adminui .aui-sidenav > a:focus-visible { outline:2px solid var(--aui-primary); outline-offset:-2px; }
+.adminui .aui-sidenav > a:focus-visible { outline:2px solid var(--aui-focus); outline-offset:-2px; }
 .adminui .aui-sidenav-dot { flex:none; width:7px; height:7px; border-radius:50%; background:var(--aui-warning); }
 .adminui .aui-sidenav-body { display:flex; flex-direction:column; gap:0; min-width:0; border-left:1px solid var(--aui-line); }
 .adminui .aui-sidenav-section { display:flex; flex-direction:column; scroll-margin-top:0; min-width:0; }
@@ -196,8 +196,8 @@
   color: var(--aui-primary);
 }
 .adminui .aui-settings-nav-item:focus-visible {
-  outline: 0;
-  box-shadow: inset 0 0 0 2px var(--aui-primary);
+  outline: 2px solid transparent;
+  box-shadow: inset 0 0 0 2px var(--aui-focus);
 }
 .adminui .aui-settings-nav-label {
   flex: 1;

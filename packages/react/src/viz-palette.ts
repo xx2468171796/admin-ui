@@ -12,7 +12,11 @@ const VIZ_DIVERGING = {
   dark: { negative: "#3987e5", mid: "#383835", positive: "#e66767" },
 } as const;
 
-/** good / warning / bad for marks (dots, bands, badges) before the palette is known. Internal. */
+/**
+ * good / warning / bad for marks (dots, bands, badges) before the palette is known: fixed hex fallbacks,
+ * kept for backward compatibility. Option builders write the `vizStatus(name)` tokens instead, which AdminChart
+ * resolves with `chartColors(palette).status` (follows the palette and dark mode; #fab219 on white was ~1.9:1).
+ */
 export const VIZ_STATUS = {
   light: { good: "#0ca30c", warning: "#fab219", serious: "#ec835a", bad: "#d03b3b", neutral: "#898781" },
   dark: { good: "#0ca30c", warning: "#fab219", serious: "#ec835a", bad: "#e66767", neutral: "#898781" },
@@ -61,6 +65,15 @@ export const VIZ_SURFACE = "aui:surface:";
 export const VIZ_OTHER = "aui:other:";
 /** An option's own tag colour (`OptionHue` or a tone like "warning" resolved by the host first). */
 export const vizOptionColor = (hue: OptionHue) => `aui:option:${hue}:`;
+/** Status colour names of `ChartColors.status`. */
+export type VizStatusName = "good" | "warning" | "bad" | "neutral";
+/**
+ * A status colour token (`aui:status:bad:`; 2-digit hex alpha may follow): verdict dots, control lines,
+ * annotations. Resolved from the palette's success-is-brand / warning / danger / note colours.
+ */
+export const vizStatus = (name: VizStatusName) => `aui:status:${name}:`;
+/** The four status tokens by name (`VIZ_STATUS_TOKENS.bad` = `vizStatus("bad")`). */
+export const VIZ_STATUS_TOKENS: Readonly<Record<VizStatusName, string>> = { good: "aui:status:good:", warning: "aui:status:warning:", bad: "aui:status:bad:", neutral: "aui:status:neutral:" };
 
 export type ChartColors = {
   /** Single series, ordered tiers, funnels, bullets, sparklines: one colour on every chart. */
@@ -119,7 +132,8 @@ export function chartColors(palette: PaletteLike): ChartColors {
   };
 }
 
-const TOKEN = /^aui:(cat|other|option|surface|text|secondary|note|track):([a-z0-9]*):?([0-9a-f]{2})?$/i;
+const TOKEN = /^aui:(cat|other|option|status|surface|text|secondary|note|track):([a-z0-9]*):?([0-9a-f]{2})?$/i;
+const STATUS_NAMES: readonly string[] = ["good", "warning", "bad", "neutral"];
 
 /** One token → colour (null = not a chart token). Categories past the eighth fold into 「其他」. */
 export function resolveVizToken(value: string, colors: ChartColors): string | null {
@@ -133,6 +147,7 @@ export function resolveVizToken(value: string, colors: ChartColors): string | nu
   if (m[1] === "note") return colors.note + alpha;
   if (m[1] === "track") return colors.track + alpha;
   if (m[1] === "option") return (colors.options[m[2] as OptionHue] ?? colors.other) + alpha;
+  if (m[1] === "status") return (STATUS_NAMES.includes(m[2] ?? "") ? colors.status[m[2] as VizStatusName] : colors.status.neutral) + alpha;
   const i = Number(m[2]);
   return (Number.isInteger(i) && i >= 0 && i < colors.categorical.length ? colors.categorical[i]! : colors.other) + alpha;
 }

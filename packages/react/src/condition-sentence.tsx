@@ -11,8 +11,6 @@ import { conditionTreeParts, conjunctionWord, describeConditionTree, opJoinsValu
 import type { ConditionGroup } from "./condition-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/conditions.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/conditions.css";
 
 export type ConditionSentenceProps = {
   tree: ConditionGroup<string>;

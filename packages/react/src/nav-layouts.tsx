@@ -8,10 +8,8 @@
  *   narrow screens (≤ 760px): the list, then — once `detailOpen` — only the detail with 「← 返回」 on top.
  *   Without `onBack` the old stack (list above detail) stays.
  */
-import { Fragment, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowLeft, CircleAlert } from "lucide-react";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/navigation.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/navigation.css";
 
@@ -36,7 +34,7 @@ export function SideNavLayout({ sections, label = "分节", navWidth = 200, foot
   const [active, setActive] = useState(sections[0]?.id ?? "");
   const lock = useRef(0);
   const navRef = useRef<HTMLElement>(null);
-  const idOf = (id: string) => `${base}-sec-${id}`;
+  const idOf = useCallback((id: string) => `${base}-sec-${id}`, [base]);
   const ids = sections.map((s) => s.id).join("|");
   useEffect(() => {
     let frame = 0;
@@ -61,9 +59,9 @@ export function SideNavLayout({ sections, label = "分节", navWidth = 200, foot
       document.removeEventListener("scroll", spy, true);
       window.removeEventListener("resize", spy);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ids, base]);
+  }, [ids, idOf]);
   // Phones: the pill row scrolls sideways — keep the current pill in view.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `active` is the trigger; the pill is found in the DOM by aria-current.
   useEffect(() => {
     const nav = navRef.current;
     const item = nav?.querySelector<HTMLElement>('[aria-current="location"]');

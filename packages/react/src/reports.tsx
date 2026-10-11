@@ -6,8 +6,6 @@ import { DateRangePicker } from "./date-range-picker.tsx";
 import { validateReportRange, type ReportFilter } from "./reports-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard.css";
 export { validateReportRange, buildCsv, downloadCsv } from "./reports-core.ts";
 export type { ReportFilter, CsvColumn } from "./reports-core.ts";
 

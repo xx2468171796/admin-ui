@@ -37,8 +37,6 @@ import {
 } from "./share-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/share.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/share.css";
 
 /** A field the visitor may get, with its type icon. */
 export type ShareFieldChoice = ShareFieldOption & { icon?: ReactNode };

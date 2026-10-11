@@ -32,10 +32,10 @@ export type MobileOrgProps = {
 /** Breadcrumb + 「整个「X」」 + sub-departments (tick = pick, 「›」 = go in) + the people of the node. */
 export function MobileOrg({ model, tree, source, current, onOpen, shortcuts, emptyAction }: MobileOrgProps) {
   const [deep, setDeep] = useState(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on entering another node only; tree.expand changes identity with the source, which must not re-expand or reset 「含下级」.
   useEffect(() => {
     if (current) tree.expand(current);
     setDeep(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current]);
   if (!tree.roots || !current) return <SkeletonRows label={model.m.loading} />;
   const unit = tree.index.get(current);

@@ -8,8 +8,6 @@ import { RowActionLimitContext } from "./row-action-limit.ts";
 import { IconButton } from "./buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/table.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/table.css";
 
 export type RowAction = {
   key: string;
@@ -104,7 +102,7 @@ export function RowActionBar({ actions, label = "更多操作", max: wanted = 3 
   const menuOnlyCount = actions.length - candidates.length;
   const [shown, setShown] = useState(candidates.length);
   const signature = actions.map((action) => `${action.key}:${action.label}:${action.menuOnly ?? ""}`).join("|");
-
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed by the actions' content (`signature`): an inline actions array is new each render; re-measure only when the buttons change.
   useLayoutEffect(() => {
     const node = box.current;
     const measure = () => {

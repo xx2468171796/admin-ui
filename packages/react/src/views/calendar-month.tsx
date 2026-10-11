@@ -29,8 +29,6 @@ import { EventCard, useEventCard } from "./calendar-card.tsx";
 import { trackPointer, useAnnouncer } from "./view-parts.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 export type { CalendarUndatedItem } from "./calendar-side.tsx";
 export type CalendarMonthProps = CalendarBaseProps & {

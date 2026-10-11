@@ -21,8 +21,6 @@ import type { FormQuestion } from "./form-core.ts";
 import { IconButton } from "../buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/form-builder.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/form-builder.css";
 
 /** What the host's upload adapter resolves with: the stored file (its id and a URL to show it). */
 export type FormUploadResult = { id: string; url?: string; thumbUrl?: string; name?: string };

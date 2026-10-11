@@ -9,9 +9,12 @@
  *   overlay once the host's rows carry them) / reject or `rejected`: rolled back with the reason.
  */
 import { runtimeTimeZone } from "./admin-defaults.ts";
-import { roundMinor } from "./format.ts";
+import { calendarDay, roundMinor } from "./format.ts";
+import { parseDateParts } from "./date-picker-core.ts";
 import { majorToMinor, optionLabel, readField, toPeople, type GridField, type GridFieldType, type GridPerson, type GridSelectOption } from "./grid-core.ts";
 import { extraEmptyValue, isReadOnlyType, parseExtraInput } from "./grid-field-types.ts"; // bt/grid-b
+import { escapeFormula, unescapeFormula } from "./grid-clipboard-text.ts";
+import { isComposingEvent } from "./ime.ts";
 
 // ---------------------------------------------------------------- changes
 
@@ -105,20 +108,17 @@ export function zonedTimeToUtc(year: number, month: number, day: number, hour: n
   const first = guess - zoneOffset(guess, timeZone) * 60000;
   return guess - zoneOffset(first, timeZone) * 60000;
 }
-const DATE_RE = /^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})日?(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/;
-/** "2026-09-30", "2026/9/30", "2026年9月30日", optionally " 14:05(:09)"; Excel serial days (45000) too. */
-export function parseDateText(text: string): { y: number; m: number; d: number; hh: number; mm: number; ss: number; time: boolean } | null {
+/**
+ * A typed / pasted date: every form the date pickers read (date-picker-core parseDateParts — "2026-09-30",
+ * "2026/9/30", "2026年9月30日", "20260930", "9/30" (this year), full-width digits), optionally with a time
+ * ("14:05", "14:05:09"); Excel serial days (45000) too.
+ */
+export function parseDateText(text: string, now: Date = new Date()): { y: number; m: number; d: number; hh: number; mm: number; ss: number; time: boolean } | null {
   const value = text.trim();
-  const match = DATE_RE.exec(value);
-  if (match) {
-    const [y, m, d] = [Number(match[1]), Number(match[2]), Number(match[3])];
-    const check = new Date(Date.UTC(y, m - 1, d));
-    if (check.getUTCFullYear() !== y || check.getUTCMonth() !== m - 1 || check.getUTCDate() !== d) return null;
-    const hh = match[4] ? Number(match[4]) : 0;
-    const mm = match[5] ? Number(match[5]) : 0;
-    const ss = match[6] ? Number(match[6]) : 0;
-    if (hh > 23 || mm > 59 || ss > 59) return null;
-    return { y, m, d, hh, mm, ss, time: Boolean(match[4]) };
+  const parts = parseDateParts(value, now);
+  if (parts) {
+    const [y, m, d] = parts.day.split("-").map(Number) as [number, number, number];
+    return { y, m, d, hh: parts.hh, mm: parts.mm, ss: parts.ss, time: parts.time };
   }
   if (/^\d{5}(\.\d+)?$/.test(value)) {
     // Excel serial date (1900 system, days since 1899-12-30).
@@ -251,6 +251,9 @@ export function editorText<T>(field: GridField<T>, value: unknown): string {
     }
     case "date":
     case "datetime": {
+      // A calendar day stays that day (no zone conversion: a date field round-trips in every zone).
+      const day = calendarDay(value);
+      if (day !== null) return field.type === "date" ? day : `${day} 00:00`;
       const time = value instanceof Date ? value.getTime() : new Date(value as string).getTime();
       if (Number.isNaN(time)) return "";
       const zone = field.timeZone ?? runtimeTimeZone();
@@ -305,13 +308,13 @@ export function clampRange(range: GridRange, rows: number, firstCol: number, las
 
 // ---------------------------------------------------------------- clipboard
 
-/** Cells → tab-separated text; a cell with tab / newline / quote is quoted ("" escapes a quote). */
+/** Cells → tab-separated text; a cell with tab / newline / quote is quoted ("" escapes a quote); formulas are escaped (escapeFormula). */
 export function toTsv(matrix: readonly (readonly string[])[]): string {
-  return matrix.map((row) => row.map((cell) => (/[\t\n\r"]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell)).join("\t")).join("\r\n");
+  return matrix.map((row) => row.map((raw) => { const cell = escapeFormula(raw); return /[\t\n\r"]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell; }).join("\t")).join("\r\n");
 }
-/** Cells → a minimal HTML table (Excel / WPS keep the cell grid when pasting it). */
+/** Cells → a minimal HTML table (Excel / WPS keep the cell grid when pasting it); formulas are escaped too. */
 export function toHtmlTable(matrix: readonly (readonly string[])[]): string {
-  const esc = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+  const esc = (text: string) => escapeFormula(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
   return `<table>${matrix.map((row) => `<tr>${row.map((cell) => `<td>${esc(cell)}</td>`).join("")}</tr>`).join("")}</table>`;
 }
 /**
@@ -344,7 +347,7 @@ export function parseTsv(text: string): string[][] {
     atStart = false;
   }
   if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
-  return rows.length ? rows : [[""]];
+  return rows.length ? rows.map((line) => line.map(unescapeFormula)) : [[""]];
 }
 
 export type GridGridCell<T> = { row: T; rowId: string } | null;
@@ -493,8 +496,16 @@ export type GridKeyAction =
   | "fillDown" // Ctrl + D: copy the top row of the range down
   | "insertBelow" // Shift + Enter (only when the grid can insert rows)
   | "insertAbove"; // Ctrl + Shift + Enter
-/** Navigate-mode key → action (arrows and paging are handled by moveGridCell). */
-export function gridKeyAction(event: { key: string; ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean; shiftKey?: boolean }): GridKeyAction | null {
+/**
+ * A key that belongs to an IME composition (Chinese / Japanese input): `isComposing`, the "Process" key, or
+ * keyCode 229 (what Safari / Chrome send for the first pinyin letter — its `key` may still read "z").
+ */
+/**
+ * Navigate-mode key → action (arrows and paging are handled by moveGridCell). IME keys are no action: the
+ * composition runs in the grid's input capture and opens the editor with the composed text (never 「z张」).
+ */
+export function gridKeyAction(event: { key: string; ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean; shiftKey?: boolean; keyCode?: number; isComposing?: boolean }): GridKeyAction | null {
+  if (isComposingEvent(event)) return null;
   const mod = Boolean(event.ctrlKey || event.metaKey);
   const key = event.key;
   if (mod && !event.altKey) {

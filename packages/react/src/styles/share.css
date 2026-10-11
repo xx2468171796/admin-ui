@@ -145,7 +145,7 @@
 .adminui .aui-shared-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 18px 20px; }
 .adminui .aui-shared-tile { position: relative; display: grid; gap: 4px; align-content: start; min-width: 0; min-height: 64px; padding: 10px 14px; border: 1px solid var(--aui-line); border-radius: 10px; background: var(--aui-tile); }
 .adminui .aui-shared-tile[data-span=full] { grid-column: 1 / -1; }
-.adminui .aui-shared-tile[data-edit=editing] { border-color: var(--aui-primary); box-shadow: 0 0 0 3px var(--aui-soft); background: var(--aui-surface); }
+.adminui .aui-shared-tile[data-edit=editing] { border-color: var(--aui-primary); box-shadow: var(--aui-selected-ring); background: var(--aui-surface); }
 .adminui .aui-shared-tile-label { display: flex; align-items: center; gap: 5px; color: var(--aui-secondary); font-size: calc(12px * var(--aui-font-scale)); }
 .adminui .aui-shared-tile-label > svg { width: 13px; height: 13px; }
 .adminui .aui-shared-tile-label > em { padding: 0 6px; border-radius: 4px; background: var(--aui-soft); color: var(--aui-ink); font-size: calc(12px * var(--aui-font-scale)); font-style: normal; font-weight: 600; }

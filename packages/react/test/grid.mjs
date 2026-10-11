@@ -163,7 +163,8 @@ try {
   assert.equal((await summaryCell('paid').textContent()).replace(/\s/g, ''), `已勾选${paid}`, '勾选字段统计 = 页面独立算出的已回款数');
   assert.match(await grid.locator('.aui-grid-summary-total').textContent(), /^2000 条(记录)?$/);
   await toolbar.getByRole('searchbox', { name: '搜索记录' }).fill('HT-00002');
-  await page.waitForTimeout(100);
+  // The view's search applies 300 ms after typing stops (grid-search.ts).
+  await page.waitForTimeout(450);
   assert.equal(await dataRows().count(), 1, '搜索编号只剩一条');
   const only = dataRows().first();
   const amountText = (await only.locator('[data-type=money]').textContent()).trim();
@@ -222,7 +223,8 @@ try {
   await grid.evaluate(el => { el.scrollTop = 0; el.scrollLeft = 0; });
   const firstKey = await dataRows().first().getAttribute('data-row-key');
   await grid.locator(`[role=row][data-row-key="${firstKey}"] [role=rowheader]`).click();
-  const focused = () => page.evaluate(() => { const el = document.activeElement; const row = el.closest('[role=row]'); return { cell: el.dataset.cell, col: el.getAttribute('aria-colindex'), row: row?.getAttribute('aria-rowindex'), key: row?.dataset.rowKey ?? null, tab: el.tabIndex }; });
+  // An editable active cell keeps focus in its input capture (IME typing); the cell is its closest [data-cell].
+  const focused = () => page.evaluate(() => { const el = document.activeElement.closest('[data-cell]') ?? document.activeElement; const row = el.closest('[role=row]'); return { cell: el.dataset.cell, col: el.getAttribute('aria-colindex'), row: row?.getAttribute('aria-rowindex'), key: row?.dataset.rowKey ?? null, tab: document.activeElement.tabIndex }; });
   const start = await focused();
   assert.equal(start.col, '2');
   await page.keyboard.press('ArrowDown');

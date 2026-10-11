@@ -54,7 +54,7 @@ try {
   assert.equal(await name0.getAttribute('data-saving'), 'saving', '保存中标记');
   await status.getByText('已保存 1 格').waitFor();
   assert.equal(await name0.getAttribute('data-saving'), null);
-  assert.equal(await page.evaluate(() => document.activeElement?.dataset.cell), `1:${await colIndex('客户名称')}`, 'Enter 后焦点到下一行同一列');
+  assert.equal(await page.evaluate(() => document.activeElement?.closest('[data-cell]')?.dataset.cell), `1:${await colIndex('客户名称')}`, 'Enter 后焦点到下一行同一列');
 
   // ---- bt/datepicker：日期格编辑 = 文本框 + 格子下方的日历；可直接打 2026/11/3，↓ 进日历、Enter 选中即保存
   const signed2 = await cell(2, '签约日期');
@@ -96,7 +96,7 @@ try {
   await page.keyboard.press('Tab');
   await status.getByText('已保存 1 格').waitFor();
   assert.equal(await text(1, '席位数'), '321');
-  assert.equal(await page.evaluate(() => document.activeElement?.dataset.cell), `1:${await colIndex('席位数') + 1}`, 'Tab 后焦点右移');
+  assert.equal(await page.evaluate(() => document.activeElement?.closest('[data-cell]')?.dataset.cell), `1:${await colIndex('席位数') + 1}`, 'Tab 后焦点右移');
 
   // ---- 单选：Enter 打开选项列表，选「赢单」
   const stage2 = await cell(2, '阶段');
@@ -256,7 +256,8 @@ try {
   await tagList.waitFor();
   await search.fill('失败的标签');
   await page.getByRole('option', { name: '新建选项「失败的标签」' }).click();
-  await page.getByText('演示：选项名不能含「失败」').waitFor();
+  // exact: the screen-reader alert (aui-sr-only) repeats it inside a longer sentence (8.10)
+  await page.getByText('演示：选项名不能含「失败」', { exact: true }).waitFor();
   assert.equal(await search.inputValue(), '失败的标签', '失败后搜索词还在，编辑器不关');
   await page.getByRole('option', { name: '新建选项「失败的标签」' }).waitFor();
   // 输入已有的「续约」不给新建行（大小写规则见 option-list-core 单测）
@@ -281,7 +282,10 @@ try {
   await sgrid.locator('[role=row][data-row-key]').nth(5).waitFor();
   await page.waitForTimeout(400);
   const idx = await sgrid.locator('[role=row][data-row-key]').evaluateAll((rows) => rows.map((r) => Number(r.getAttribute('aria-rowindex'))));
-  assert.ok(Math.min(...idx) > 50000, `滚到 60% 处加载那一段（${idx[0]}），加载中出现骨架行 ${skeletons}`);
+  // The active row (row 1 by default) stays rendered off-screen since 8.9 — it keeps keyboard focus (and, 8.10, the
+  // IME capture input). Everything else must be the 60% stretch.
+  const far = idx.filter((i) => i > 50000);
+  assert.ok(far.length >= 5 && idx.length - far.length <= 1, `滚到 60% 处加载那一段（${idx.join(',')}），加载中出现骨架行 ${skeletons}`);
   // 8.7 服务端新增记录：底栏「+」→ 服务端在最后加一条 → 表格自己重取、滚到最后、第一格进入编辑，打字回车保存
   await sgrid.evaluate((el) => { el.scrollTop = 0; });
   await sgrid.getByRole('button', { name: '新增记录', exact: true }).click();

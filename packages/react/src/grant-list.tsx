@@ -46,8 +46,6 @@ import { GrantOrgField, type GrantOrgPickerOptions } from "./grant-org-field.tsx
 import type { OrgDataSource } from "./org-picker/org-picker-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grants.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grants.css";
 
 /**
  * A holder that is always there (default chain). Without `level`: a locked chip above the list; with

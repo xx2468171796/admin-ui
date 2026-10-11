@@ -129,6 +129,47 @@ try {
     const deal = detail.locator('.aui-dcard[data-kind=section]').filter({ has: page.getByRole('heading', { name: '成交' }) });
     assert.match(await deal.locator('.aui-dcard-folded').innerText(), /3 个空字段已收起 · 显示/);
     assert.equal(await deal.locator('.aui-rfield').count(), 0);
+    // 跟进方式的颜色（ActivityKind tone / color）：图标 / 小色点上色，选中 = 软底 + 色字 + 色边；浅深色下文字 ≥ 4.5:1、图标 ≥ 3:1
+    {
+      const kindGroup = detail.locator('.aui-acomposer').getByRole('group', { name: '跟进方式' });
+      assert.deepEqual(await kindGroup.getByRole('button').evaluateAll((els) => els.map((el) => el.getAttribute('data-tone'))), ['blue', 'green', 'orange', 'violet', 'teal', 'gray'], '每种方式带颜色；color 就近换成色卡色');
+      const other = kindGroup.getByRole('button', { name: '其他' });
+      assert.equal(await other.locator('svg').count(), 0);
+      assert.equal(await other.locator('.aui-tone-dot').count(), 1, '没图标 + 有颜色 = 小色点');
+      const measureChip = (button) => button.evaluate((el) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 1;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const rgb = (css) => { ctx.clearRect(0, 0, 1, 1); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 1, 1); ctx.fillStyle = css; ctx.fillRect(0, 0, 1, 1); return [...ctx.getImageData(0, 0, 1, 1).data.slice(0, 3)]; };
+        const lum = ([r, g, b]) => { const f = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+        const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+        let bgEl = el;
+        let bg = getComputedStyle(bgEl).backgroundColor;
+        while (bgEl && (bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent')) { bgEl = bgEl.parentElement; bg = bgEl ? getComputedStyle(bgEl).backgroundColor : '#fff'; }
+        const back = rgb(bg);
+        const mark = el.querySelector('svg, .aui-tone-dot');
+        const markColor = mark ? (mark.matches('svg') ? getComputedStyle(mark).color : getComputedStyle(mark).backgroundColor) : null;
+        return { text: ratio(rgb(getComputedStyle(el).color), back), mark: markColor ? ratio(rgb(markColor), back) : null, isDot: Boolean(mark?.matches('.aui-tone-dot')), bg, border: getComputedStyle(el).borderTopColor };
+      });
+      for (const name of ['电话', 'LINE', '拜访', '到店', '视频', '其他']) {
+        const button = kindGroup.getByRole('button', { name });
+        if ((await button.getAttribute('aria-pressed')) === 'true') await kindGroup.getByRole('button', { name: name === '其他' ? '电话' : '其他' }).click();
+        assert.equal(await button.getAttribute('aria-pressed'), 'false');
+        const idle = await measureChip(button);
+        await button.click();
+        assert.equal(await button.getAttribute('aria-pressed'), 'true');
+        const on = await measureChip(button);
+        for (const [state, m] of [['未选', idle], ['选中', on]]) {
+          assert.ok(m.text >= 4.5, `${scheme} ${name} ${state} 文字对比度 ${m.text.toFixed(2)}`);
+          if (!m.isDot) assert.ok(m.mark >= 3, `${scheme} ${name} ${state} 图标对比度 ${m.mark?.toFixed(2)}`);
+          else assert.ok(m.mark > 1.2, `${scheme} ${name} ${state} 色点看得见 ${m.mark?.toFixed(2)}`);
+        }
+        assert.notEqual(on.bg, idle.bg, `${scheme} ${name}：选中换底色`);
+        assert.notEqual(on.border, idle.border, `${scheme} ${name}：选中换边框色`);
+      }
+      await kindGroup.getByRole('button', { name: '电话' }).click();
+      await shot(detail.locator('.aui-acomposer'), `composer-kinds-${scheme}`);
+    }
     await feedDotsOnLine(detail, `1440 ${scheme}`);
     await shot(page, `cards-${scheme}`);
     if (scheme === 'dark') {

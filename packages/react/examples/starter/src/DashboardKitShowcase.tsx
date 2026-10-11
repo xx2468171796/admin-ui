@@ -71,7 +71,7 @@ export function DashboardKitShowcase({ active }: { active: boolean }) {
           <KpiGrid>
             <KpiCard title="成交额" tag={["北极星", { label: "进行中", tone: "info" }]} value="¥204.0" unit="万" target={{ value: 204, target: 1200, format: ntWan }} timeProgress={0.15} detail="目标 ¥1,200 万 · 已达 17.0% · 时间进度 15.0%" delta={rel(204 / 3, 1248 / 20 * 0.92)} comparison="日均比 9 月同期" definition="成交口径（签约 / 订金 / 全款）待和财务模块一起定；金额以财务为准。" />
             <KpiCard title="30 天成交转化" value="9.9" unit="%" detail="8 月进线 31 / 312" delta={pp(0.099, 0.087)} comparison="比 7 月同天龄" trend={[8.1, 8.6, 8.3, 8.7, 9.9]} trendPlacement="inline" />
-            <KpiCard title="赢单率" value="39" unit="%" detail="成交 9 ÷（成交 9 + 丢单 14）" delta={pp(0.39, 0.35)} comparison="比上月同期" trend={[33, 36, 34, 37, 35, 39]} trendPlacement="inline" />
+            <KpiCard title="赢单率" value="39" unit="%" detail="成交 9 ÷（成交 9 + 丢单 14）" delta={pp(0.39, 0.35)} comparison="比上月同期" trend={[33, 36, 34, 37, 35, 39]} trendPlacement="inline" definition="成交 ÷（成交 + 丢单），只算本月关闭的商机" onActivate={drill("赢单率 · 本月关闭的商机")} />
             <KpiCard title="成交周期" value="34" unit="天 · 中位" detail="P90 71 天 · 还在跟进 186 位" delta={abs(34, 38, "down")} comparison="比上月同期" trend={[41, 39, 40, 38, 36, 34]} trendPlacement="inline" />
           </KpiGrid>
           <div style={grid3}>

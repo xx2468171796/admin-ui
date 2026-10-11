@@ -4,7 +4,7 @@
  * input. Empty box → 「最近」 + 「常用」; typing → one group per provider (queried concurrently,
  * 800ms each) plus 「页面」 / 「命令」 from `commands`. Logic: command-core.ts + command-palette-model.ts.
  */
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { Search } from "lucide-react";
 import { searchReady, type AdminCommand } from "./command-core.ts";
@@ -21,8 +21,8 @@ import { CommandTrigger, NoMatch, PaletteFooter, PaletteRowView, ScopeChips } fr
 import { useAdminTheme } from "./theme.tsx";
 import { Kbd } from "./tooltip.tsx";
 import { useAdminShortcuts, useGlobalShortcutDefault } from "./admin-shortcuts.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/command-palette.css";
+import { errorText as textOf } from "./error-text.ts";
+import { isComposingEvent } from "./ime.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/command-palette.css";
 
@@ -64,7 +64,7 @@ export type CommandPaletteProps = {
 const NO_COMMANDS: readonly AdminCommand[] = [];
 const NO_PROVIDERS: readonly CommandProvider[] = [];
 
-const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
+const errorText = (e: unknown) => textOf(e);
 
 export function CommandPalette({
   commands = NO_COMMANDS,
@@ -124,16 +124,14 @@ export function CommandPalette({
   const searchAllTitle = onSearchAll ? `在全部${providers.length === 1 ? (providers[0]?.label ?? "") : "内容"}里搜「${q}」` : undefined;
   const view = useMemo(
     () => buildPaletteView({ query, scope, ready, commands, providers, groups, recent: recentList, suggested, searchAllTitle, emptyActions }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [query, scope, ready, commands, providers, groups, recentList, suggested, searchAllTitle],
+    [query, scope, ready, commands, providers, groups, recentList, suggested, searchAllTitle, emptyActions],
   );
   const rows = selectableRows(view);
   const current = rows.length ? Math.min(active, rows.length - 1) : -1;
-  const rowId = (index: number) => `${ids}-row-${index}`;
+  const rowId = useCallback((index: number) => `${ids}-row-${index}`, [ids]);
   useEffect(() => {
     if (current >= 0) document.getElementById(rowId(current))?.scrollIntoView({ block: "nearest" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current]);
+  }, [current, rowId]);
 
   const providerLabel = (id?: string) => providers.find((p) => p.id === id)?.label ?? "";
   const providerIcon = (id: string): ReactNode => providers.find((p) => p.id === id)?.icon ?? null;
@@ -176,7 +174,7 @@ export function CommandPalette({
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.nativeEvent.isComposing) return;
+    if (isComposingEvent(e)) return;
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       if (rows.length) setActive((current + (e.key === "ArrowDown" ? 1 : -1) + rows.length) % rows.length);
@@ -218,8 +216,9 @@ export function CommandPalette({
                 back?.focus({ preventScroll: true });
               }}
               onEscapeKeyDown={(e) => {
-                // Esc closes at once, typed or not (Linear / Raycast; the footer says 「Esc 关闭」). Only a running command keeps it open.
-                if (busy) e.preventDefault();
+                // Esc closes at once, typed or not (Linear / Raycast; the footer says 「Esc 关闭」). Only a running command
+                // keeps it open — and an IME candidate list, whose Esc only cancels the composition.
+                if (busy || isComposingEvent(e)) e.preventDefault();
               }}
             >
               <RadixDialog.Title className="aui-sr-only">搜索与命令</RadixDialog.Title>

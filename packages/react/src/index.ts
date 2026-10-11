@@ -34,6 +34,14 @@ export { AuthLayout, LoginForm, type AuthLayoutProps, type LoginFormProps, type 
 export * from "./tabbed-page.tsx";
 export * from "./choices.tsx";
 export { toggleChoice, datePresetValue } from "./choice-core.ts";
+// 8.10：Note 说明文字、本地分页、根入口懒加载图表、远程搜索下拉
+export { Note, type NoteProps, type NoteTone } from "./note.ts";
+export { useLocalPagination, type LocalPagination, type LocalPaginationOptions } from "./local-pagination.ts";
+export { LazyAdminChart, preloadAdminChart, type LazyAdminChartProps } from "./lazy-admin-chart.ts";
+export { AsyncChoice, type AsyncChoiceProps } from "./async-choice.tsx";
+export type { RemoteSearchLoader } from "./choice-core.ts";
+export type { ControlWidth } from "./control-width.ts";
+export { vizStatus, VIZ_STATUS_TOKENS, type VizStatusName } from "./viz-palette.ts";
 export * from "./forms.tsx";
 export * from "./data.tsx";
 export * from "./cells.tsx";
@@ -456,3 +464,5 @@ export {
   type CommandGroupStatus,
   type RunProvidersOptions,
 } from "./command-core.ts";
+export { errorText } from "./error-text.ts";
+export { isComposingEvent } from "./ime.ts";

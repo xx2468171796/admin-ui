@@ -20,8 +20,8 @@
 .adminui .aui-ftype-icon svg { width: 15px; height: 15px; }
 .adminui .aui-ftype-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adminui .aui-ftype-tile:hover:not([aria-disabled=true]) { background: var(--aui-wash); border-color: var(--aui-control-border); }
-.adminui .aui-ftype-tile:focus-visible { outline: none; box-shadow: var(--aui-focus-ring); }
-.adminui .aui-ftype-tile[aria-checked=true] { border-color: var(--aui-primary); background: var(--aui-soft); color: var(--aui-ink); font-weight: 500; box-shadow: var(--aui-focus-ring); }
+.adminui .aui-ftype-tile[aria-checked=true] { border-color: var(--aui-primary); background: var(--aui-soft); color: var(--aui-ink); font-weight: 500; box-shadow: var(--aui-selected-ring); }
+.adminui .aui-ftype-tile:focus-visible { outline: 2px solid transparent; box-shadow: var(--aui-focus-ring); }
 .adminui .aui-ftype-tile[aria-checked=true] .aui-ftype-icon { color: var(--aui-primary); }
 .adminui .aui-ftype-tile[data-later] { border-color: transparent; background: var(--aui-surface-subtle); color: var(--aui-note); cursor: not-allowed; }
 .adminui .aui-ftype-tile[data-later] .aui-ftype-icon { color: var(--aui-note); }
@@ -30,7 +30,7 @@
 .adminui .aui-ftype-more { display: inline-flex; align-items: center; justify-self: start; gap: 4px; padding: 4px 0; border: 0; background: none; color: var(--aui-note); font: inherit; font-size: calc(12px * var(--aui-font-scale)); font-weight: 600; cursor: pointer; }
 .adminui .aui-ftype-more > svg { width: 13px; height: 13px; }
 .adminui .aui-ftype-more:hover { color: var(--aui-text); }
-.adminui .aui-ftype-more:focus-visible { outline: none; box-shadow: var(--aui-focus-ring); border-radius: var(--aui-radius-sm); }
+.adminui .aui-ftype-more:focus-visible { outline: 2px solid transparent; box-shadow: var(--aui-focus-ring); border-radius: var(--aui-radius-sm); }
 .adminui .aui-ftype-desc { display: flex; align-items: center; gap: 10px; min-width: 0; margin-top: 2px; padding: 10px 12px; border-radius: 10px; background: var(--aui-wash); color: var(--aui-secondary); font-size: calc(12.5px * var(--aui-font-scale)); }
 .adminui .aui-ftype-desc-text { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; min-width: 0; }
 .adminui .aui-ftype-desc-text > b { color: var(--aui-text); font-weight: 600; }
@@ -44,7 +44,7 @@
 .adminui .aui-opts .aui-swatch-button .aui-swatch { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--aui-tone-soft, var(--aui-option-gray-soft)); }
 .adminui .aui-opts .aui-swatch-button .aui-swatch::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--aui-tone, var(--aui-option-gray)); }
 .adminui .aui-opts .aui-swatch-button:hover:not(:disabled) .aui-swatch { box-shadow: 0 0 0 1px var(--aui-tone); }
-.adminui .aui-opts .aui-swatch-button:focus-visible { outline: none; box-shadow: var(--aui-focus-ring); }
+.adminui .aui-opts .aui-swatch-button:focus-visible { outline: 2px solid transparent; box-shadow: var(--aui-focus-ring); }
 .adminui .aui-opts-row > .aui-input { height: var(--aui-control-height-sm); min-width: 0; border-color: transparent; background: transparent; }
 .adminui .aui-opts-row > .aui-input:hover { border-color: var(--aui-field-border, var(--aui-line)); }
 .adminui .aui-opts-row > .aui-input:focus { border-color: var(--aui-primary); background: var(--aui-surface); }

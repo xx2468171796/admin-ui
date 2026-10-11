@@ -315,3 +315,59 @@ test("8.0 removals stay removed (the MIGRATION_8 table of the audit tool)", asyn
   const primitives = readFileSync(new URL("../src/primitives.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(primitives, /icon: "aui-button-icon"|link: "aui-button-link"/, "Button has no size=icon / variant=link");
 });
+
+/**
+ * The other direction of "every catalog export is really exported": every value an entry exports must be
+ * registered in the catalog. The catalog is the public API; an unregistered export is either a forgotten
+ * registration (AI agents read the catalog as the full list and rebuild what they cannot find there) or an
+ * internal helper that leaked — and every leaked helper turns the next refactor into a breaking change.
+ * test/fixtures/unregistered-exports.json lists the ones that predate this test; it may only shrink.
+ */
+test("every exported value is registered in the catalog (allowlist may only shrink)", () => {
+  const allow = JSON.parse(readFileSync(new URL("./fixtures/unregistered-exports.json", import.meta.url), "utf8")) as Record<string, string[]>;
+  const registered = new Map<string, Set<string>>();
+  for (const cap of CAPABILITIES) {
+    const file = ENTRY_FILES[cap.entry] ?? "";
+    registered.set(file, new Set([...(registered.get(file) ?? []), ...cap.exports]));
+  }
+  const problems: string[] = [];
+  for (const file of new Set(Object.values(ENTRY_FILES))) {
+    const exported = publicValues(file);
+    const known = registered.get(file) ?? new Set<string>();
+    const allowed = new Set(allow[file] ?? []);
+    for (const name of exported) if (!known.has(name) && !allowed.has(name)) problems.push(`${file}: ${name} is exported but not in catalog.ts — register it, or stop exporting it`);
+    for (const name of allowed) if (known.has(name) || !exported.has(name)) problems.push(`${file}: remove ${name} from test/fixtures/unregistered-exports.json (now registered or no longer exported)`);
+  }
+  assert.deepEqual(problems, []);
+});
+
+/**
+ * ECharts is an optional peer: a project that shows no chart does not install it. The root entry's TYPE graph
+ * (not only its runtime) must not reach "echarts" — with skipLibCheck off, a type import of a missing package
+ * fails the host's type-check even if it never renders a chart. 8.10's LazyAdminChart first typed its props as
+ * AdminChartProps (EChartsOption) and pulled six chart modules into the root's types; chart-props.ts fixed it.
+ */
+test("the root entry's type graph never reaches echarts", () => {
+  const seen = new Set<string>();
+  const reach: string[] = [];
+  const walk = (file: string) => {
+    if (seen.has(file)) return;
+    seen.add(file);
+    let source: string;
+    try {
+      source = readFileSync(new URL(`../src/${file}`, import.meta.url), "utf8");
+    } catch {
+      return;
+    }
+    if (/from "echarts/.test(source)) reach.push(file);
+    const dir = file.includes("/") ? file.slice(0, file.lastIndexOf("/") + 1) : "";
+    for (const m of source.matchAll(/(?:import|export)\s[^;]*?from\s+"(\.[^"]+)"/g)) {
+      const parts = (dir + m[1]!.replace(/^\.\//, "")).split("/");
+      const out: string[] = [];
+      for (const part of parts) if (part === "..") out.pop(); else if (part !== ".") out.push(part);
+      walk(out.join("/"));
+    }
+  };
+  walk("index.ts");
+  assert.deepEqual(reach, [], "type-only imports count too: keep ECharts types behind ./charts");
+});

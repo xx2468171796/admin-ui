@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, InlineAlert, PageBody, PageHeader, RecordPage, useNotify } from "@adminui/react";
 import { contractLayout, ContractOverview, type ContractRow } from "./contract-record";
-import { BitableGrid, ViewOverrideBar, gridViewReducer, normalizeGridView, useGridView, type GridCellChange, type GridDataSource, type GridField, type GridSelectOption, type GridView } from "@adminui/react/grid";
+import { BitableGrid, ViewOverrideBar, gridViewReducer, normalizeGridView, useGridView, type BitableGridHandle, type GridCellChange, type GridDataSource, type GridField, type GridSelectOption, type GridView } from "@adminui/react/grid";
 import { applyGridGroups, applyGridQuery, type ConditionContext } from "@adminui/react/grid-query";
 import { SegmentedControl } from "@adminui/react";
 
@@ -103,17 +103,22 @@ const fields: GridField<Contract>[] = [
 // 模拟的服务端：10 万条记录，按 GridQuery 筛选排序后分块返回（真实项目在后端用 @adminui/react/grid-query 的
 // parseGridQuery + buildGridSql / applyGridQuery 实现同一个接口）
 let BIG = generate(100_000);
+/** Simulated network latency (the browser tests slow it down to look at the in-between state). */
+const latency = (offset = 0) => {
+  const delay = (globalThis as { __auiServerDelay?: number | ((offset: number) => number) }).__auiServerDelay;
+  return typeof delay === "function" ? delay(offset) : delay ?? 250;
+};
 const serverSource: GridDataSource<Contract> = {
   capabilities: { search: true, filter: true, sort: true, summaries: ["sum", "avg", "min", "max", "filled", "empty"] },
   load: ({ query, offset, limit, summaries, signal }) =>
     new Promise((resolve, reject) => {
-      const timer = setTimeout(() => resolve(applyGridQuery(BIG, fields, query, { offset, limit, summaries }, CONDITIONS)), 250);
+      const timer = setTimeout(() => resolve(applyGridQuery(BIG, fields, query, { offset, limit, summaries }, CONDITIONS)), latency(offset));
       signal.addEventListener("abort", () => { clearTimeout(timer); reject(new DOMException("aborted", "AbortError")); });
     }),
   // 分组：组头（每级的组、条数、统计）；行由 load 按同样的分组顺序返回（后端用 buildGridGroupSql 或 applyGridGroups）
   loadGroups: ({ query, summaries, signal }) =>
     new Promise((resolve, reject) => {
-      const timer = setTimeout(() => resolve(applyGridGroups(BIG, fields, query, { summaries }, CONDITIONS)), 250);
+      const timer = setTimeout(() => resolve(applyGridGroups(BIG, fields, query, { summaries }, CONDITIONS)), latency());
       signal.addEventListener("abort", () => { clearTimeout(timer); reject(new DOMException("aborted", "AbortError")); });
     }),
 };
@@ -125,6 +130,15 @@ function addServerRow(): string {
   // 新数组：applyGridQuery 按数组缓存查询结果
   BIG = [...BIG, { ...BIG[0]!, id, name: "", tags: [], owners: [], note: "", amount: 0, signed: null, followUp: null }];
   return id;
+}
+let insertedRows = 0;
+/** 8.9 向上 / 向下插入记录（服务端）：「服务端」在锚点旁边建一条，表格用 handle.insertRow 原地放进去，不整表重取 */
+function insertServerRow(position: "above" | "below", anchorId: string): Contract | null {
+  const at = BIG.findIndex((item) => item.id === anchorId);
+  if (at < 0) return null;
+  const row: Contract = { ...BIG[at]!, id: `HT-${200_000 + ++insertedRows}`, name: "", note: "", amount: 0 };
+  BIG = [...BIG.slice(0, position === "above" ? at : at + 1), row, ...BIG.slice(position === "above" ? at : at + 1)];
+  return row;
 }
 function saveServerCells(changes: GridCellChange<Contract>[]) {
   for (const change of changes) {
@@ -143,12 +157,28 @@ function ModeSwitch({ mode, onMode }: { mode: "client" | "server"; onMode: (mode
 
 function ServerGrid({ onMode }: { onMode: (mode: "client" | "server") => void }) {
   const { view, onViewChange } = useGridView(fields, { storageKey: "starter:demo:bitable-server:view", defaults: { rowHeight: "short", summary: { amount: "sum" } } });
+  // 8.9 handleRef: refresh / patchRows / insertRow / removeRows / revealRow — no clicking 「刷新」 through the DOM
+  const grid = useRef<BitableGridHandle<Contract>>(null);
+  // For the browser tests (test/grid-refresh.mjs) only
+  useEffect(() => {
+    Object.assign(window, { __auiServerGrid: grid, __auiServerRows: { insert: insertServerRow, remove: (ids: string[]) => { BIG = BIG.filter((item) => !ids.includes(item.id)); }, find: (id: string) => BIG.find((item) => item.id === id) ?? null } });
+  }, []);
   return (
     <>
       <PageHeader title="多维表格" description="服务端模式：10 万条合同，滚到哪儿加载到哪儿（每块 100 条，模拟 250ms 网络延迟）；搜索、筛选、排序、底部统计都交给服务端算。" actions={<ModeSwitch mode="server" onMode={onMode} />} />
       <PageBody>
         <BitableGrid caption="合同台账（服务端）" dataSource={serverSource} getRowId={(row) => row.id} fields={fields} view={view} onViewChange={onViewChange} emptyLabel="没有合同" conditionContext={CONDITIONS} panelNote={PANEL_NOTE}
-          onAddRow={() => new Promise<string>((resolve) => setTimeout(() => resolve(addServerRow()), 150))} onCellsChange={saveServerCells} />
+          onAddRow={() => new Promise<string>((resolve) => setTimeout(() => resolve(addServerRow()), 150))} onCellsChange={saveServerCells} handleRef={grid}
+          onRowsInsert={(position, anchorId) => {
+            const row = insertServerRow(position, anchorId);
+            if (!row) return;
+            grid.current?.insertRow(row, position === "above" ? { before: anchorId } : { after: anchorId });
+            void grid.current?.revealRow(row.id, { edit: true });
+          }}
+          onRowsDelete={(ids) => {
+            BIG = BIG.filter((item) => !ids.includes(item.id));
+            grid.current?.removeRows(ids);
+          }} />
       </PageBody>
     </>
   );

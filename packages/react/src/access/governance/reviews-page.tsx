@@ -34,8 +34,6 @@ import { govErrorMessage, type GovernanceApi } from "./api.ts";
 import { GovLoad, feedbackOf, staleAlert, ReadOnlyNote, StaleAlert, defaultNow, optionLabeler, toChoice, useGov, useNotice, type GovPageBaseProps } from "./shared.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export type ReviewsPageProps = GovPageBaseProps & {
   roles?: readonly GovOption[];

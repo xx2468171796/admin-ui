@@ -14,8 +14,6 @@ import { UploadDropZone, UploadFileTile, uploadLimitText } from "./upload-queue.
 import { validateFile, type UploadAdapter, type UploadResult } from "./contracts.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/uploads.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/uploads.css";
 
 /** A file already in the field (edit forms: the current cover). */
 export type UploadFieldValue = { name: string; size?: number; url?: string; thumbUrl?: string; mime?: string };

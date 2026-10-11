@@ -20,8 +20,6 @@ import { auditActionLabel, auditActionOptions, auditEventDim, auditTargetLabel, 
 import { ErrorAlert, StatusLine, useAction, useConsole, useSecondTick } from "./console-shared.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export function ExplainSection() {
   const c = useConsole();
@@ -185,9 +183,9 @@ export function AuditSection() {
       setLoading(false);
     }
   };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a newly applied filter is the trigger; load (new each render) only reads state setters and, for append, the rows of that render.
   useEffect(() => {
     void load(applied, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applied]);
   const set = (patch: Partial<AuditQuery>) => setFilter((f) => {
     const next: AuditQuery = { ...f, ...patch };

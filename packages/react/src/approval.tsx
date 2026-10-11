@@ -22,8 +22,6 @@ import { ApprovalMiniSteps, ApprovalProgress } from "./approval-progress.tsx";
 import { approvalCounts, approvalStatusMeta, canDecide, canWithdraw, decisionError, filterApprovals, type ApprovalRequest, type ApprovalScope } from "./approval-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/approval.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/approval.css";
 
 const failure = (caught: unknown, fallback: string) => (caught instanceof Error && caught.message ? caught.message : fallback);
 const defaultTime = (iso: string) => {
@@ -147,8 +145,14 @@ export type ApprovalDetailProps<R extends ApprovalRequest = ApprovalRequest> = {
   now?: number;
 };
 
-/** See the module comment. */
-export function ApprovalDetail<R extends ApprovalRequest>({ request, viewerId, renderSubject, fields = [], onApprove, onReject, onWithdraw, decideHint, actions, formatTime = defaultTime, now }: ApprovalDetailProps<R>) {
+/**
+ * See the module comment. Keyed by `request.id`: switching to another request starts over (empty comment,
+ * no error) — a rejection reason typed for A is never submitted for B, and a late result of A is dropped.
+ */
+export function ApprovalDetail<R extends ApprovalRequest>(props: ApprovalDetailProps<R>) {
+  return <ApprovalDetailBody key={props.request.id} {...props} />;
+}
+function ApprovalDetailBody<R extends ApprovalRequest>({ request, viewerId, renderSubject, fields = [], onApprove, onReject, onWithdraw, decideHint, actions, formatTime = defaultTime, now }: ApprovalDetailProps<R>) {
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
   const [invalid, setInvalid] = useState(false);

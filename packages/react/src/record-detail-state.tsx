@@ -85,10 +85,10 @@ export function useRecordDetail<T>({ rows, rowKey, layout, defaultLevel, url, en
   // focus to the opener (Dialog does that); after prev / next, onRefocus moves it to the current one.
   const firstKey = useRef<string | null>(null);
   const isOpen = row !== undefined;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on the open / close edge only; `key` is the record it opened on (prev / next must not move it).
   useEffect(() => {
     if (!isOpen) firstKey.current = null;
     else if (firstKey.current === null) firstKey.current = key;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
   const open = (next: string, nextLevel?: Exclude<RecordDetailLevel, "page">) => {
     const lv = nextLevel ?? fallbackLevel;
@@ -116,12 +116,12 @@ export function useRecordDetail<T>({ rows, rowKey, layout, defaultLevel, url, en
   };
   // A record that disappeared (deleted, filtered out) closes instead of lingering on stale data.
   const stale = !controlled && ownKey !== null && enabled && rows.length > 0 && index < 0;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: closes once on the transition to stale; syncUrl / level are read from that render.
   useEffect(() => {
     if (stale) {
       setOwnKey(null);
       syncUrl(null, level, "replace");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stale]);
 
   // Mounted from the first open on (the dialog animates closed and keeps focus return), never before.
@@ -133,7 +133,7 @@ export function useRecordDetail<T>({ rows, rowKey, layout, defaultLevel, url, en
         nav={row !== undefined ? { index, total: rows.length, onMove: move } : undefined} details={details} peek={peek} recordKey={row !== undefined ? rowKey(row) : undefined} />
     </Suspense>
   ) : null;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: open / close / changeLevel / element are rebuilt each render from exactly these inputs; the memo keeps them while none changed.
   return useMemo(() => ({ openKey: row !== undefined ? key : null, level, open, close, setLevel: changeLevel, element, row, index }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [row, key, level, rows, layout, details, peek, enabled, loaded]);
+    [row, key, level, rows, layout, details, peek, enabled, loaded, index, rowKey, controlled, fallbackLevel, syncUrl, onOpenChange, onRefocus]);
 }

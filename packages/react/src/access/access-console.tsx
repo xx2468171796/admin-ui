@@ -22,8 +22,6 @@ import { GroupSection } from "./console-groups.tsx";
 import { AuditSection, ExplainSection, ViewAsBanner } from "./console-insight.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 /** A host section appended after the built-in ones (e.g. 字典 / 参数). */
 export type AccessConsoleExtraSection = {

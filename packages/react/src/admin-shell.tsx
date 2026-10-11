@@ -21,8 +21,6 @@ import { IconButton } from "./buttons.tsx";
 import { GlobalShortcutContext } from "./admin-shortcuts.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/shell.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/shell.css";
 
 export type WorkspaceItem = {
   id: string;
@@ -190,7 +188,7 @@ export function AdminShell(props: AdminShellProps) {
   useEffect(() => {
     if (documentTitle && activeTitle !== undefined) document.title = documentTitle(activeTitle);
   }, [documentTitle, activeTitle]);
-  // Keep the current item visible in a long, scrolled menu. Only the menu scrolls: never the page.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keeps the current item visible in a long, scrolled menu (only the menu scrolls, never the page) — re-run when the item, the drawer or the collapsed state changes.
   useEffect(() => {
     const nav = navRef.current;
     const item = nav?.querySelector<HTMLElement>('[aria-current="page"]');

@@ -19,8 +19,8 @@ import { SOURCE_LABELS, relativeDay, shortTime, type CellVersionSource } from ".
 import { ChangeValue } from "./change-value.tsx";
 import { avatarTone } from "./avatar-core.ts";
 import { IconButton } from "./buttons.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/cell-history.css";
+import { LoadMore } from "./load-more.tsx";
+import { errorText } from "./error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/cell-history.css";
 
@@ -75,10 +75,20 @@ export type CellHistoryPopoverProps = {
   timeZone?: string;
   /** Clock for 「今天 15:05」 (default Date.now). */
   now?: () => number;
+  /**
+   * Long histories: pass one page in `versions` and load older ones here (append them to `versions`). A
+   * 「加载更多」 row shows under the list while `hasMore`; without `onLoadMore` every version is rendered.
+   */
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  /** The next page is loading (the row spins). */
+  loadingMore?: boolean;
+  /** The next page failed: the message (true = 「没加载出来」), with 重试. */
+  loadMoreError?: string | boolean;
 };
 
 /** Version history of a cell / record, anchored under the cell. */
-export function CellHistoryPopover({ open, onClose, anchor = null, anchorRect, subject, versions, scope, onScopeChange, loading, error, onRetry, onRestore, retentionNote, onOpenLog, timeZone: timeZoneProp, now = Date.now }: CellHistoryPopoverProps) {
+export function CellHistoryPopover({ open, onClose, anchor = null, anchorRect, subject, versions, scope, onScopeChange, loading, error, onRetry, onRestore, retentionNote, onOpenLog, timeZone: timeZoneProp, now = Date.now, onLoadMore, hasMore, loadingMore, loadMoreError }: CellHistoryPopoverProps) {
   const fallbackZone = useAdminDefaults().timeZone;
   const timeZone = timeZoneProp ?? fallbackZone;
   const [pending, setPending] = useState<string | null>(null);
@@ -92,7 +102,7 @@ export function CellHistoryPopover({ open, onClose, anchor = null, anchorRect, s
       await onRestore(version);
       setAsking(null);
     } catch (e) {
-      setFailure({ id: version.id, message: e instanceof Error ? e.message : String(e) });
+      setFailure({ id: version.id, message: errorText(e) });
     } finally {
       setPending(null);
     }
@@ -208,6 +218,9 @@ export function CellHistoryPopover({ open, onClose, anchor = null, anchorRect, s
               </li>
             ))}
           </ol>
+        )}
+        {onLoadMore && !loading && !error && versions.length > 0 && (
+          <LoadMore shown={versions.length} hasMore={hasMore ?? false} loading={loadingMore} error={loadMoreError} onLoadMore={onLoadMore} unit="个版本" />
         )}
       </div>
       {(retentionNote || onOpenLog) && (

@@ -137,3 +137,9 @@ export function searchViews(views: readonly ViewSummary[], query: string): ViewS
   const q = query.trim().toLowerCase();
   return q ? views.filter((v) => v.name.toLowerCase().includes(q)) : [...views];
 }
+
+/** Hover text of a view tab: kind · tier (standard = conditions locked) · 「你改过，只对你生效」. */
+export function viewTabTip(view: ViewSummary): string {
+  const tier = view.tier === "standard" ? " · 业务线标准视图（条件锁定）" : view.tier === "shared" ? " · 共享视图" : "";
+  return `${VIEW_KIND_LABELS[view.kind]}视图${tier}${view.modified ? " · 你改过，只对你生效" : ""}`;
+}

@@ -13,11 +13,9 @@ import { SegmentedControl } from "./choices.tsx";
 import { useIsMobile } from "./media-query.ts";
 import { PopoverLayer } from "./popover-panel.tsx";
 import { Button } from "./primitives.tsx";
-import { markReadLocal, unreadBadgeText } from "./notification-core.ts";
+import { markReadLocal, tabKeyIndex, unreadBadgeText } from "./notification-core.ts";
 import { errorText, usePagedList, usePendingCount } from "./notification-center-load.ts";
-import { InboxList, NotificationList } from "./notification-center-lists.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/notification-center.css";
+import { InboxList, NotificationList, preloadLists, usePreloadLists } from "./notification-center-lazy.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/notification-center.css";
 
@@ -104,6 +102,7 @@ export function NotificationCenter(props: NotificationCenterProps) {
   const [bell, setBell] = useState<HTMLButtonElement | null>(null);
   const [ownOpen, setOwnOpen] = useState(false);
   const open = props.open ?? ownOpen;
+  usePreloadLists(open);
   const onOpenChange = props.onOpenChange;
   const setOpen = useCallback((next: boolean) => {
     setOwnOpen(next);
@@ -175,11 +174,9 @@ export function NotificationCenter(props: NotificationCenterProps) {
   ];
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const onTabKey = (event: KeyboardEvent<HTMLDivElement>) => {
-    const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
-    if (!keys.includes(event.key)) return;
+    const next = tabKeyIndex(event.key, tabs.findIndex((t) => t.key === shownTab), tabs.length);
+    if (next === null) return;
     event.preventDefault();
-    const at = tabs.findIndex((t) => t.key === shownTab);
-    const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (at + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
     const target = tabs[next];
     if (!target) return;
     setTab(target.key);
@@ -211,7 +208,7 @@ export function NotificationCenter(props: NotificationCenterProps) {
         aria-haspopup="dialog"
         aria-expanded={open}
         data-open={open || undefined}
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen(!open)} onPointerEnter={preloadLists} onFocus={preloadLists}
       />
       {badge && <span className="aui-count aui-ncenter-badge" data-tone="danger" aria-hidden="true">{badge}</span>}
       <PopoverLayer

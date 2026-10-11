@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { shortcutApplies, shortcutOf, type AdminCommand } from "./command-core.ts";
 import { useAdminTheme } from "./theme.tsx";
+import { errorText } from "./error-text.ts";
 
 export type AdminShortcutOptions = {
   /**
@@ -47,7 +48,7 @@ export function useAdminShortcuts(
       e.preventDefault();
       Promise.resolve()
         .then(command.run)
-        .catch((err) => setError(String(err)));
+        .catch((err) => setError(errorText(err)));
     };
     const host: EventTarget | null | undefined = global ? window : root;
     host?.addEventListener("keydown", listener as EventListener);

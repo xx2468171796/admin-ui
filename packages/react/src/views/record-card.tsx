@@ -37,8 +37,6 @@ import { cardFieldEmpty, cardKeyline, cardTags } from "./record-card-core.ts";
 import { CardFooter } from "./record-card-parts.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 export type RecordCardDensity = "compact" | "normal";
 export type RecordCardProps<T> = {

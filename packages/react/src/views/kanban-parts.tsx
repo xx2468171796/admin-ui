@@ -12,8 +12,6 @@ import { revealInline } from "../scroll-reveal.ts";
 import type { KanbanColumn } from "./kanban-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 /** Bottom-centred bar in the Provider portal while a card is dragged (or a locked card is grabbed). */
 export function KanbanHint({ text, locked }: { text: ReactNode; locked?: boolean }) {

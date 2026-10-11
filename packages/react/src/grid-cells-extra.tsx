@@ -32,6 +32,7 @@ import { CellDate } from "./displays.tsx";
 import type { AudioPlayerProps } from "./media-audio.tsx";
 import type { MediaLightboxProps } from "./media-lightbox.tsx";
 import { lazyPart } from "./lazy-part.ts";
+import { useInnerTabIndex } from "./grid-tab-context.ts";
 import { itemKind, MediaThumb } from "./media-parts.tsx";
 import { toPeople, valueText, type GridField } from "./grid-core.ts";
 import {
@@ -47,8 +48,6 @@ import {
   type GridExtraFieldType,
   type GridRecordRef,
 } from "./grid-field-types.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grid.css";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grid.css";
 
@@ -88,8 +87,10 @@ export function GridProgress({ value, precision }: { value: number | null; preci
 export function GridMaskedValue({ text, reveal, label }: { text: string; reveal?: () => string | Promise<string>; label: string }) {
   const [full, setFull] = useState<string | null>(null);
   const [state, setState] = useState<"idle" | "busy" | "error">("idle");
+  const tabIndex = useInnerTabIndex();
   if (!text) return empty;
   const toggle = async () => {
+    if (state === "busy") return; // aria-disabled while loading: focus stays on the button
     if (full !== null) return setFull(null);
     if (!reveal) return;
     setState("busy");
@@ -105,7 +106,7 @@ export function GridMaskedValue({ text, reveal, label }: { text: string; reveal?
       <span className="aui-grid-masked-text" data-tip={state === "error" ? "无权查看或加载失败" : undefined}>{full ?? text}</span>
       {reveal && (
         <button type="button" className="aui-grid-cell-icon" aria-label={full !== null ? `隐藏${label}` : state === "error" ? `查看完整${label}失败，重试` : `查看完整${label}`} aria-pressed={full !== null}
-          disabled={state === "busy"} onClick={(event) => { event.stopPropagation(); void toggle(); }}>
+          tabIndex={tabIndex} aria-disabled={state === "busy" || undefined} onClick={(event) => { event.stopPropagation(); void toggle(); }}>
           {full !== null ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
         </button>
       )}
@@ -128,6 +129,7 @@ export function GridAttachments({ items, label, open }: { items: ReturnType<type
   const [shown, setShown] = useState<number | null>(null);
   // Mounted from the first open on (so closing still animates), loaded then.
   const [used, setUsed] = useState(false);
+  const tabIndex = useInnerTabIndex();
   if (!items.length) return empty;
   const first = items[0]!;
   const openAt = (index: number) => {
@@ -152,7 +154,7 @@ export function GridAttachments({ items, label, open }: { items: ReturnType<type
   return (
     <span className="aui-grid-attachments" role="list" aria-label={`${label}：${items.length} 个文件`} onPointerEnter={open ? undefined : lightboxPart.preload}>
       {visible.map((item, index) => (
-        <button key={item.id} type="button" role="listitem" className="aui-grid-attachment" data-tip={item.name} aria-label={`打开 ${item.name}`} onClick={(event) => { event.stopPropagation(); openAt(index); }}>
+        <button key={item.id} type="button" tabIndex={tabIndex} role="listitem" className="aui-grid-attachment" data-tip={item.name} aria-label={`打开 ${item.name}`} onClick={(event) => { event.stopPropagation(); openAt(index); }}>
           <MediaThumb item={item} size="sm" showPlay={itemKind(item) === "video"} />
         </button>
       ))}
@@ -164,12 +166,13 @@ export function GridAttachments({ items, label, open }: { items: ReturnType<type
 
 /** Linked-record chips; with `open` they are buttons that open the record. */
 export function GridRefChips({ refs, label, open }: { refs: readonly GridRecordRef[]; label: string; open?: (ref: GridRecordRef) => void }) {
+  const tabIndex = useInnerTabIndex();
   if (!refs.length) return empty;
   if (!open) return <CellTags label={label} items={refs.map((ref) => ({ label: ref.title, tone: "teal" as const }))} />;
   return (
     <span className="aui-grid-refs" role="list" aria-label={label}>
       {refs.map((ref) => (
-        <button key={ref.id} type="button" role="listitem" className="aui-chip aui-grid-ref" data-tone="teal" data-tip={ref.hint ? `${ref.title} · ${ref.hint}` : ref.title}
+        <button key={ref.id} type="button" tabIndex={tabIndex} role="listitem" className="aui-chip aui-grid-ref" data-tone="teal" data-tip={ref.hint ? `${ref.title} · ${ref.hint}` : ref.title}
           onClick={(event) => { event.stopPropagation(); open(ref); }}>
           <span className="aui-chip-label">{ref.title}</span>
         </button>

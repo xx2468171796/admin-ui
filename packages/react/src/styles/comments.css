@@ -69,7 +69,7 @@
 .adminui .aui-comment-doc-name { display: grid; min-width: 0; }
 .adminui .aui-comment-doc-name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: calc(13px * var(--aui-font-scale)); font-weight: 500; }
 .adminui .aui-comment-doc-name small { color: var(--aui-note); font-size: calc(12px * var(--aui-font-scale)); }
-.adminui :is(.aui-comment-file, .aui-comment-doc):focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 2px; }
+.adminui :is(.aui-comment-file, .aui-comment-doc):focus-visible { outline: 2px solid var(--aui-focus); outline-offset: 2px; }
 .adminui :is(.aui-comment-file, .aui-comment-doc):disabled { cursor: not-allowed; }
 .adminui .aui-comment-reactions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
 .adminui .aui-comment-reaction { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border: 1px solid transparent; border-radius: 6px; background: var(--aui-surface-subtle); color: var(--aui-secondary); font: inherit; font-size: calc(12.5px * var(--aui-font-scale)); font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer; }
@@ -78,7 +78,7 @@
 .adminui .aui-comment-reaction:hover:not(:disabled) { border-color: var(--aui-control-border); }
 .adminui .aui-comment-reaction[aria-pressed=true] { border-color: color-mix(in srgb, var(--aui-primary) 35%, transparent); background: var(--aui-soft); color: var(--aui-ink); }
 .adminui .aui-comment-reaction:disabled { cursor: default; }
-.adminui .aui-comment-reaction:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 1px; }
+.adminui .aui-comment-reaction:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: 1px; }
 .adminui .aui-comment-hover { position: absolute; top: 6px; right: 12px; z-index: 2; display: flex; align-items: center; gap: 2px; padding: 2px; border: 1px solid var(--aui-line); border-radius: 8px; background: var(--aui-surface); box-shadow: var(--aui-shadow-sm); opacity: 0; pointer-events: none; transition: opacity var(--aui-duration-fast); }
 .adminui .aui-comment:hover > .aui-comment-main > .aui-comment-hover,
 .adminui .aui-comment:focus-within > .aui-comment-main > .aui-comment-hover,
@@ -90,7 +90,7 @@
 .adminui .aui-comment-tool > span { display: none; }
 .adminui .aui-comment-tool:hover { background: var(--aui-hover); color: var(--aui-text); }
 .adminui .aui-comment-tool[data-tone=ok]:hover { background: var(--aui-soft); color: var(--aui-primary); }
-.adminui .aui-comment-tool:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: -1px; }
+.adminui .aui-comment-tool:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: -1px; }
 @media (hover: none), (max-width: 760px) {
   .adminui .aui-comment-hover { position: static; justify-content: flex-start; gap: 16px; margin-top: 6px; padding: 0; border: 0; background: none; box-shadow: none; opacity: 1; pointer-events: auto; }
   .adminui .aui-comment-tool,
@@ -105,7 +105,7 @@
 .adminui .aui-comment-rxpick > button > svg { width: 16px; height: 16px; }
 .adminui .aui-comment-rxpick > button:hover { background: var(--aui-hover); color: var(--aui-text); }
 .adminui .aui-comment-rxpick > button[aria-pressed=true] { background: var(--aui-soft); color: var(--aui-ink); }
-.adminui .aui-comment-rxpick > button:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: -2px; }
+.adminui .aui-comment-rxpick > button:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: -2px; }
 .adminui .aui-comment-confirm { width: 248px; padding: 12px; }
 .adminui .aui-comment-confirm > b { display: block; margin-bottom: 4px; font-weight: 600; }
 .adminui .aui-comment-confirm > p { margin: 0 0 10px; color: var(--aui-secondary); font-size: calc(12.5px * var(--aui-font-scale)); line-height: 1.5; }
@@ -122,7 +122,7 @@
 .adminui .aui-comment-folded-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .adminui .aui-comment-folded-by { flex: none; }
 .adminui .aui-comment-folded:hover { color: var(--aui-secondary); }
-.adminui .aui-comment-folded:focus-visible { outline: 2px solid var(--aui-primary); outline-offset: 1px; }
+.adminui .aui-comment-folded:focus-visible { outline: 2px solid var(--aui-focus); outline-offset: 1px; }
 .adminui .aui-comment-more-replies { display: inline-flex; align-items: center; gap: 8px; justify-self: start; height: 26px; margin: 0 16px 6px 46px; padding: 0 8px 0 4px; border: 0; border-radius: 6px; background: none; color: var(--aui-primary); font: inherit; font-size: calc(12.5px * var(--aui-font-scale)); font-weight: 500; cursor: pointer; }
 .adminui .aui-comment-more-replies:hover { background: var(--aui-soft); }
 .adminui .aui-comment-more-avatars { display: inline-flex; }

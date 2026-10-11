@@ -23,8 +23,7 @@ import { GridGroupTool, GridSortTool, preloadGroupPanels } from "./grid-group-pa
 import { GridFieldsTool, preloadFieldsPanel } from "./grid-fields-panel.tsx";
 import { GridColorTool, preloadColorPanel } from "./grid-color-panel.tsx";
 import { whenIdle } from "./lazy-part.ts";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grid.css";
+import { useDebouncedSearch } from "./grid-search.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grid.css";
 
@@ -88,9 +87,11 @@ export type GridToolbarProps<T> = {
 };
 
 /** Search icon that opens into the box (stays open while there is a query). */
-function SearchToggle({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+function SearchToggle({ committed, onCommit }: { committed: string; onCommit: (value: string) => void }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLInputElement>(null);
+  // 300 ms after typing stops, never mid-composition (grid-search.ts).
+  const { text: value, onChange, composition } = useDebouncedSearch(committed, onCommit);
   if (!open && !value)
     return (
       <IconButton label="搜索记录" tooltip="搜索" className="aui-grid-search-icon" onClick={() => {
@@ -99,10 +100,20 @@ function SearchToggle({ value, onChange }: { value: string; onChange: (value: st
       }} icon={<Search aria-hidden="true" />} />
     );
   return (
-    <div className="aui-grid-search" data-collapsible="" onBlur={(event) => {
+    <div className="aui-grid-search" data-collapsible="" {...composition} onBlur={(event) => {
       if (!value && !(event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget))) setOpen(false);
     }}>
       <SearchBox ref={box} size="sm" label="搜索记录" placeholder="搜索" value={value} onChange={onChange} />
+    </div>
+  );
+}
+
+/** The toolbar's search box: the view's `search` changes 300 ms after typing stops, never mid-composition. */
+function GridSearchBox({ id, value, onCommit }: { id: string; value: string; onCommit: (value: string) => void }) {
+  const { text, onChange, composition } = useDebouncedSearch(value, onCommit);
+  return (
+    <div className="aui-grid-search" {...composition}>
+      <SearchBox id={id} size="sm" label="搜索记录" placeholder="搜索" value={text} onChange={onChange} />
     </div>
   );
 }
@@ -123,7 +134,6 @@ export function GridToolbar<T>({ fields, view, onViewChange, total, matched, sel
   const quickRow = phone && quickFilters ? <div className="aui-grid-quickrow">{quickFilters}</div> : null;
   // The panel bodies are lazy (not on the first paint); fetch the ones this toolbar shows once the browser is idle,
   // so the first open is instant.
-  const wanted = `${can.filter}${can.group}${can.sort}${can.fields}${can.color}`;
   useEffect(
     () =>
       whenIdle(() => {
@@ -132,17 +142,14 @@ export function GridToolbar<T>({ fields, view, onViewChange, total, matched, sel
         if (can.fields) preloadFieldsPanel();
         if (can.color) preloadColorPanel();
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [wanted],
+    [can.filter, can.group, can.sort, can.fields, can.color],
   );
   return (
     <>
     {quickRow}
     <div className="aui-grid-toolbar" role="toolbar" aria-label="视图工具栏" data-quick={quickFilters && !phone ? "" : undefined}>
       {leading && <div className="aui-grid-leading">{leading}</div>}
-      {can.search && !iconSearch && <div className="aui-grid-search">
-        <SearchBox id={searchId} size="sm" label="搜索记录" placeholder="搜索" value={view.search} onChange={(value) => apply({ type: "search", value })} />
-      </div>}
+      {can.search && !iconSearch && <GridSearchBox id={searchId} value={view.search} onCommit={(value) => apply({ type: "search", value })} />}
       {can.fields && <GridFieldsTool {...context} onCreateField={onCreateField} onCreateGroup={onCreateFieldGroup} />}
       {can.filter && <GridFilterTool {...context} />}
       {can.group && <GridGroupTool {...context} groupKeys={groupKeys} />}
@@ -160,7 +167,7 @@ export function GridToolbar<T>({ fields, view, onViewChange, total, matched, sel
       {tools}
       <div className="aui-grid-end">
         {quickFilters && !phone && <div className="aui-grid-quick">{quickFilters}</div>}
-        {iconSearch && <SearchToggle value={view.search} onChange={(value) => apply({ type: "search", value })} />}
+        {iconSearch && <SearchToggle committed={view.search} onCommit={(value) => apply({ type: "search", value })} />}
         <span className="aui-grid-count" aria-live="polite">
           {selected ? <>已选择 {selected} 条{onClearSelection && <Button variant="text" size="sm" onClick={onClearSelection}>清除选择</Button>}</> : total === undefined ? null : matched !== undefined && matched !== total ? `${iconSearch ? "" : "筛选出 "}${matched} / ${total} 条` : iconSearch ? `${total} 条` : `共 ${total} 条`}
         </span>

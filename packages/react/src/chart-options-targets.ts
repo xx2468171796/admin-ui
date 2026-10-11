@@ -8,6 +8,7 @@ import type { EChartsOption } from "echarts";
 import { formatNumber } from "./dashboard-core.ts";
 import { VIZ_BRAND, VIZ_NOTE, VIZ_TEXT, type VizMode } from "./viz-palette.ts";
 import { CHART_VALUE_LABEL, tooltipHtml } from "./chart-options-kinds.ts";
+import { chartFormatter } from "./chart-formatter.ts";
 import { formatDuration, isDurationUnit } from "./duration-format.ts";
 
 const finite = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
@@ -112,7 +113,7 @@ export function targetBarOption(input: TargetBarInput): EChartsOption {
       trigger: "axis",
       confine: true,
       axisPointer: { type: "shadow" },
-      formatter: ((params: { dataIndex: number; seriesId?: string; color?: string }[]) => {
+      formatter: chartFormatter((params: { dataIndex: number; seriesId?: string; color?: string }[]) => {
         const i = params[0]?.dataIndex ?? 0;
         const tickColor = params.find((p) => p.seriesId === "target")?.color;
         const v = values[i];
@@ -126,7 +127,7 @@ export function targetBarOption(input: TargetBarInput): EChartsOption {
           ],
           ...(finite(v) && finite(t) && t > 0 ? { total: { label: "完成", text: `${formatNumber((v / t) * 100, { digits: 1 })}%` } } : {}),
         });
-      }) as never,
+      }),
     },
     xAxis: { type: "category", data: [...categories], axisTick: { show: false } },
     // The unit belongs in the panel subtitle (「万 US$ · 横线 = 当月目标」); an axis name crowds the top-left tick.

@@ -12,8 +12,6 @@ import { KanbanSkeleton } from "./kanban-parts.tsx";
 import { IconButton, MoreMenu } from "../buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 export type KanbanColumnMeta = {
   /** All records of the column on the server (header count); default: cards loaded. */

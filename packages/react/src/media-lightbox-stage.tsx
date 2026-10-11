@@ -15,8 +15,6 @@ import { useMediaSource } from "./media-source-hook.ts";
 import { canPan, clampPan, clampZoom, fitScale, stepZoom, swipeIntent, wheelZoom, zoomAround, ZOOM_MAX, ZOOM_MIN, type ZoomPan, type ZoomSize } from "./media-zoom.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/media.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/media.css";
 
 const NO_PAN: ZoomPan = { x: 0, y: 0 };
 

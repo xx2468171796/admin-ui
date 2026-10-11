@@ -17,8 +17,6 @@ import { errorText, type PagedList } from "./notification-center-load.ts";
 import type { InboxAction, InboxItem, NotificationActor, NotificationItem } from "./notification-center.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/notification-center.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/notification-center.css";
 
 function Who({ actor, kindIcon, tone }: { actor?: NotificationActor; kindIcon?: ReactNode; tone?: NotificationItem["tone"] }) {
   return (

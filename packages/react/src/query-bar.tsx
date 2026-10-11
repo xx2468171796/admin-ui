@@ -5,8 +5,6 @@ import { Button } from "./primitives.tsx";
 import { SearchBox } from "./search.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/table.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/table.css";
 /**
  * Search + filters above a list: the search filters as you type (0.3 s after the last
  * key) — there are no 查询 / 重置 buttons any more; slow lists (audit logs) pass `searchMode="enter"` and the

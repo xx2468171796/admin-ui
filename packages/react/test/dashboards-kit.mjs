@@ -116,6 +116,20 @@ try {
   assert.equal(await ar.locator('.aui-kpi-value strong').textContent(), '—');
   await ar.getByText('财务模块上线后显示').waitFor();
   assert.equal(await ar.locator('.aui-delta').count(), 0, '占位指标不显示变化值');
+  // 8.9 KpiCard onActivate: the whole card (its number) opens the detail; ⓘ stays its own button
+  const win = kit.getByRole('button', { name: '赢单率 39%，查看明细' });
+  assert.ok((await win.boundingBox()).height >= 40, '整张卡可点（≥ 40px）');
+  await kit.getByRole('button', { name: '赢单率的口径说明' }).click();
+  await kit.getByText('成交 ÷（成交 + 丢单），只算本月关闭的商机').waitFor();
+  assert.equal(await page.getByText('进入「赢单率 · 本月关闭的商机」', { exact: false }).count(), 0, 'ⓘ 不触发卡片');
+  const num = await kit.locator('.aui-kpi').filter({ hasText: '赢单率' }).locator('.aui-kpi-value strong').boundingBox();
+  await page.mouse.click(num.x + num.width / 2, num.y + num.height / 2); // tap the number itself
+  await page.getByText('进入「赢单率 · 本月关闭的商机」，带着当前筛选（carryFilterContext）').first().waitFor();
+  await kit.getByRole('button', { name: '赢单率的口径说明' }).focus();
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await win.evaluate((el) => el === document.activeElement), true, 'Tab 能到整张卡');
+  assert.notEqual(await win.evaluate((el) => getComputedStyle(el).boxShadow), 'none', '键盘焦点有一圈框');
+  await page.keyboard.press('Enter');
   assert.equal(await kit.locator('.aui-rollup').count(), 4);
   assert.equal(await kit.locator('.aui-rollup-anomaly').count(), 2);
   await kit.locator('.aui-rollup').filter({ hasText: '旅游' }).getByRole('button', { name: '进入业务线经营' }).click();

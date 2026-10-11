@@ -44,7 +44,7 @@ try {
   const text = async (id, title) => (await (await cell(id, title)).innerText()).trim();
   const stored = () => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}').view ?? {}, VIEW_KEY);
   const firstKeys = () => grid.locator('[role=row][data-row-key]').evaluateAll((rows) => rows.map((r) => r.dataset.rowKey));
-  const focusedCell = () => page.evaluate(() => document.activeElement?.dataset.cell ?? document.activeElement?.textContent?.trim().slice(0, 12));
+  const focusedCell = () => page.evaluate(() => document.activeElement?.closest('[data-cell]')?.dataset.cell ?? document.activeElement?.textContent?.trim().slice(0, 12));
   const menuItems = (m) => m.locator('[role^=menuitem]').evaluateAll((items) => items.map((i) => i.querySelector('.aui-cmenu-text')?.textContent));
   await page.waitForTimeout(200);
 

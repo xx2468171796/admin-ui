@@ -12,8 +12,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, Pencil, Redo2, Undo2, X } from "lucide-react";
 import { Input } from "./primitives.tsx";
 import { IconButton } from "./buttons.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/workspace.css";
+import { errorText } from "./error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/workspace.css";
 
@@ -51,9 +50,10 @@ function BuilderTitle({ title, icon, onTitleChange }: Pick<BuilderLayoutProps, "
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const editing = draft !== null;
   useEffect(() => {
-    if (draft !== null) input.current?.select();
-  }, [draft !== null]);
+    if (editing) input.current?.select();
+  }, [editing]);
   const save = async () => {
     if (draft === null) return;
     const next = draft.trim();
@@ -65,7 +65,7 @@ function BuilderTitle({ title, icon, onTitleChange }: Pick<BuilderLayoutProps, "
       setDraft(null);
       setError("");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError(errorText(reason));
     } finally {
       setBusy(false);
     }

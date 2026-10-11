@@ -30,8 +30,7 @@ import {
 import { MediaTypeIcon } from "./media-parts.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/media.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/media.css";
+import "#aui-css/uploads.css";
 
 /**
  * Upload one file. Same shape as UploadAdapter plus `key` (stable per queue item — use it to find a
@@ -57,6 +56,7 @@ export type UseUploadQueueOptions<R> = {
 
 let seq = 0;
 const newId = () => `up-${Date.now().toString(36)}-${(seq += 1)}`;
+const abortIn = (controllers: Map<string, AbortController>, id: string) => { controllers.get(id)?.abort(); controllers.delete(id); };
 
 export function useUploadQueue<R = UploadResult>({ upload, accept = [], maxBytes, maxFiles, concurrency = 3, onUploaded }: UseUploadQueueOptions<R>) {
   const [items, dispatch] = useReducer((s: UploadQueueItem<R>[], a: UploadQueueAction<R>) => uploadQueueReducer(s, a), []);
@@ -141,16 +141,14 @@ export function useUploadQueue<R = UploadResult>({ upload, accept = [], maxBytes
     [accept, maxBytes, maxFiles],
   );
   const cancel = useCallback((id: string) => {
-    controllers.current.get(id)?.abort();
-    controllers.current.delete(id);
+    abortIn(controllers.current, id);
     dispatch({ type: "cancel", id });
   }, []);
   const retry = useCallback((id: string) => {
     if (files.current.has(id)) dispatch({ type: "retry", id });
   }, []);
   const remove = useCallback((id: string) => {
-    controllers.current.get(id)?.abort();
-    controllers.current.delete(id);
+    abortIn(controllers.current, id);
     forget(id);
     dispatch({ type: "remove", id });
   }, [forget]);

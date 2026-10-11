@@ -34,8 +34,6 @@ import { HoverCard, trackPointer, useAnnouncer } from "./view-parts.tsx";
 import { IconButton } from "../buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/views.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/views.css";
 
 /** What the gantt reads from records; edited by GanttSettings (view-settings.tsx). */
 export type GanttConfig = {
@@ -204,7 +202,7 @@ export function GanttView<T>(props: GanttViewProps<T>) {
   const frame = ganttFrame({ anchor, scale, bodyWidth, visibleDays, weekStart: props.weekStart ?? 1, listWidth: props.listWidth ?? ownWidth, collapsed: collapsedList, listNeed: ganttListNeed(listFields) });
   const dw = frame.dayWidth;
   const win = frame.window;
-  const ticks = useMemo(() => ganttTicks(win, scale, today, workCalendar, props.weekStart ?? 1, dw), [win.start, win.days, scale, today, workCalendar, props.weekStart, dw]);
+  const ticks = useMemo(() => ganttTicks({ start: win.start, days: win.days }, scale, today, workCalendar, props.weekStart ?? 1, dw), [win.start, win.days, scale, today, workCalendar, props.weekStart, dw]);
   const [hoverKey, setHoverKey] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [live, setLive] = useState<Live | null>(null);

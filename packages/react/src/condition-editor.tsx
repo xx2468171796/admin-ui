@@ -46,8 +46,6 @@ import {
 } from "./condition-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/conditions.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/conditions.css";
 
 export { ConditionValuePicker, type ConditionChoice, type ConditionValuePickerProps } from "./condition-value-picker.tsx";
 

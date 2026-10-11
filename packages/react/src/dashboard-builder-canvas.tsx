@@ -36,8 +36,6 @@ import { IconButton } from "./buttons.tsx";
 import { hugNumberRows } from "./dashboard-view-rows.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/dashboard-builder.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/dashboard-builder.css";
 
 /** Row height of the grid (审阅 06: 64 → 28; stored version-1 dashboards are migrated by normalizeDashboard). */
 export const DASHBOARD_ROW_HEIGHT = 28;

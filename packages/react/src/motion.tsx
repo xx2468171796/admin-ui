@@ -20,6 +20,7 @@ export function MotionReveal({ children, effect = "rise", replayKey, active = tr
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const enabled = useAdminMotion();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `replayKey` is the replay trigger.
   useEffect(() => {
     const node = ref.current;
     if (!node || !enabled || !active || !node.getClientRects().length || !node.animate) return;

@@ -20,8 +20,6 @@ import { revealInline } from "./scroll-reveal.ts";
 import type { MediaErrorInfo } from "./media-source-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/media.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/media.css";
 
 export type MediaLightboxProps = {
   open: boolean;
@@ -98,6 +96,7 @@ export function MediaLightbox({ open, items, index, onIndexChange, onClose, onDo
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `safe` (the current index) is a trigger — scroll its thumbnail into view; the thumbnail is found by aria-current.
   useEffect(() => {
     if (!open) return;
     const frame = requestAnimationFrame(() => revealInline(strip.current?.querySelector<HTMLElement>("[aria-current=true]"), strip.current, 3));

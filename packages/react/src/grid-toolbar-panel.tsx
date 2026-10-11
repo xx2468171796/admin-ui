@@ -15,8 +15,6 @@ import type { GridField, GridSelectOption, GridView, GridViewAction, GridViewLim
 import { VIEW_PANEL_WIDTHS, type ViewPanelWidth } from "./grid-view-v2.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/grid.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/grid.css";
 
 export { VIEW_PANEL_WIDTHS, type ViewPanelWidth } from "./grid-view-v2.ts";
 

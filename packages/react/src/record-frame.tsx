@@ -14,8 +14,6 @@ import type { MenuSection } from "./menu.tsx";
 import { RECORD_FRAMES, RECORD_FRAME_LABELS, recordFrameNavText, type RecordFrame, type RecordFrameNav } from "./record-frame-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/record.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/record.css";
 
 export { RECORD_FRAMES, RECORD_FRAME_LABELS, recordFrameNavText, type RecordFrame, type RecordFrameNav } from "./record-frame-core.ts";
 const FRAME_ICONS = { drawer: PanelRight, dialog: RectangleHorizontal, page: Maximize } as const;

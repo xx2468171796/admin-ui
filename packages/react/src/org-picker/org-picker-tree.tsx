@@ -35,6 +35,7 @@ export function OrgTreePane({ model, tree, current, focusId, onFocusId, onOpen, 
   const rows = tree.roots ? visibleTreeRows(tree.roots, tree.children, tree.expanded, hidden) : [];
   const hiddenCount = tree.roots ? [...tree.roots, ...[...tree.children.values()].flat()].filter(hidden).length : 0;
   const active = rows.some((r) => r.unit.id === focusId) ? focusId : (current ?? rows[0]?.unit.id ?? null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `scrollKey` (「回到我的位置」) and `rows.length` (the node's row rendered after its parents loaded) are scroll triggers.
   useEffect(() => {
     if (!current) return;
     box.current?.querySelector(`[data-node-id="${CSS.escape(current)}"]`)?.scrollIntoView({ block: "nearest" });

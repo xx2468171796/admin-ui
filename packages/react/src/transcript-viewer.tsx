@@ -42,8 +42,6 @@ import {
 } from "./transcript-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/transcript.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/transcript.css";
 
 export type { TranscriptExportOptions, TranscriptSummary } from "./transcript-side.tsx";
 

@@ -14,8 +14,6 @@ import { useId, type ReactNode } from "react";
 import { CircleAlert, CircleCheck, Info, TriangleAlert } from "lucide-react";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/workspace.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/workspace.css";
 
 export type PublicProgress = { done: number; total: number; /** Default 「已填 {done} / {total} 题」. */ label?: string };
 export type PublicPageLayoutProps = {

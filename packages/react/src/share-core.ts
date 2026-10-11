@@ -181,8 +181,11 @@ export function createClipboardClearer(write: (text: string) => Promise<void> | 
 
 /** Unambiguous PIN alphabet (no 0 / O / 1 / I / L). */
 export const PIN_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-/** A random PIN from PIN_ALPHABET using crypto.getRandomValues (rejection sampling, no modulo bias). */
-export function randomPin(length = 4, random: (n: number) => Uint8Array = (n) => crypto.getRandomValues(new Uint8Array(n))): string {
+/**
+ * A random PIN from PIN_ALPHABET using crypto.getRandomValues (rejection sampling, no modulo bias). Default 6
+ * characters (31^6 ≈ 8.9e8 combinations): 4 (31^4 ≈ 9.2e5) is guessable for a public share link without a server-side rate limit.
+ */
+export function randomPin(length = 6, random: (n: number) => Uint8Array = (n) => crypto.getRandomValues(new Uint8Array(n))): string {
   const limit = 256 - (256 % PIN_ALPHABET.length);
   let out = "";
   while (out.length < length)

@@ -23,8 +23,7 @@ import {
 } from "./history-core.ts";
 import type { LogChange, LogTimelineProps } from "./log-timeline.tsx";
 import { hhmm, letterOf, LogStatusPill, UNDO_LABEL } from "./log-shared.tsx";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/history.css";
+import { errorText } from "./error-text.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/history.css";
 
@@ -109,7 +108,7 @@ function OperationRow<T>({ p, item, outside, open, onToggle, decisions, onDecisi
     try {
       await u.onUndo(conflicts.length ? decisions : null);
     } catch (error) {
-      notify(error instanceof Error ? error.message : String(error), "error");
+      notify(errorText(error), "error");
     } finally {
       setBusy(false);
     }

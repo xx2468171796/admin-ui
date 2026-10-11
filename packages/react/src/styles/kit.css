@@ -213,7 +213,7 @@
   text-underline-offset: 3px;
 }
 .adminui .aui-step-btn:focus-visible {
-  outline: 2px solid var(--aui-primary);
+  outline: 2px solid var(--aui-focus);
   outline-offset: 2px;
 }
 .adminui .aui-steps[data-orientation="vertical"] {

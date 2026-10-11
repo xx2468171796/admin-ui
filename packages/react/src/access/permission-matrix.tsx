@@ -39,8 +39,6 @@ import { fullPath, indexTree } from "./tree-core.ts";
 import { IconButton } from "../buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/access.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/access.css";
 
 export type PermissionMatrixProps = {
   resources: readonly MatrixResource[];

@@ -16,8 +16,6 @@ import { useRailShell } from "./rail-shell.tsx";
 import { IconButton, MoreMenu } from "./buttons.tsx";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/workspace.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/workspace.css";
 
 export type ScopeOption = { value: string; label: string; hint?: string };
 export type ScopePillProps = {

@@ -29,8 +29,6 @@ import {
 } from "./record-detail-core.ts";
 // aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
 import "#aui-css/record.css";
-// aui-css: styles of the classes this module renders (scripts/css-chunks.mjs keeps this list in sync)
-import "#aui-css/record.css";
 
 // ---------------------------------------------------------------- editing state
 
@@ -40,6 +38,7 @@ const RecordEditingContext = /* @__PURE__ */ createContext<Editing | null>(null)
 /** One editor at a time inside a record; `resetKey` (the record's key) closes it when the record changes. */
 export function RecordEditingProvider({ resetKey, children }: { resetKey: unknown; children: ReactNode }) {
   const [key, setKey] = useState<string | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `resetKey` (another record) is the trigger that closes the open editor.
   useEffect(() => setKey(null), [resetKey]);
   const start = useCallback((next: string) => setKey(next), []);
   const stop = useCallback((done: string) => setKey((current) => (current === done ? null : current)), []);

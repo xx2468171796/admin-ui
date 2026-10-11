@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Rows3, Share2, UserRoundCheck, Users } from "lucide-react";
 import { Button, DescriptionList, GrantList, PageBody, PageHeader, Panel, SegmentedControl, ShareDialog, useNotify, type GrantEntry, type ShareGrant, type ShareSettings } from "@adminui/react";
 import { OrgPicker, OrgPickerField, type OrgPick, type PickedSubject } from "@adminui/react/org-picker";
-import { DEMO_DEPARTED, DEMO_FOCUS, DEMO_TABS, DEMO_VIEWERS, createDemoOrgSource, demoAvailability, demoShortcuts, type DemoViewer } from "./org-picker-demo";
+import { DEMO_DEPARTED, DEMO_FOCUS, DEMO_TABS, DEMO_VIEWERS, createDemoOrgSource, demoAssignAvailability, demoAvailability, demoShortcuts, type DemoViewer } from "./org-picker-demo";
 import { SHARE_SETTINGS, demoNow } from "./share-demo";
 
 // 组织选人示例（样稿 A–I）：选人弹框（部门树 | 成员 | 已选）、单选转交、只选人最多 5 个、
@@ -20,7 +20,7 @@ const SHARE_LEVELS = [
   { value: "edit", label: "可编辑" },
 ];
 
-type Mode = "share" | "transfer" | "max" | "late";
+type Mode = "share" | "transfer" | "max" | "late" | "assign";
 
 function PickText({ picks }: { picks: readonly OrgPick[] }) {
   if (!picks.length) return <span className="aui-note">还没有选</span>;
@@ -47,6 +47,8 @@ export function OrgPickerShowcase() {
   const [settings, setSettings] = useState<ShareSettings>({ ...SHARE_SETTINGS, audience: "people" });
   const [people, setPeople] = useState<ShareGrant[]>([]);
   const availability = useMemo(() => demoAvailability(viewer), [viewer]);
+  const assignAvailability = useMemo(() => demoAssignAvailability(viewer), [viewer]);
+  const [assignee, setAssignee] = useState<PickedSubject[]>([]);
   const shortcuts = useMemo(() => demoShortcuts(viewer), [viewer]);
   const common = { source, availability, defaultFocus: DEMO_FOCUS[viewer], shortcuts };
   // 「我的部门」由宿主另一个接口给、比弹框晚到：defaultFocus 晚到时弹框要重新定位，不能停在骨架上。
@@ -83,12 +85,17 @@ export function OrgPickerShowcase() {
               <Share2 />
               分享（「我的部门」晚到）
             </Button>
+            <Button variant="outline" onClick={() => setMode("assign")}>
+              <UserRoundCheck />
+              指派跟进人（只列能选的人）
+            </Button>
           </div>
           <DescriptionList
             items={[
               { label: "分享给", value: shared.length ? shared.map((s) => s.label).join("、") : "—" },
               { label: "新负责人", value: owner[0]?.label ?? "—" },
               { label: "培训对象", value: five.length ? five.map((s) => s.label).join("、") : "—" },
+              { label: "跟进人", value: assignee[0]?.label ?? "—" },
               { label: "最近一次输出", value: <PickText picks={lastPicks} /> },
             ]}
           />
@@ -194,6 +201,23 @@ export function OrgPickerShowcase() {
         value={five}
         onChange={(next, picks) => {
           setFive(next);
+          setLastPicks(picks);
+        }}
+      />
+      {/* hideUnselectable：管不着的部门和人、已离职的、外包客服都不列出来（不是灰着），组长只看到能指派的人 */}
+      <OrgPicker
+        {...common}
+        availability={assignAvailability}
+        hideUnselectable
+        open={mode === "assign"}
+        onClose={() => setMode(null)}
+        mode="single"
+        selectable={["person"]}
+        title="指派跟进人 · 孙佳宁"
+        description="只列你能指派的人"
+        value={assignee}
+        onChange={(next, picks) => {
+          setAssignee(next);
           setLastPicks(picks);
         }}
       />
